@@ -1,0 +1,92 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllResources",
+            "Effect": "Allow",
+            "Action": [
+                "secretsmanager:CreateSecret"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "iam:GetPolicyVersion",
+                "iam:CreateGroup",
+                "iam:DeleteAccessKey",
+                "iam:GetPolicy",
+                "iam:DeleteGroup",
+                "iam:UpdateAccessKey",
+                "iam:DeleteUser",
+                "iam:CreateUser",
+                "iam:GetGroup",
+                "iam:CreateAccessKey",
+                "iam:CreatePolicy",
+                "iam:RemoveUserFromGroup",
+                "iam:AddUserToGroup",
+                "iam:ListGroupsForUser",
+                "iam:ListPolicyVersions",
+                "iam:AttachGroupPolicy",
+                "iam:ListAttachedGroupPolicies",
+                "iam:DetachGroupPolicy",
+                "iam:GetUser",
+                "iam:CreatePolicyVersion",
+                "iam:DeletePolicyVersion",
+                "iam:GetRole",
+                "iam:CreateRole",
+                "iam:ListAttachedRolePolicies",
+                "iam:AttachRolePolicy",
+                "iam:DetachRolePolicy",
+                "iam:UpdateAssumeRolePolicy"
+            ],
+            "Resource": [
+                "arn:aws:iam::*:group/sym-s2-${environmentType}-*",
+                "arn:aws:iam::*:policy/sym-s2-${environmentType}-*",
+                "arn:aws:iam::*:user/sym-s2-${environmentType}-*",
+                "arn:aws:iam::*:role/sym-s2-${environmentType}-*"
+            ]
+        },
+        {
+            "Sid": "FugueAdmin",
+            "Effect": "Allow",
+            "Action": [
+                "iam:GetRole",
+                "iam:GetPolicyVersion",
+                "iam:ListPolicyVersions",
+                "iam:CreatePolicyVersion",
+                "iam:DeletePolicyVersion",
+                "iam:GetPolicy",
+                "iam:CreatePolicy",
+                "iam:CreateAccessKey",
+                "iam:DeleteAccessKey",
+                "iam:CreateRole",
+                "iam:ListAttachedRolePolicies",
+                "iam:AttachRolePolicy",
+                "iam:GetUser",
+                "iam:CreateUser",
+                "iam:DeleteUser",
+                "iam:ListGroupsForUser",
+                "iam:CreateGroup",
+                "iam:AttachGroupPolicy",
+                "iam:ListAttachedGroupPolicies",
+                "iam:GetGroup",
+                "iam:AddUserToGroup",
+                "iam:RemoveUserFromGroup",
+                "ecs:RunTask",
+                "iam:ListAccessKeys",
+                "secretsmanager:GetSecretValue",
+                "secretsmanager:PutSecretValue"
+            ],
+            "Resource": [
+                "arn:aws:ecs:*:*:task-definition/sym-s2-${environmentType}-*",
+                "arn:aws:iam::*:policy/sym-s2-${environmentType}-*",
+                "arn:aws:iam::*:role/sym-s2-${environmentType}-*",
+                "arn:aws:iam::*:user/sym-s2-${environmentType}-*",
+                "arn:aws:iam::*:group/sym-s2-${environmentType}-*",
+                "arn:aws:secretsmanager:*:*:secret:sym-s2-fugue-${environmentType}-*"
+            ]
+        }
+    ]
+}

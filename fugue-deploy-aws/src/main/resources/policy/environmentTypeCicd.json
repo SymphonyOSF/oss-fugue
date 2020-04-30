@@ -1,0 +1,171 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "FugueRead",
+            "Effect": "Allow",
+            "Action": [
+                "secretsmanager:GetSecretValue"
+            ],
+            "Resource": [
+                "arn:aws:secretsmanager:*:*:secret:sym-s2-fugue-${environmentType}-*"
+            ]
+        },
+        {
+            "Sid": "DeployLambda",
+            "Effect": "Allow",
+            "Action": [
+                "s3:PutObject",
+                "s3:GetObject",
+                "s3:ListObjects",
+                "s3:PutObjectTagging"
+            ],
+            "Resource": [
+                "arn:aws:s3:::sym-s2-fugue-${environmentType}-*-config/lambda/*"
+            ]
+        },
+        {
+            "Sid": "SyncLambda",
+            "Effect": "Allow",
+            "Action": [
+                "s3:ListBucket"
+            ],
+            "Resource": [
+                "arn:aws:s3:::sym-s2-fugue-${environmentType}-*-config"
+            ]
+        },
+        {
+            "Sid": "IAMandS3",
+            "Effect": "Allow",
+            "Action": [
+                "iam:GetRole",
+                "iam:GetPolicy",
+                "iam:PassRole",
+                "s3:GetObject"
+            ],
+            "Resource": [
+                "arn:aws:s3:::sym-s2-fugue-*/config/sym-s2-${environmentType}-*",
+                "arn:aws:s3:::sym-build-secrets/*",
+                "arn:aws:iam::*:policy/sym-s2-${environmentType}-*",
+                "arn:aws:iam::*:role/sym-s2-fugue-${environmentType}-admin-role",
+                "arn:aws:iam::*:role/ecsTaskExecutionRole",
+                "arn:aws:iam::*:role/sym-s2-${environmentType}-*",
+                "arn:aws:iam::*:role/sym-s2-fugue-ecs-execution-role"
+            ]
+        },
+        {
+            "Sid": "ECSS2",
+            "Effect": "Allow",
+            "Action": [
+                "ecs:ListTasks",
+                "ecs:StartTask",
+                "ecs:DescribeClusters",
+                "ecs:RunTask"
+            ],
+            "Resource": [
+                "arn:aws:ecs:*:*:task-definition/sym-s2-${environmentType}-*",
+                "arn:aws:ecs:*:*:task-definition/sym-s2-fugue-*",
+                "arn:aws:ecs:*:*:task/sym-s2-${environmentType}-*",
+                "arn:aws:ecs:*:*:task/sym-s2-fugue-*",
+                "arn:aws:ecs:*:*:container-instance/*",
+                "arn:aws:ecs:*:*:cluster/*"
+            ]
+        },
+        {
+            "Sid": "ECSAll",
+            "Effect": "Allow",
+            "Action": [
+                "ecs:DeregisterTaskDefinition",
+                "ecs:ListServices",
+                "ecs:UpdateService",
+                "ecs:CreateService",
+                "ecs:ListTaskDefinitionFamilies",
+                "ecs:CreateCluster",
+                "ecs:RegisterTaskDefinition",
+                "ecs:DeleteService",
+                "ecs:DescribeServices",
+                "ecs:ListTaskDefinitions",
+                "ecs:DescribeTaskDefinition",
+                "ecs:ListClusters",
+                "ecs:StopTask",
+                "ecs:DescribeTasks"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "ContainerRegistryS2",
+            "Effect": "Allow",
+            "Action": [
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:BatchDeleteImage",
+                "ecr:UploadLayerPart",
+                "ecr:ListImages",
+                "ecr:DeleteRepository",
+                "ecr:PutImage",
+                "ecr:SetRepositoryPolicy",
+                "ecr:BatchGetImage",
+                "ecr:CompleteLayerUpload",
+                "ecr:DescribeImages",
+                "ecr:DescribeRepositories",
+                "ecr:DeleteRepositoryPolicy",
+                "ecr:InitiateLayerUpload",
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:GetRepositoryPolicy"
+            ],
+            "Resource": "arn:aws:ecr:*:*:repository/sym-s2-*"
+        },
+        {
+            "Sid": "ContainerRegistryES",
+            "Effect": "Allow",
+            "Action": [
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:ListImages",
+                "ecr:BatchGetImage",
+                "ecr:DescribeImages",
+                "ecr:DescribeRepositories",
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:GetRepositoryPolicy"
+            ],
+            "Resource": [
+              "arn:aws:ecr:*:*:repository/symphony-es",
+              "arn:aws:ecr:*:*:repository/symphony-es/*",
+              "arn:aws:ecr:*:*:repository/symbase",
+              "arn:aws:ecr:*:*:repository/symbase/*"
+              ]
+        },
+        {
+            "Sid": "ContainerRegistryAll",
+            "Effect": "Allow",
+            "Action": [
+                "ecr:CreateRepository",
+                "ecr:GetAuthorizationToken"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "Route53DotIsymDotIoDot",
+            "Effect": "Allow",
+            "Action": [
+                "route53:ListResourceRecordSets",
+                "route53:ChangeResourceRecordSets"
+            ],
+            "Resource": [
+                "arn:aws:route53:::hostedzone/*"
+            ]
+        },
+        {
+            "Action": [
+                "logs:CreateLogGroup",
+                "logs:DescribeLogGroups",
+                "logs:PutRetentionPolicy",
+                "logs:FilterLogEvents",
+                "logs:DescribeLogStreams",
+                "logs:PutRetentionPolicy",
+                "logs:GetLogEvents"
+            ],
+            "Effect": "Allow",
+            "Resource": "*",
+            "Sid": "Logs"
+        }
+    ]
+}
