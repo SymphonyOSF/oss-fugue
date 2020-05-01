@@ -24,12 +24,14 @@
 package org.symphonyoss.s2.fugue.http.ui.servlet;
 
 import java.util.Collection;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class PanelListParameter<T> extends PanelParameter<T>
 {
   private Collection<T> values_;
 
-  public PanelListParameter(Class<T> type, String label, IGetter<T> getter, ISetter<T> setter,
+  public PanelListParameter(Class<T> type, String label, Supplier<T> getter, Consumer<T> setter,
       Collection<T> values)
   {
     super(type, label, getter, setter);

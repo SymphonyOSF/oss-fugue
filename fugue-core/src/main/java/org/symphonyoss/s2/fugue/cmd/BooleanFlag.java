@@ -23,14 +23,15 @@
 
 package org.symphonyoss.s2.fugue.cmd;
 
+import java.util.function.Consumer;
+
 import org.symphonyoss.s2.fugue.cmd.CommandLineHandler.ArrayIterator;
-import org.symphonyoss.s2.fugue.http.ui.servlet.ISetter;
 
 public class BooleanFlag extends AbstractFlag
 {
-  private final ISetter<Boolean> setter_;
+  private final Consumer<Boolean> setter_;
 
-  public BooleanFlag(Character shortFlag, String longFlag, String envName, ISetter<Boolean> setter)
+  public BooleanFlag(Character shortFlag, String longFlag, String envName, Consumer<Boolean> setter)
   {
     super(shortFlag, longFlag, envName);
 
@@ -39,7 +40,7 @@ public class BooleanFlag extends AbstractFlag
 
   public void set(Boolean value)
   {
-    setter_.set(value);
+    setter_.accept(value);
   }
 
   @Override

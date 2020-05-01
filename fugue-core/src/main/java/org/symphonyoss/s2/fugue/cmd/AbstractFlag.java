@@ -24,7 +24,6 @@
 package org.symphonyoss.s2.fugue.cmd;
 
 import org.symphonyoss.s2.fugue.cmd.CommandLineHandler.ArrayIterator;
-import org.symphonyoss.s2.fugue.http.ui.servlet.ISetter;
 
 public abstract class AbstractFlag
 {

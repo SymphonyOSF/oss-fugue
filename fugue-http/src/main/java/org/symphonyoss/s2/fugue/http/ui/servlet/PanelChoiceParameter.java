@@ -25,12 +25,14 @@ package org.symphonyoss.s2.fugue.http.ui.servlet;
 
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class PanelChoiceParameter<T> extends PanelParameter<T>
 {
   private Map<T, ?> values_;
 
-  public PanelChoiceParameter(Class<T> type, String label, IGetter<T> getter, ISetter<T> setter,
+  public PanelChoiceParameter(Class<T> type, String label, Supplier<T> getter, Consumer<T> setter,
       Map<T,?> values)
   {
     super(type, label, getter, setter);

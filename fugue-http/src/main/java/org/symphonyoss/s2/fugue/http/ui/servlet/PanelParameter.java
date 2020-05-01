@@ -26,6 +26,8 @@ package org.symphonyoss.s2.fugue.http.ui.servlet;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,8 +44,8 @@ public class PanelParameter<T> implements IPanelParameter<T>
 
   private Class<T>                      type_;
   private final String                  label_;
-  private final IGetter<T>              getter_;
-  private final ISetter<T>              setter_;
+  private final Supplier<T>             getter_;
+  private final Consumer<T>             setter_;
   private final String                  id_;
   private Constructor<? extends Object> constructor_;
   private Method                        staticConstructor_;
@@ -51,7 +53,7 @@ public class PanelParameter<T> implements IPanelParameter<T>
   private boolean                       enabled_ = true;
 
   @SuppressWarnings("unchecked")
-  public PanelParameter(Class<T> type, String label, IGetter<T> getter, ISetter<T> setter)
+  public PanelParameter(Class<T> type, String label, Supplier<T> getter, Consumer<T> setter)
   {
     type_ = type;
     label_ = label;
@@ -115,12 +117,12 @@ public class PanelParameter<T> implements IPanelParameter<T>
     return label_;
   }
 
-  public IGetter<T> getGetter()
+  public Supplier<T> getGetter()
   {
     return getter_;
   }
 
-  public ISetter<T> getSetter()
+  public Consumer<T> getSetter()
   {
     return setter_;
   }
@@ -136,7 +138,7 @@ public class PanelParameter<T> implements IPanelParameter<T>
   {
     try
     {
-      setter_.set((staticConstructor_ == null ? (T) constructor_.newInstance(value)
+      setter_.accept((staticConstructor_ == null ? (T) constructor_.newInstance(value)
           : (T) staticConstructor_.invoke(null, value)));
     }
     catch (Exception e) // Yes, really, think NumberFormatException etc....

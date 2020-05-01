@@ -31,8 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-
-import org.symphonyoss.s2.fugue.http.ui.servlet.ISetter;
+import java.util.function.Consumer;
 
 /**
  * Parser for command line flags and arguments.
@@ -47,7 +46,7 @@ public class CommandLineHandler
   private Map<String, AbstractFlag>    envMap_      = new HashMap<>();
   private Set<AbstractFlag>            doneSet_      = new HashSet<>();
   private Set<AbstractFlag>            requiredSet_  = new HashSet<>();
-  private List<ISetter<String>>        paramSetters_ = new ArrayList<>();
+  private List<Consumer<String>>       paramSetters_ = new ArrayList<>();
   private int                          paramCnt_;
   private int                          errors_;
   
@@ -65,7 +64,7 @@ public class CommandLineHandler
    * 
    * @return This (fluent method)
    */
-  public <T> CommandLineHandler withFlag(Character shortFlag, String longFlag, String envName, Class<T> type, boolean multiple, boolean required, ISetter<T> setter)
+  public <T> CommandLineHandler withFlag(Character shortFlag, String longFlag, String envName, Class<T> type, boolean multiple, boolean required, Consumer<T> setter)
   {
     return withFlag(new Flag<T>(shortFlag, longFlag, envName, type, multiple, required, setter));
   }
@@ -116,7 +115,7 @@ public class CommandLineHandler
    * 
    * @return This (fluent method)
    */
-  public CommandLineHandler withParam(ISetter<String> setter)
+  public CommandLineHandler withParam(Consumer<String> setter)
   {
     paramSetters_.add(setter);
     
@@ -167,7 +166,7 @@ public class CommandLineHandler
           System.err.println("Unknown flag \"" + arg + "\" ignored.");
         else
         {
-          paramSetters_.get(paramCnt_).set(arg);
+          paramSetters_.get(paramCnt_).accept(arg);
           
           if(paramCnt_ < paramSetters_.size() - 1)
             paramCnt_++;

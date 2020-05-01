@@ -23,18 +23,19 @@
 
 package org.symphonyoss.s2.fugue.cmd;
 
+import java.util.function.Consumer;
+
 import org.symphonyoss.s2.fugue.cmd.CommandLineHandler.ArrayIterator;
-import org.symphonyoss.s2.fugue.http.ui.servlet.ISetter;
 
 public class Flag<T> extends AbstractFlag
 {
   private final Class<T>            type_;
   private final boolean             multiple_;
   private final boolean             required_;
-  private final ISetter<T>          setter_;
+  private final Consumer<T>         setter_;
   private final IStringConverter<T> converter_;
 
-  public Flag(Character shortFlag, String longFlag, String envName, Class<T> type, boolean multiple, boolean required, ISetter<T> setter)
+  public Flag(Character shortFlag, String longFlag, String envName, Class<T> type, boolean multiple, boolean required, Consumer<T> setter)
   {
     super(shortFlag, longFlag, envName);
     
@@ -65,7 +66,7 @@ public class Flag<T> extends AbstractFlag
 
   public void set(T value)
   {
-    setter_.set(value);
+    setter_.accept(value);
   }
 
   public void process(ArrayIterator it, boolean boolVal)
