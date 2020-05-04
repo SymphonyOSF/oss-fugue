@@ -29,10 +29,10 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.apache.commons.codec.binary.Base64;
-import org.symphonyoss.s2.fugue.lambda.JsonLambdaRequest;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.symphony.oss.commons.immutable.ImmutableByteArray;
+import com.symphony.oss.fugue.lambda.JsonLambdaRequest;
 
 /*
 {

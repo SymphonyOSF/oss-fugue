@@ -24,13 +24,14 @@ package org.symphonyoss.s2.fugue.inmemory.pubsub;
 import java.util.Map;
 
 import org.junit.Test;
-import org.symphonyoss.s2.fugue.core.trace.ITraceContext;
-import org.symphonyoss.s2.fugue.core.trace.NoOpTraceContext;
 import org.symphonyoss.s2.fugue.inmemory.pubsub.InMemoryPublisherManager;
-import org.symphonyoss.s2.fugue.naming.INameFactory;
-import org.symphonyoss.s2.fugue.naming.NameFactory;
 import org.symphonyoss.s2.fugue.pubsub.IPubSubMessage;
 import org.symphonyoss.s2.fugue.pubsub.IPublisher;
+
+import com.symphony.oss.fugue.core.trace.ITraceContext;
+import com.symphony.oss.fugue.core.trace.NoOpTraceContext;
+import com.symphony.oss.fugue.naming.INameFactory;
+import com.symphony.oss.fugue.naming.NameFactory;
 
 /**
  * Unit test for InMemoryPubSub

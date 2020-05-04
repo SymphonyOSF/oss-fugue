@@ -24,8 +24,9 @@
 package org.symphonyoss.s2.fugue.deploy;
 
 import org.symphonyoss.s2.common.dom.json.JsonObject;
-import org.symphonyoss.s2.fugue.naming.INameFactory;
-import org.symphonyoss.s2.fugue.naming.TopicName;
+
+import com.symphony.oss.fugue.naming.INameFactory;
+import com.symphony.oss.fugue.naming.TopicName;
 
 public abstract class TopicSubscription extends Subscription
 {

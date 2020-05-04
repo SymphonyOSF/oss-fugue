@@ -23,7 +23,7 @@
 
 package org.symphonyoss.s2.fugue.store;
 
-import org.symphonyoss.s2.fugue.core.trace.ITraceContext;
+import com.symphony.oss.fugue.core.trace.ITraceContext;
 
 /**
  * A low level database within which Fugue objects can be stored.

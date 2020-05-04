@@ -12,15 +12,15 @@ import java.io.OutputStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.symphonyoss.s2.fugue.FugueComponentContainer;
-import org.symphonyoss.s2.fugue.IFugueAssemblyBuilder;
-import org.symphonyoss.s2.fugue.config.IConfiguration;
-import org.symphonyoss.s2.fugue.counter.BusyCounter;
-import org.symphonyoss.s2.fugue.counter.IBusyCounter;
-import org.symphonyoss.s2.fugue.counter.ITopicBusyCounterFactory;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
+import com.symphony.oss.fugue.IFugueAssemblyBuilder;
+import com.symphony.oss.fugue.config.IConfiguration;
+import com.symphony.oss.fugue.counter.BusyCounter;
+import com.symphony.oss.fugue.counter.IBusyCounter;
+import com.symphony.oss.fugue.counter.ITopicBusyCounterFactory;
+import com.symphony.oss.fugue.server.FugueComponentContainer;
 
 /**
  * A lambda function implementation based on a Fugue Assembly.
@@ -39,17 +39,23 @@ public abstract class AwsAssemblyLambda implements RequestStreamHandler
   {
     try
     {
-      FugueComponentContainer container = new FugueComponentContainer();
+      FugueComponentContainer.Builder registry = new FugueComponentContainer.Builder();
       
       IFugueAssemblyBuilder<?, ?> builder = createBuilder();
       
+      LambdaBusyCounterFactory busyCounterFactory =  new LambdaBusyCounterFactory(
+          builder.getConfiguration().getConfiguration("com/symphony/s2/legacy/message/forwarder/AwsForwarderComponent"));
+      
       builder
-          .withContainer(container)
-          .withBusyCounterFactory(new LambdaBusyCounterFactory(container,
-              builder.getConfiguration().getConfiguration("com/symphony/s2/legacy/message/forwarder/AwsForwarderComponent"))) // TODO: refactor this into Symphony code
+          .withContainer(registry)
+          .withBusyCounterFactory(busyCounterFactory) // TODO: refactor this into Symphony code
           .build();
             
-      container.start();
+      FugueComponentContainer container = registry.build();
+      
+      busyCounterFactory.container_ = container;
+      
+      //container.start();
       
       try
       {
@@ -88,12 +94,11 @@ public abstract class AwsAssemblyLambda implements RequestStreamHandler
   
   class LambdaBusyCounterFactory implements ITopicBusyCounterFactory
   {
-    private final FugueComponentContainer container_;
+    private FugueComponentContainer container_;
     private final IConfiguration config_;
 
-    public LambdaBusyCounterFactory(FugueComponentContainer container, IConfiguration config)
+    private LambdaBusyCounterFactory(IConfiguration config)
     {
-      container_ = container;
       config_ = config;
     }
 
@@ -109,7 +114,7 @@ public abstract class AwsAssemblyLambda implements RequestStreamHandler
   {
     private FugueComponentContainer container_;
 
-    public LambdaBusyCounter(FugueComponentContainer container, IConfiguration config)
+    private LambdaBusyCounter(FugueComponentContainer container, IConfiguration config)
     {
       super(config);
       container_ = container;

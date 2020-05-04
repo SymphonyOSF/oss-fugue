@@ -23,17 +23,18 @@
 
 package org.symphonyoss.s2.fugue.aws.assembly;
 
-import org.symphonyoss.s2.fugue.IFugeComponentContainer;
-import org.symphonyoss.s2.fugue.IFugueAssembly;
 import org.symphonyoss.s2.fugue.aws.config.S3Configuration;
 import org.symphonyoss.s2.fugue.aws.sts.StsManager;
-import org.symphonyoss.s2.fugue.config.GlobalConfiguration;
-import org.symphonyoss.s2.fugue.config.IGlobalConfiguration;
-import org.symphonyoss.s2.fugue.naming.INameFactory;
-import org.symphonyoss.s2.fugue.naming.NameFactory;
 
 import com.symphony.oss.commons.fault.FaultAccumulator;
 import com.symphony.oss.commons.fluent.BaseAbstractBuilder;
+import com.symphony.oss.fugue.IFugueAssembly;
+import com.symphony.oss.fugue.config.GlobalConfiguration;
+import com.symphony.oss.fugue.config.IGlobalConfiguration;
+import com.symphony.oss.fugue.naming.INameFactory;
+import com.symphony.oss.fugue.naming.NameFactory;
+import com.symphony.oss.fugue.server.IFugeComponentContainer;
+import com.symphony.oss.fugue.server.IFugueComponentRegistry;
 
 /**
  * A base assembly for AWS implementations.
@@ -43,7 +44,7 @@ import com.symphony.oss.commons.fluent.BaseAbstractBuilder;
  */
 public class AwsFugueAssembly implements IFugueAssembly
 {
-  protected final IFugeComponentContainer<?> container_;
+  protected final IFugueComponentRegistry    container_;
   protected final IGlobalConfiguration       config_;
   protected final INameFactory               nameFactory_;
   protected final String                     region_;
@@ -89,7 +90,7 @@ public class AwsFugueAssembly implements IFugueAssembly
     protected String                            region_;
     protected StsManager                        stsManager_;
 
-    protected IFugeComponentContainer<?>        container_;
+    protected IFugueComponentRegistry           container_;
     
     public AbstractBuilder(Class<T> type)
     {
@@ -132,7 +133,7 @@ public class AwsFugueAssembly implements IFugueAssembly
       return nameFactory_;
     }
 
-    public T withContainer(IFugeComponentContainer<?> container)
+    public T withContainer(IFugueComponentRegistry container)
     {
       container_ = container;
       

@@ -25,7 +25,6 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.TreeMap;
 
-import org.symphonyoss.s2.fugue.core.trace.ITraceContext;
 import org.symphonyoss.s2.fugue.store.FugueObjectDeletionType;
 import org.symphonyoss.s2.fugue.store.IFugueId;
 import org.symphonyoss.s2.fugue.store.IFugueObjectPayload;
@@ -33,6 +32,7 @@ import org.symphonyoss.s2.fugue.store.IFugueObjectStoreSecondaryWritable;
 import org.symphonyoss.s2.fugue.store.NoSuchObjectException;
 
 import com.symphony.oss.commons.hash.Hash;
+import com.symphony.oss.fugue.core.trace.ITraceContext;
 
 /**
  * IFundamentalObjectStoreSecondaryWritable implementation based on DynamoDB and S3.

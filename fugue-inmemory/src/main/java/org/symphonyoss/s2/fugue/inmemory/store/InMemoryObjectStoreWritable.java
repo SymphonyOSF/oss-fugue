@@ -26,8 +26,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeMap;
 
-import org.symphonyoss.s2.fugue.IFugueComponent;
-import org.symphonyoss.s2.fugue.core.trace.ITraceContext;
 import org.symphonyoss.s2.fugue.store.IFugueObject;
 import org.symphonyoss.s2.fugue.store.IFugueObjectStoreWritable;
 import org.symphonyoss.s2.fugue.store.IFugueVersionedObject;
@@ -35,6 +33,8 @@ import org.symphonyoss.s2.fugue.store.NoSuchObjectException;
 import org.symphonyoss.s2.fugue.store.ObjectExistsException;
 
 import com.symphony.oss.commons.hash.Hash;
+import com.symphony.oss.fugue.IFugueComponent;
+import com.symphony.oss.fugue.core.trace.ITraceContext;
 
 /**
  * IFundamentalObjectStoreWritable implementation based on DynamoDB and S3.

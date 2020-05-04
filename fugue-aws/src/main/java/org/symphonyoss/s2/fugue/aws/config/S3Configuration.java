@@ -35,9 +35,6 @@ import java.net.URL;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.symphonyoss.s2.fugue.Fugue;
-import org.symphonyoss.s2.fugue.config.Configuration;
-import org.symphonyoss.s2.fugue.config.IConfigurationFactory;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
@@ -46,6 +43,9 @@ import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.symphony.oss.fugue.Fugue;
+import com.symphony.oss.fugue.config.Configuration;
+import com.symphony.oss.fugue.config.IConfigurationFactory;
 
 /**
  * An implementation of IConfiguration which reads a JSON document from an S3 bucket.

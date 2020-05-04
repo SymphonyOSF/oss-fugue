@@ -25,8 +25,8 @@ package org.symphonyoss.s2.fugue.pubsub;
 
 import javax.annotation.Nullable;
 
-import org.symphonyoss.s2.fugue.naming.INameFactory;
-import org.symphonyoss.s2.fugue.naming.TopicName;
+import com.symphony.oss.fugue.naming.INameFactory;
+import com.symphony.oss.fugue.naming.TopicName;
 
 /**
  * A topic as represented in the Fugue API.

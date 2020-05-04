@@ -30,9 +30,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.symphonyoss.s2.fugue.naming.TopicName;
 import org.symphonyoss.s2.fugue.pubsub.AbstractPublisherManager;
 import org.symphonyoss.s2.fugue.pubsub.IPublisher;
+
+import com.symphony.oss.fugue.naming.TopicName;
 
 /**
  * In memory implementation of PublisherManager.

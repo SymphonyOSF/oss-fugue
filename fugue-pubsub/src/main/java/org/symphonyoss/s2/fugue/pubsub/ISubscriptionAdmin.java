@@ -23,9 +23,8 @@
 
 package org.symphonyoss.s2.fugue.pubsub;
 
-import org.symphonyoss.s2.fugue.naming.Name;
-
 import com.google.common.collect.ImmutableSet;
+import com.symphony.oss.fugue.naming.Name;
 
 /**
  * A subscription.

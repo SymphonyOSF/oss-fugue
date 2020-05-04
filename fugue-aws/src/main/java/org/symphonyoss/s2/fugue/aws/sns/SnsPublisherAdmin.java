@@ -33,8 +33,6 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.symphonyoss.s2.fugue.Fugue;
-import org.symphonyoss.s2.fugue.naming.TopicName;
 import org.symphonyoss.s2.fugue.pubsub.IPublisher;
 import org.symphonyoss.s2.fugue.pubsub.IPublisherAdmin;
 
@@ -48,6 +46,8 @@ import com.amazonaws.services.sns.model.SetTopicAttributesRequest;
 import com.amazonaws.services.sns.model.Subscription;
 import com.amazonaws.services.sns.model.Tag;
 import com.amazonaws.services.sns.model.TagResourceRequest;
+import com.symphony.oss.fugue.Fugue;
+import com.symphony.oss.fugue.naming.TopicName;
 
 /**
  * The admin variation of an SnsPublisherManager.

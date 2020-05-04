@@ -32,9 +32,9 @@ import java.io.StringWriter;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.codec.binary.Base64;
-import org.symphonyoss.s2.fugue.lambda.JsonLambdaResponse;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.symphony.oss.fugue.lambda.JsonLambdaResponse;
 
 public class AwsLambdaResponse extends JsonLambdaResponse
 {

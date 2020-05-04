@@ -29,14 +29,14 @@ import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.symphonyoss.s2.fugue.Fugue;
-import org.symphonyoss.s2.fugue.config.IConfiguration;
-import org.symphonyoss.s2.fugue.counter.IBusyCounter;
-import org.symphonyoss.s2.fugue.counter.ITopicBusyCounterFactory;
-import org.symphonyoss.s2.fugue.naming.Name;
-import org.symphonyoss.s2.fugue.naming.SubscriptionName;
 
 import com.symphony.oss.commons.concurrent.NamedThreadFactory;
+import com.symphony.oss.fugue.Fugue;
+import com.symphony.oss.fugue.config.IConfiguration;
+import com.symphony.oss.fugue.counter.IBusyCounter;
+import com.symphony.oss.fugue.counter.ITopicBusyCounterFactory;
+import com.symphony.oss.fugue.naming.Name;
+import com.symphony.oss.fugue.naming.SubscriptionName;
 
 /**
  * Base class for synchronous pull type implementations.
@@ -60,9 +60,9 @@ public abstract class AbstractPullSubscriberManager<P, T extends AbstractPullSub
   private ThreadPoolExecutor                  handlerExecutor_;
 
   
-  protected AbstractPullSubscriberManager(Class<T> type, Builder<?,P,T> builder)
+  protected AbstractPullSubscriberManager(Builder<?,P,T> builder)
   {
-    super(type, builder);
+    super(builder);
     
     busyCounterFactory_  = builder.busyCounterFactory_;
     

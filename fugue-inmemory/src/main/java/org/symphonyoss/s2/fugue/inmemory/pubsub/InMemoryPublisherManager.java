@@ -23,7 +23,7 @@
 
 package org.symphonyoss.s2.fugue.inmemory.pubsub;
 
-import org.symphonyoss.s2.fugue.naming.TopicName;
+import com.symphony.oss.fugue.naming.TopicName;
 
 /**
  * In memory implementation of PublisherManager.

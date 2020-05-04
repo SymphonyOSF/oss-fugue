@@ -28,13 +28,14 @@ import java.util.Collection;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.symphonyoss.s2.fugue.Fugue;
-import org.symphonyoss.s2.fugue.counter.IBusyCounter;
-import org.symphonyoss.s2.fugue.counter.ICounter;
-import org.symphonyoss.s2.fugue.counter.ScaleAction;
-import org.symphonyoss.s2.fugue.deploy.ExecutorBatch;
-import org.symphonyoss.s2.fugue.deploy.IBatch;
-import org.symphonyoss.s2.fugue.pipeline.ICloseableConsumer;
+
+import com.symphony.oss.fugue.Fugue;
+import com.symphony.oss.fugue.batch.ExecutorBatch;
+import com.symphony.oss.fugue.batch.IBatch;
+import com.symphony.oss.fugue.counter.IBusyCounter;
+import com.symphony.oss.fugue.counter.ICounter;
+import com.symphony.oss.fugue.counter.ScaleAction;
+import com.symphony.oss.fugue.pipeline.ICloseableConsumer;
 
 public abstract class AbstractPullSubscriber implements Runnable
 {

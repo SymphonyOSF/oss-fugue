@@ -30,11 +30,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.symphonyoss.s2.fugue.core.trace.ITraceContext;
-import org.symphonyoss.s2.fugue.core.trace.ITraceContextTransaction;
-import org.symphonyoss.s2.fugue.core.trace.ITraceContextTransactionFactory;
-import org.symphonyoss.s2.fugue.counter.ICounter;
-import org.symphonyoss.s2.fugue.pipeline.IThreadSafeRetryableConsumer;
 
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
@@ -42,6 +37,11 @@ import com.google.protobuf.Timestamp;
 import com.google.pubsub.v1.PubsubMessage;
 import com.symphony.oss.commons.concurrent.NamedThreadFactory;
 import com.symphony.oss.commons.immutable.ImmutableByteArray;
+import com.symphony.oss.fugue.core.trace.ITraceContext;
+import com.symphony.oss.fugue.core.trace.ITraceContextTransaction;
+import com.symphony.oss.fugue.core.trace.ITraceContextTransactionFactory;
+import com.symphony.oss.fugue.counter.ICounter;
+import com.symphony.oss.fugue.pipeline.IThreadSafeRetryableConsumer;
 
 /**
  * A subscriber to a single topic.

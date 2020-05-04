@@ -24,7 +24,8 @@
 package org.symphonyoss.s2.fugue.deploy;
 
 import org.symphonyoss.s2.common.dom.json.JsonObject;
-import org.symphonyoss.s2.fugue.naming.INameFactory;
+
+import com.symphony.oss.fugue.naming.INameFactory;
 
 public abstract class DbSubscription extends Subscription
 {

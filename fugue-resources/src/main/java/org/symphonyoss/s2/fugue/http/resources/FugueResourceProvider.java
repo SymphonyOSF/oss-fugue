@@ -7,7 +7,9 @@ import java.net.URL;
 import java.nio.file.Path;
 
 import org.slf4j.LoggerFactory;
-import org.symphonyoss.s2.fugue.http.IResourceProvider;
+
+import com.symphony.oss.fugue.http.IResourceProvider;
+
 import org.slf4j.Logger;
 
 public class FugueResourceProvider implements IResourceProvider

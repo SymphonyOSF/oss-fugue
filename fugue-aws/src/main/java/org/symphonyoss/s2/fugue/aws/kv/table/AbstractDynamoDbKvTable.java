@@ -39,10 +39,7 @@ import javax.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.symphonyoss.s2.fugue.Fugue;
 import org.symphonyoss.s2.fugue.aws.AwsTags;
-import org.symphonyoss.s2.fugue.core.trace.ITraceContext;
-import org.symphonyoss.s2.fugue.core.trace.NoOpTraceContext;
 import org.symphonyoss.s2.fugue.kv.IKvItem;
 import org.symphonyoss.s2.fugue.kv.IKvPagination;
 import org.symphonyoss.s2.fugue.kv.IKvPartitionKeyProvider;
@@ -105,6 +102,9 @@ import com.amazonaws.services.dynamodbv2.model.WriteRequest;
 import com.symphony.oss.commons.fault.CodingFault;
 import com.symphony.oss.commons.fault.FaultAccumulator;
 import com.symphony.oss.commons.hash.Hash;
+import com.symphony.oss.fugue.Fugue;
+import com.symphony.oss.fugue.core.trace.ITraceContext;
+import com.symphony.oss.fugue.core.trace.NoOpTraceContext;
 
 /**
  * DynamoDB implementation of IKvTable

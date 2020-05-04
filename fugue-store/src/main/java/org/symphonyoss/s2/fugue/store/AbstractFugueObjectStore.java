@@ -25,9 +25,8 @@ package org.symphonyoss.s2.fugue.store;
 
 import java.time.Instant;
 
-import org.symphonyoss.s2.fugue.IFugueComponent;
-
 import com.symphony.oss.commons.hash.Hash;
+import com.symphony.oss.fugue.IFugueComponent;
 
 /**
  * Base class for object store implementations.

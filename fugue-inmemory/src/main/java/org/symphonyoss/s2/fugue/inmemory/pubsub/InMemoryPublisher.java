@@ -23,10 +23,11 @@
 
 package org.symphonyoss.s2.fugue.inmemory.pubsub;
 
-import org.symphonyoss.s2.fugue.core.trace.ITraceContext;
-import org.symphonyoss.s2.fugue.naming.TopicName;
 import org.symphonyoss.s2.fugue.pubsub.IPubSubMessage;
 import org.symphonyoss.s2.fugue.pubsub.IPublisher;
+
+import com.symphony.oss.fugue.core.trace.ITraceContext;
+import com.symphony.oss.fugue.naming.TopicName;
 
 
 class InMemoryPublisher implements IPublisher

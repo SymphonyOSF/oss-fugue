@@ -23,16 +23,12 @@
 
 package org.symphonyoss.s2.fugue.pubsub;
 
-import com.symphony.oss.commons.fluent.IFluent;
-
 /**
  * A subscriber admin controller.
  * 
  * @author Bruce Skingle
- *
- * @param <T> Type of concrete manager, needed for fluent methods.
  */
-public interface ISubscriberAdmin<T extends ISubscriberAdmin<T>> extends IFluent<T>
+public interface ISubscriberAdmin
 {
   /**
    * Create all configured subscriptions.

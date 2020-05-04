@@ -25,9 +25,8 @@ package org.symphonyoss.s2.fugue.pubsub;
 
 import javax.annotation.Nullable;
 
-import org.symphonyoss.s2.fugue.naming.SubscriptionName;
-
 import com.google.common.collect.ImmutableSet;
+import com.symphony.oss.fugue.naming.SubscriptionName;
 
 /**
  * A subscription.

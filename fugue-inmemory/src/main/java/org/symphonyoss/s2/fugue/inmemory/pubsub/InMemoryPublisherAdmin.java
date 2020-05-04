@@ -30,10 +30,11 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.symphonyoss.s2.fugue.naming.TopicName;
 import org.symphonyoss.s2.fugue.pubsub.IPubSubMessage;
 import org.symphonyoss.s2.fugue.pubsub.IPublisher;
 import org.symphonyoss.s2.fugue.pubsub.IPublisherAdmin;
+
+import com.symphony.oss.fugue.naming.TopicName;
 
 /**
  * The admin variation of an InMemoryPublisherManager.

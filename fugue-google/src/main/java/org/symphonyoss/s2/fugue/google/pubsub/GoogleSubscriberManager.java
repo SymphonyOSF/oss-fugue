@@ -12,7 +12,6 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.symphonyoss.s2.fugue.naming.Name;
 import org.symphonyoss.s2.fugue.pubsub.AbstractPullSubscriberManager;
 import org.symphonyoss.s2.fugue.pubsub.ISubscription;
 
@@ -20,6 +19,7 @@ import com.google.api.gax.rpc.NotFoundException;
 import com.google.cloud.pubsub.v1.SubscriptionAdminClient;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.symphony.oss.commons.fault.FaultAccumulator;
+import com.symphony.oss.fugue.naming.Name;
 
 import io.grpc.StatusRuntimeException;
 
@@ -61,7 +61,7 @@ public class GoogleSubscriberManager extends AbstractPullSubscriberManager<Strin
   
   private GoogleSubscriberManager(Builder builder)
   {
-    super(GoogleSubscriberManager.class, builder);
+    super(builder);
     
     projectId_ = builder.projectId_;
   }

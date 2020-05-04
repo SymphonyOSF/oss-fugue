@@ -33,7 +33,7 @@ import com.symphony.oss.commons.fluent.IBuilder;
  * @param <T> Type of concrete builder, needed for fluent methods.
  * @param <B> Type of concrete manager (built object), needed for fluent methods.
  */
-public interface ISubscriberAdminBuilder<T extends ISubscriberAdminBuilder<T,B>, B extends ISubscriberAdmin<B>> extends IBuilder<T,B>
+public interface ISubscriberAdminBuilder<T extends ISubscriberAdminBuilder<T,B>, B extends ISubscriberAdmin> extends IBuilder<T,B>
 {
   /**
    * Subscribe to the given subscription on the given topics.

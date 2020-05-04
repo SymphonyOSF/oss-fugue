@@ -29,23 +29,22 @@ import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.symphonyoss.s2.fugue.FugueLifecycleComponent;
-import org.symphonyoss.s2.fugue.FugueLifecycleState;
-import org.symphonyoss.s2.fugue.config.IConfiguration;
-import org.symphonyoss.s2.fugue.core.trace.ITraceContext;
-import org.symphonyoss.s2.fugue.core.trace.ITraceContextTransactionFactory;
-import org.symphonyoss.s2.fugue.counter.ICounter;
-import org.symphonyoss.s2.fugue.naming.INameFactory;
-import org.symphonyoss.s2.fugue.pipeline.FatalConsumerException;
-import org.symphonyoss.s2.fugue.pipeline.IThreadSafeErrorConsumer;
-import org.symphonyoss.s2.fugue.pipeline.IThreadSafeRetryableConsumer;
-import org.symphonyoss.s2.fugue.pipeline.RetryableConsumerException;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableList;
 import com.symphony.oss.commons.fault.FaultAccumulator;
-import com.symphony.oss.commons.fluent.BaseAbstractBuilder;
+import com.symphony.oss.fugue.FugueLifecycleComponent;
+import com.symphony.oss.fugue.FugueLifecycleState;
+import com.symphony.oss.fugue.config.IConfiguration;
+import com.symphony.oss.fugue.core.trace.ITraceContext;
+import com.symphony.oss.fugue.core.trace.ITraceContextTransactionFactory;
+import com.symphony.oss.fugue.counter.ICounter;
+import com.symphony.oss.fugue.naming.INameFactory;
+import com.symphony.oss.fugue.pipeline.FatalConsumerException;
+import com.symphony.oss.fugue.pipeline.IThreadSafeErrorConsumer;
+import com.symphony.oss.fugue.pipeline.IThreadSafeRetryableConsumer;
+import com.symphony.oss.fugue.pipeline.RetryableConsumerException;
 
 /**
  * Base class for subscriber managers.
@@ -55,8 +54,8 @@ import com.symphony.oss.commons.fluent.BaseAbstractBuilder;
  * @param <P> Type of the payload.
  * @param <T> Type of concrete manager, needed for fluent methods.
  */
-public abstract class AbstractSubscriberManager<P, T extends AbstractSubscriberManager<P,T>> extends FugueLifecycleComponent<T>
-implements ISubscriberManager<T>
+public abstract class AbstractSubscriberManager<P, T extends AbstractSubscriberManager<P,T>> extends FugueLifecycleComponent
+implements ISubscriberManager
 {
   protected static final long          FAILED_DEAD_LETTER_RETRY_TIME = TimeUnit.HOURS.toMillis(1);
   protected static final long          FAILED_CONSUMER_RETRY_TIME    = TimeUnit.SECONDS.toMillis(30);
@@ -80,9 +79,9 @@ implements ISubscriberManager<T>
                                                                             .build();
   
 
-  protected AbstractSubscriberManager(Class<T> type, Builder<?,P,T> builder)
+  protected AbstractSubscriberManager(Builder<?,P,T> builder)
   {
-    super(type);
+    super(builder);
     
     nameFactory_                  = builder.nameFactory_;
     subscribers_                  = ImmutableList.copyOf(builder.subscribers_);
@@ -108,7 +107,7 @@ implements ISubscriberManager<T>
    * @param <B>   The concrete type of the built object.
    */
   protected static abstract class Builder<T extends Builder<T,P,B>, P, B extends AbstractSubscriberManager<P,B>>
-  extends BaseAbstractBuilder<T,B>
+  extends FugueLifecycleComponent.AbstractBuilder<T,B>
   implements ISubscriberManagerBuilder<T,P,B>
   {
     protected INameFactory                     nameFactory_;

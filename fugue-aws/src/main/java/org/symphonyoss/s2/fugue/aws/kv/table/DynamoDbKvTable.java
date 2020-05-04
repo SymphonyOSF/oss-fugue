@@ -25,11 +25,11 @@ package org.symphonyoss.s2.fugue.aws.kv.table;
 
 import javax.annotation.Nonnull;
 
-import org.symphonyoss.s2.fugue.core.trace.ITraceContext;
 import org.symphonyoss.s2.fugue.kv.IKvItem;
 import org.symphonyoss.s2.fugue.store.NoSuchObjectException;
 
 import com.symphony.oss.commons.hash.Hash;
+import com.symphony.oss.fugue.core.trace.ITraceContext;
 
 /**
  * DynamoDB implementation of IKvTable.

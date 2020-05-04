@@ -18,8 +18,6 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import org.junit.Test;
-import org.symphonyoss.s2.fugue.core.trace.ITraceContext;
-import org.symphonyoss.s2.fugue.core.trace.NoOpTraceContext;
 import org.symphonyoss.s2.fugue.kv.IKvItem;
 import org.symphonyoss.s2.fugue.kv.IKvPagination;
 import org.symphonyoss.s2.fugue.kv.IKvPartitionKey;
@@ -35,6 +33,8 @@ import org.symphonyoss.s2.fugue.store.NoSuchObjectException;
 
 import com.symphony.oss.commons.hash.Hash;
 import com.symphony.oss.commons.hash.HashProvider;
+import com.symphony.oss.fugue.core.trace.ITraceContext;
+import com.symphony.oss.fugue.core.trace.NoOpTraceContext;
 
 public class TestInMemoryKvTable
 {

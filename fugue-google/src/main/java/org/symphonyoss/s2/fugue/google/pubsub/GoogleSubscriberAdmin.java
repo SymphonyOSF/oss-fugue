@@ -10,8 +10,6 @@ import java.io.IOException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.symphonyoss.s2.fugue.naming.SubscriptionName;
-import org.symphonyoss.s2.fugue.naming.TopicName;
 import org.symphonyoss.s2.fugue.pubsub.AbstractSubscriberAdmin;
 import org.symphonyoss.s2.fugue.pubsub.ITopicSubscriptionAdmin;
 
@@ -22,6 +20,8 @@ import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PushConfig;
 import com.symphony.oss.commons.fault.FaultAccumulator;
+import com.symphony.oss.fugue.naming.SubscriptionName;
+import com.symphony.oss.fugue.naming.TopicName;
 
 /**
  * Admin variant of GooglePublisherManager.
@@ -39,7 +39,7 @@ public class GoogleSubscriberAdmin extends AbstractSubscriberAdmin<GoogleSubscri
   
   private GoogleSubscriberAdmin(Builder builder)
   {
-    super(GoogleSubscriberAdmin.class, builder);
+    super(builder);
     
     projectId_ = builder.projectId_;
     

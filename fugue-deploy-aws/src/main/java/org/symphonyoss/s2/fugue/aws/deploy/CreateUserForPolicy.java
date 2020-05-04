@@ -31,8 +31,6 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.List;
 
-import org.symphonyoss.s2.fugue.naming.Name;
-
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagement;
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClientBuilder;
 import com.amazonaws.services.identitymanagement.model.AccessKey;
@@ -58,6 +56,7 @@ import com.amazonaws.services.securitytoken.AWSSecurityTokenService;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder;
 import com.amazonaws.services.securitytoken.model.GetCallerIdentityRequest;
 import com.amazonaws.services.securitytoken.model.GetCallerIdentityResult;
+import com.symphony.oss.fugue.naming.Name;
 
 public class CreateUserForPolicy
 {

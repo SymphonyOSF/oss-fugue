@@ -12,11 +12,6 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.symphonyoss.s2.fugue.config.IConfiguration;
-import org.symphonyoss.s2.fugue.core.trace.ITraceContextTransactionFactory;
-import org.symphonyoss.s2.fugue.naming.INameFactory;
-import org.symphonyoss.s2.fugue.naming.Name;
-import org.symphonyoss.s2.fugue.pipeline.IThreadSafeErrorConsumer;
 import org.symphonyoss.s2.fugue.pubsub.AbstractSubscriberManager;
 import org.symphonyoss.s2.fugue.pubsub.ISubscription;
 
@@ -26,6 +21,11 @@ import com.google.cloud.pubsub.v1.SubscriptionAdminClient;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.symphony.oss.commons.fault.FaultAccumulator;
+import com.symphony.oss.fugue.config.IConfiguration;
+import com.symphony.oss.fugue.core.trace.ITraceContextTransactionFactory;
+import com.symphony.oss.fugue.naming.INameFactory;
+import com.symphony.oss.fugue.naming.Name;
+import com.symphony.oss.fugue.pipeline.IThreadSafeErrorConsumer;
 
 import io.grpc.StatusRuntimeException;
 
@@ -72,7 +72,7 @@ public class GoogleAsyncSubscriberManager extends AbstractSubscriberManager<Stri
 
   private GoogleAsyncSubscriberManager(Builder builder)
   {
-    super(GoogleAsyncSubscriberManager.class, builder);
+    super(builder);
     
     projectId_ = builder.projectId_;
   }

@@ -23,8 +23,6 @@
 
 package org.symphonyoss.s2.fugue.pubsub;
 
-import com.symphony.oss.commons.fluent.IFluent;
-
 /**
  * A subscriber manager.
  * 
@@ -32,7 +30,7 @@ import com.symphony.oss.commons.fluent.IFluent;
  *
  * @param <T> Type of concrete manager, needed for fluent methods.
  */
-public interface ISubscriberManager<T extends ISubscriberManager<T>> extends IFluent<T>
+public interface ISubscriberManager
 {
   /**
    * 

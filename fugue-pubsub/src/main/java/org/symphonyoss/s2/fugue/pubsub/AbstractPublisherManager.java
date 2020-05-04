@@ -29,13 +29,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.symphonyoss.s2.fugue.FugueLifecycleComponent;
-import org.symphonyoss.s2.fugue.naming.INameFactory;
-import org.symphonyoss.s2.fugue.naming.TopicName;
-
 import com.symphony.oss.commons.fault.FaultAccumulator;
-import com.symphony.oss.commons.fluent.BaseAbstractBuilder;
-import com.symphony.oss.commons.fluent.IFluent;
+import com.symphony.oss.fugue.FugueLifecycleComponent;
+import com.symphony.oss.fugue.naming.INameFactory;
+import com.symphony.oss.fugue.naming.TopicName;
 
 /**
  * Base class for publisher managers.
@@ -45,14 +42,14 @@ import com.symphony.oss.commons.fluent.IFluent;
  * @param <T> Type of concrete manager, needed for fluent methods.
  */
 public abstract class AbstractPublisherManager<T extends AbstractPublisherManager<T>>
-  extends FugueLifecycleComponent<T>
+  extends FugueLifecycleComponent
   implements IPublisherManager
 {
   protected final INameFactory   nameFactory_;
   
   protected AbstractPublisherManager(Class<T> builtType, Builder<?,T> builder)
   {
-    super(builtType);
+    super(builder);
     
     nameFactory_  = builder.nameFactory_;
   }
@@ -65,7 +62,7 @@ public abstract class AbstractPublisherManager<T extends AbstractPublisherManage
    * @param <T>   The concrete type returned by fluent methods.
    * @param <B>   The concrete type of the built object.
    */
-  public static abstract class Builder<T extends Builder<T,B>, B extends IFluent<B>> extends BaseAbstractBuilder<T,B>
+  public static abstract class Builder<T extends Builder<T,B>, B extends AbstractPublisherManager<B>> extends FugueLifecycleComponent.AbstractBuilder<T,B>
   {
     private final List<String>              topicIds_        = new LinkedList<>();
     private final Map<String, List<String>> serviceTopicIds_ = new HashMap<>();

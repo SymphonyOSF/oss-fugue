@@ -36,6 +36,10 @@ import javax.servlet.http.HttpServletResponse;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.symphony.oss.fugue.http.HttpServer;
+import com.symphony.oss.fugue.http.HttpServerBuilder;
+import com.symphony.oss.fugue.http.IUrlPathServlet;
+
 public class TestHttpServer
 {
   private static final String HELLO_WORLD = "Hello World!";

@@ -28,12 +28,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 
-import org.symphonyoss.s2.fugue.Fugue;
-import org.symphonyoss.s2.fugue.config.Configuration;
-import org.symphonyoss.s2.fugue.config.IConfigurationFactory;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.symphony.oss.fugue.Fugue;
+import com.symphony.oss.fugue.config.Configuration;
+import com.symphony.oss.fugue.config.IConfigurationFactory;
 
 /**
  * An implementation of IConfiguration which reads a JSON document from a file.

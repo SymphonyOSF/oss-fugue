@@ -32,8 +32,6 @@ import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.symphonyoss.s2.fugue.deploy.ExecutorBatch;
-import org.symphonyoss.s2.fugue.deploy.IBatch;
 
 import com.amazonaws.SdkClientException;
 import com.amazonaws.services.s3.AmazonS3;
@@ -42,6 +40,8 @@ import com.amazonaws.services.s3.model.BucketTaggingConfiguration;
 import com.amazonaws.services.s3.model.DeleteObjectsRequest;
 import com.amazonaws.services.s3.model.DeleteObjectsRequest.KeyVersion;
 import com.symphony.oss.commons.concurrent.NamedThreadFactory;
+import com.symphony.oss.fugue.batch.ExecutorBatch;
+import com.symphony.oss.fugue.batch.IBatch;
 import com.amazonaws.services.s3.model.ListObjectsV2Request;
 import com.amazonaws.services.s3.model.ListObjectsV2Result;
 import com.amazonaws.services.s3.model.MultiObjectDeleteException;

@@ -28,11 +28,10 @@ import java.util.Set;
 
 import javax.annotation.concurrent.Immutable;
 
-import org.symphonyoss.s2.fugue.naming.SubscriptionName;
-import org.symphonyoss.s2.fugue.naming.TopicName;
-
 import com.google.common.collect.ImmutableSet;
 import com.symphony.oss.commons.fault.FaultAccumulator;
+import com.symphony.oss.fugue.naming.SubscriptionName;
+import com.symphony.oss.fugue.naming.TopicName;
 
 /**
  * A subscription on a Topic.

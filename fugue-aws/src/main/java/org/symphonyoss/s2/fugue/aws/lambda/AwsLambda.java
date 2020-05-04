@@ -27,10 +27,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.symphonyoss.s2.fugue.lambda.LambdaResponse;
-
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
+import com.symphony.oss.fugue.lambda.LambdaResponse;
 
 /**
  * Base lambda function implementation.

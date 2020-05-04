@@ -31,9 +31,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.symphonyoss.s2.fugue.Fugue;
 import org.symphonyoss.s2.fugue.aws.config.S3Helper;
-import org.symphonyoss.s2.fugue.core.trace.ITraceContext;
 import org.symphonyoss.s2.fugue.kv.IKvItem;
 import org.symphonyoss.s2.fugue.store.NoSuchObjectException;
 
@@ -48,6 +46,8 @@ import com.amazonaws.services.s3.model.S3Object;
 import com.symphony.oss.commons.fault.CodingFault;
 import com.symphony.oss.commons.fault.FaultAccumulator;
 import com.symphony.oss.commons.hash.Hash;
+import com.symphony.oss.fugue.Fugue;
+import com.symphony.oss.fugue.core.trace.ITraceContext;
 
 /**
  * S3/DynamoDb implementation of IKvTable.

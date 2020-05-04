@@ -30,13 +30,6 @@ import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.symphonyoss.s2.fugue.Fugue;
-import org.symphonyoss.s2.fugue.core.trace.ITraceContext;
-import org.symphonyoss.s2.fugue.core.trace.ITraceContextTransaction;
-import org.symphonyoss.s2.fugue.core.trace.ITraceContextTransactionFactory;
-import org.symphonyoss.s2.fugue.counter.IBusyCounter;
-import org.symphonyoss.s2.fugue.counter.ICounter;
-import org.symphonyoss.s2.fugue.pipeline.IThreadSafeRetryableConsumer;
 import org.symphonyoss.s2.fugue.pubsub.AbstractPullSubscriber;
 import org.symphonyoss.s2.fugue.pubsub.IPullSubscriberContext;
 import org.symphonyoss.s2.fugue.pubsub.IPullSubscriberMessage;
@@ -45,6 +38,13 @@ import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
+import com.symphony.oss.fugue.Fugue;
+import com.symphony.oss.fugue.core.trace.ITraceContext;
+import com.symphony.oss.fugue.core.trace.ITraceContextTransaction;
+import com.symphony.oss.fugue.core.trace.ITraceContextTransactionFactory;
+import com.symphony.oss.fugue.counter.IBusyCounter;
+import com.symphony.oss.fugue.counter.ICounter;
+import com.symphony.oss.fugue.pipeline.IThreadSafeRetryableConsumer;
 
 /**
  * An SWS SNS subscriber.

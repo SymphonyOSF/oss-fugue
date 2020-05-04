@@ -28,10 +28,10 @@ import java.util.Map;
 
 import javax.annotation.Nullable;
 
-import org.symphonyoss.s2.fugue.core.trace.ITraceSubject;
 import org.symphonyoss.s2.fugue.store.IFuguePodId;
 
 import com.symphony.oss.commons.hash.Hash;
+import com.symphony.oss.fugue.core.trace.ITraceSubject;
 
 /**
  * An item to be stored in a KvStore or KvTable.

@@ -23,11 +23,10 @@
 
 package org.symphonyoss.s2.fugue.aws.lambda;
 
-import org.symphonyoss.s2.fugue.lambda.JsonLambdaResponse;
-import org.symphonyoss.s2.fugue.lambda.LambdaRequest;
-
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.symphony.oss.fugue.lambda.JsonLambdaResponse;
+import com.symphony.oss.fugue.lambda.LambdaRequest;
 
 /**
  * A response from an Amazon API Gateway Lambda Authorizer.

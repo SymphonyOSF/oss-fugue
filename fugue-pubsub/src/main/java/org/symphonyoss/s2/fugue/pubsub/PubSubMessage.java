@@ -28,7 +28,7 @@ import java.util.Map;
 
 import javax.annotation.Nonnull;
 
-import org.symphonyoss.s2.fugue.core.trace.ITraceContext;
+import com.symphony.oss.fugue.core.trace.ITraceContext;
 
 /**
  * A payload sent or received over a pub sub channel.

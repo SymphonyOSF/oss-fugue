@@ -25,9 +25,8 @@ package org.symphonyoss.s2.fugue.pubsub;
 
 import javax.annotation.concurrent.Immutable;
 
-import org.symphonyoss.s2.fugue.pipeline.IThreadSafeRetryableConsumer;
-
 import com.symphony.oss.commons.fault.FaultAccumulator;
+import com.symphony.oss.fugue.pipeline.IThreadSafeRetryableConsumer;
 
 /**
  * A subscription on a Queue.

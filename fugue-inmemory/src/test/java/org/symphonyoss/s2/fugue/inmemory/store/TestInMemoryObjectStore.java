@@ -27,7 +27,6 @@ import static org.junit.Assert.fail;
 import java.time.Instant;
 
 import org.junit.Test;
-import org.symphonyoss.s2.fugue.core.trace.NoOpTraceContext;
 import org.symphonyoss.s2.fugue.store.IFugueObject;
 import org.symphonyoss.s2.fugue.store.IFugueObjectPayload;
 import org.symphonyoss.s2.fugue.store.IFuguePodId;
@@ -38,6 +37,7 @@ import org.symphonyoss.s2.fugue.store.ObjectExistsException;
 import com.symphony.oss.commons.hash.Hash;
 import com.symphony.oss.commons.hash.HashProvider;
 import com.symphony.oss.commons.immutable.ImmutableByteArray;
+import com.symphony.oss.fugue.core.trace.NoOpTraceContext;
 
 /**
  * Unit test for in memory object store.

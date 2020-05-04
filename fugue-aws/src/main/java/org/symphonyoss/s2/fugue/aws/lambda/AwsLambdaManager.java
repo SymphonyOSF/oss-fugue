@@ -29,7 +29,6 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.symphonyoss.s2.fugue.aws.sqs.SqsQueueManager.Builder;
-import org.symphonyoss.s2.fugue.lambda.ILambdaManager;
 
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.services.lambda.AWSLambda;
@@ -45,6 +44,7 @@ import com.amazonaws.services.lambda.model.UpdateEventSourceMappingResult;
 import com.google.common.collect.ImmutableMap;
 import com.symphony.oss.commons.fault.FaultAccumulator;
 import com.symphony.oss.commons.fluent.BaseAbstractBuilder;
+import com.symphony.oss.fugue.lambda.ILambdaManager;
 
 /**
  * AWS implementation of ILambdaManager.

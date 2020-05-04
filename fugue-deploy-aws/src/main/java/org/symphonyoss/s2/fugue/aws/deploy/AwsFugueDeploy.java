@@ -50,7 +50,6 @@ import org.symphonyoss.s2.common.dom.json.IJsonObject;
 import org.symphonyoss.s2.common.dom.json.ImmutableJsonObject;
 import org.symphonyoss.s2.common.dom.json.JsonObject;
 import org.symphonyoss.s2.common.dom.json.jackson.JacksonAdaptor;
-import org.symphonyoss.s2.fugue.Fugue;
 import org.symphonyoss.s2.fugue.aws.config.S3Helper;
 import org.symphonyoss.s2.fugue.aws.secret.AwsSecretManager;
 import org.symphonyoss.s2.fugue.deploy.ConfigHelper;
@@ -58,9 +57,6 @@ import org.symphonyoss.s2.fugue.deploy.ConfigProvider;
 import org.symphonyoss.s2.fugue.deploy.FugueDeploy;
 import org.symphonyoss.s2.fugue.deploy.FugueDeployAction;
 import org.symphonyoss.s2.fugue.deploy.Subscription;
-import org.symphonyoss.s2.fugue.naming.CredentialName;
-import org.symphonyoss.s2.fugue.naming.INameFactory;
-import org.symphonyoss.s2.fugue.naming.Name;
 
 import com.amazonaws.services.apigateway.AmazonApiGateway;
 import com.amazonaws.services.apigateway.AmazonApiGatewayClientBuilder;
@@ -273,6 +269,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.symphony.oss.commons.fault.CodingFault;
 import com.symphony.oss.commons.immutable.ImmutableByteArray;
 import com.symphony.oss.commons.type.provider.IStringProvider;
+import com.symphony.oss.fugue.Fugue;
+import com.symphony.oss.fugue.naming.CredentialName;
+import com.symphony.oss.fugue.naming.INameFactory;
+import com.symphony.oss.fugue.naming.Name;
 
 /**
  * AWS implementation of FugueDeploy.

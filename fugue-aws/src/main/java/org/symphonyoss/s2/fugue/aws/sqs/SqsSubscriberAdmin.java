@@ -33,10 +33,6 @@ import java.util.Map.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.symphonyoss.s2.fugue.aws.lambda.AwsLambdaManager;
-import org.symphonyoss.s2.fugue.lambda.ILambdaManager;
-import org.symphonyoss.s2.fugue.naming.INameFactory;
-import org.symphonyoss.s2.fugue.naming.SubscriptionName;
-import org.symphonyoss.s2.fugue.naming.TopicName;
 import org.symphonyoss.s2.fugue.pubsub.AbstractSubscriberAdmin;
 import org.symphonyoss.s2.fugue.pubsub.ITopicSubscriptionAdmin;
 
@@ -65,6 +61,10 @@ import com.amazonaws.services.sqs.model.SetQueueAttributesRequest;
 import com.amazonaws.services.sqs.model.TagQueueRequest;
 import com.google.common.collect.ImmutableMap;
 import com.symphony.oss.commons.fault.FaultAccumulator;
+import com.symphony.oss.fugue.lambda.ILambdaManager;
+import com.symphony.oss.fugue.naming.INameFactory;
+import com.symphony.oss.fugue.naming.SubscriptionName;
+import com.symphony.oss.fugue.naming.TopicName;
 
 /**
  * The admin variant of SqsSubscriberManager.
@@ -88,7 +88,7 @@ public class SqsSubscriberAdmin extends AbstractSubscriberAdmin<SqsSubscriberAdm
   
   private SqsSubscriberAdmin(Builder builder)
   {
-    super(SqsSubscriberAdmin.class, builder);
+    super(builder);
     
     accountId_  = builder.accountId_;
     region_     = builder.region_;

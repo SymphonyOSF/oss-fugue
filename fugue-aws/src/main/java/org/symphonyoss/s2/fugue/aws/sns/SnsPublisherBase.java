@@ -33,9 +33,6 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.symphonyoss.s2.fugue.config.IConfiguration;
-import org.symphonyoss.s2.fugue.core.trace.ITraceContext;
-import org.symphonyoss.s2.fugue.naming.TopicName;
 import org.symphonyoss.s2.fugue.pubsub.AbstractPublisherManager;
 import org.symphonyoss.s2.fugue.pubsub.IPubSubMessage;
 import org.symphonyoss.s2.fugue.pubsub.IPublisher;
@@ -49,6 +46,9 @@ import com.amazonaws.services.sns.model.PublishRequest;
 import com.google.common.collect.ImmutableList;
 import com.symphony.oss.commons.fault.FaultAccumulator;
 import com.symphony.oss.commons.type.provider.IIntegerProvider;
+import com.symphony.oss.fugue.config.IConfiguration;
+import com.symphony.oss.fugue.core.trace.ITraceContext;
+import com.symphony.oss.fugue.naming.TopicName;
 
 /**
  * Amazon SNS implementation of PublisherManager.

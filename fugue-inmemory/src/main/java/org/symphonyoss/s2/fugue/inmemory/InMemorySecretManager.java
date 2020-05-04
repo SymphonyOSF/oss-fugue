@@ -29,13 +29,13 @@ import java.util.Map;
 
 import org.symphonyoss.s2.common.dom.json.IImmutableJsonDomNode;
 import org.symphonyoss.s2.common.dom.json.jackson.JacksonAdaptor;
-import org.symphonyoss.s2.fugue.naming.CredentialName;
-import org.symphonyoss.s2.fugue.secret.ISecretManager;
-import org.symphonyoss.s2.fugue.store.NoSuchObjectException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.symphony.oss.commons.fluent.BaseAbstractBuilder;
+import com.symphony.oss.fugue.naming.CredentialName;
+import com.symphony.oss.fugue.secret.ISecretManager;
+import com.symphony.oss.fugue.secret.SecretNotFoundException;
 
 /**
  * In Memory implementation of Secret Manager.
@@ -81,12 +81,12 @@ public class InMemorySecretManager implements ISecretManager
   }
   
   @Override
-  public IImmutableJsonDomNode getSecret(CredentialName name) throws NoSuchObjectException
+  public IImmutableJsonDomNode getSecret(CredentialName name) throws SecretNotFoundException
   {
     IImmutableJsonDomNode result = secretMap_.get(name);
     
     if(result == null)
-      throw new NoSuchObjectException("Unable to find secret " + name);
+      throw new SecretNotFoundException("Unable to find secret " + name);
     
     return result;
   }

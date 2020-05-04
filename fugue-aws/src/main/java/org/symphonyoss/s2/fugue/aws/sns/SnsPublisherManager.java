@@ -25,7 +25,8 @@ package org.symphonyoss.s2.fugue.aws.sns;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.symphonyoss.s2.fugue.naming.TopicName;
+
+import com.symphony.oss.fugue.naming.TopicName;
 
 /**
  * Amazon SNS implementation of PublisherManager.

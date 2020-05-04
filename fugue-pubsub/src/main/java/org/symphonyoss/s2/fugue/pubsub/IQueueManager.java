@@ -27,8 +27,6 @@ import java.util.Map;
 
 import javax.annotation.Nullable;
 
-import org.symphonyoss.s2.fugue.store.NoSuchObjectException;
-
 /**
  * A queue manager.
  * 
@@ -80,9 +78,9 @@ public interface IQueueManager
    * 
    * @return A receiver for the given queue.
    * 
-   * @throws NoSuchObjectException If the queue does not exist. 
+   * @throws QueueNotFoundException If the queue does not exist. 
    */
-  IQueueReceiver getReceiver(String queueName) throws NoSuchObjectException;
+  IQueueReceiver getReceiver(String queueName) throws QueueNotFoundException;
 
   /**
    * Return the maximum allowed size of a message in bytes.

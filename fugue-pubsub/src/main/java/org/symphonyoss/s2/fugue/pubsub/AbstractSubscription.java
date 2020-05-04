@@ -25,10 +25,9 @@ package org.symphonyoss.s2.fugue.pubsub;
 
 import javax.annotation.concurrent.Immutable;
 
-import org.symphonyoss.s2.fugue.naming.INameFactory;
-
 import com.symphony.oss.commons.fault.FaultAccumulator;
 import com.symphony.oss.commons.fluent.BaseAbstractBuilder;
+import com.symphony.oss.fugue.naming.INameFactory;
 
 /**
  * An abstract subscription, subclasses deal with Topic and Queue subscriptions.

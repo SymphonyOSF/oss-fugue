@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 import org.symphonyoss.s2.fugue.pubsub.IQueueManager;
 import org.symphonyoss.s2.fugue.pubsub.IQueueReceiver;
 import org.symphonyoss.s2.fugue.pubsub.IQueueSender;
-import org.symphonyoss.s2.fugue.store.NoSuchObjectException;
+import org.symphonyoss.s2.fugue.pubsub.QueueNotFoundException;
 
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentialsProvider;
@@ -116,7 +116,7 @@ public class SqsQueueManager implements IQueueManager
   }
   
   @Override
-  public IQueueReceiver getReceiver(String queueName) throws NoSuchObjectException
+  public IQueueReceiver getReceiver(String queueName) throws QueueNotFoundException
   {
     try
     {
@@ -129,7 +129,7 @@ public class SqsQueueManager implements IQueueManager
     catch(UncheckedExecutionException e)
     {
       if(e.getCause() instanceof QueueDoesNotExistException)
-        throw new NoSuchObjectException("Queue does not exist", e);
+        throw new QueueNotFoundException("Queue does not exist", e);
       
       if(e.getCause() instanceof RuntimeException)
         throw (RuntimeException)e.getCause();

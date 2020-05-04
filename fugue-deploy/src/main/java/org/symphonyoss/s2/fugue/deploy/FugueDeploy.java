@@ -57,15 +57,18 @@ import org.symphonyoss.s2.common.dom.json.ImmutableJsonObject;
 import org.symphonyoss.s2.common.dom.json.JsonObject;
 import org.symphonyoss.s2.common.dom.json.MutableJsonDom;
 import org.symphonyoss.s2.common.dom.json.MutableJsonObject;
-import org.symphonyoss.s2.fugue.Fugue;
-import org.symphonyoss.s2.fugue.cmd.CommandLineHandler;
-import org.symphonyoss.s2.fugue.naming.INameFactory;
-import org.symphonyoss.s2.fugue.naming.Name;
 
 import com.symphony.oss.commons.concurrent.NamedThreadFactory;
 import com.symphony.oss.commons.fault.CodingFault;
 import com.symphony.oss.commons.type.provider.IIntegerProvider;
 import com.symphony.oss.commons.type.provider.IStringProvider;
+import com.symphony.oss.fugue.Fugue;
+import com.symphony.oss.fugue.batch.ExecutorBatch;
+import com.symphony.oss.fugue.batch.IBatch;
+import com.symphony.oss.fugue.batch.SerialBatch;
+import com.symphony.oss.fugue.cmd.CommandLineHandler;
+import com.symphony.oss.fugue.naming.INameFactory;
+import com.symphony.oss.fugue.naming.Name;
 
 /**
  * Abstract base class for deployment utility implementations, to be subclassed for each cloud service provider.

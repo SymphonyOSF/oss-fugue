@@ -23,11 +23,10 @@
 
 package org.symphonyoss.s2.fugue.kv.table;
 
-import org.symphonyoss.s2.fugue.config.IConfiguration;
-import org.symphonyoss.s2.fugue.naming.INameFactory;
-
 import com.symphony.oss.commons.fault.FaultAccumulator;
 import com.symphony.oss.commons.fluent.BaseAbstractBuilder;
+import com.symphony.oss.fugue.config.IConfiguration;
+import com.symphony.oss.fugue.naming.INameFactory;
 
 /**
  * Base implementation of IKvTable.

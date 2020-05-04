@@ -27,12 +27,6 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.symphonyoss.s2.fugue.IFugueServer;
-import org.symphonyoss.s2.fugue.config.IConfiguration;
-import org.symphonyoss.s2.fugue.metrics.IMetricManager;
-import org.symphonyoss.s2.fugue.naming.INameFactory;
-import org.symphonyoss.s2.fugue.naming.NameFactory;
-
 import com.amazonaws.metrics.AwsSdkMetrics;
 import com.amazonaws.services.cloudwatch.AmazonCloudWatch;
 import com.amazonaws.services.cloudwatch.AmazonCloudWatchClientBuilder;
@@ -40,6 +34,11 @@ import com.amazonaws.services.cloudwatch.model.Dimension;
 import com.amazonaws.services.cloudwatch.model.MetricDatum;
 import com.amazonaws.services.cloudwatch.model.PutMetricDataRequest;
 import com.amazonaws.services.cloudwatch.model.StandardUnit;
+import com.symphony.oss.fugue.IFugueServer;
+import com.symphony.oss.fugue.config.IConfiguration;
+import com.symphony.oss.fugue.metrics.IMetricManager;
+import com.symphony.oss.fugue.naming.INameFactory;
+import com.symphony.oss.fugue.naming.NameFactory;
 
 public class AwsMetricManager implements IMetricManager
 {

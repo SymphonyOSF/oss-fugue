@@ -28,9 +28,8 @@ import java.util.Collection;
 
 import javax.annotation.Nullable;
 
-import org.symphonyoss.s2.fugue.core.trace.ITraceContext;
-
 import com.symphony.oss.commons.hash.Hash;
+import com.symphony.oss.fugue.core.trace.ITraceContext;
 
 /**
  * A low level store within which Fugue Objects can be stored.

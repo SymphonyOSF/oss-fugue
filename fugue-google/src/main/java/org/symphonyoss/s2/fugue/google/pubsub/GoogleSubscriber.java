@@ -31,13 +31,6 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.symphonyoss.s2.fugue.Fugue;
-import org.symphonyoss.s2.fugue.core.trace.ITraceContext;
-import org.symphonyoss.s2.fugue.core.trace.ITraceContextTransaction;
-import org.symphonyoss.s2.fugue.core.trace.ITraceContextTransactionFactory;
-import org.symphonyoss.s2.fugue.counter.IBusyCounter;
-import org.symphonyoss.s2.fugue.counter.ICounter;
-import org.symphonyoss.s2.fugue.pipeline.IThreadSafeRetryableConsumer;
 import org.symphonyoss.s2.fugue.pubsub.AbstractPullSubscriber;
 import org.symphonyoss.s2.fugue.pubsub.IPullSubscriberContext;
 import org.symphonyoss.s2.fugue.pubsub.IPullSubscriberMessage;
@@ -52,6 +45,13 @@ import com.google.pubsub.v1.PubsubMessage;
 import com.google.pubsub.v1.PullRequest;
 import com.google.pubsub.v1.ReceivedMessage;
 import com.symphony.oss.commons.fault.CodingFault;
+import com.symphony.oss.fugue.Fugue;
+import com.symphony.oss.fugue.core.trace.ITraceContext;
+import com.symphony.oss.fugue.core.trace.ITraceContextTransaction;
+import com.symphony.oss.fugue.core.trace.ITraceContextTransactionFactory;
+import com.symphony.oss.fugue.counter.IBusyCounter;
+import com.symphony.oss.fugue.counter.ICounter;
+import com.symphony.oss.fugue.pipeline.IThreadSafeRetryableConsumer;
 
 /**
  * A subscriber to a single topic.

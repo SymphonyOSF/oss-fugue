@@ -27,7 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.symphonyoss.s2.common.dom.json.JsonObject;
 import org.symphonyoss.s2.fugue.deploy.DbSubscription;
-import org.symphonyoss.s2.fugue.naming.INameFactory;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBStreams;
@@ -48,6 +47,7 @@ import com.amazonaws.services.lambda.model.ListEventSourceMappingsRequest;
 import com.amazonaws.services.lambda.model.ListEventSourceMappingsResult;
 import com.amazonaws.services.lambda.model.UpdateEventSourceMappingRequest;
 import com.amazonaws.services.lambda.model.UpdateEventSourceMappingResult;
+import com.symphony.oss.fugue.naming.INameFactory;
 
 class AwsDbSubscription extends DbSubscription
 {

@@ -23,7 +23,7 @@
 
 package org.symphonyoss.s2.fugue.pubsub;
 
-import org.symphonyoss.s2.fugue.naming.TopicName;
+import com.symphony.oss.fugue.naming.TopicName;
 
 /**
  * A pub/sub publisher manager.

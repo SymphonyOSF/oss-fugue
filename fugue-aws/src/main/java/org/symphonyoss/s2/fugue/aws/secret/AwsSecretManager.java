@@ -29,9 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.symphonyoss.s2.common.dom.json.IImmutableJsonDomNode;
 import org.symphonyoss.s2.common.dom.json.jackson.JacksonAdaptor;
-import org.symphonyoss.s2.fugue.naming.CredentialName;
-import org.symphonyoss.s2.fugue.secret.ISecretManager;
-import org.symphonyoss.s2.fugue.store.NoSuchObjectException;
 
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.services.secretsmanager.AWSSecretsManager;
@@ -50,6 +47,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.symphony.oss.commons.fault.CodingFault;
 import com.symphony.oss.commons.fault.FaultAccumulator;
 import com.symphony.oss.commons.fluent.BaseAbstractBuilder;
+import com.symphony.oss.fugue.naming.CredentialName;
+import com.symphony.oss.fugue.secret.ISecretManager;
+import com.symphony.oss.fugue.secret.SecretNotFoundException;
 
 /**
  * AWS implementation of Secret Manager.
@@ -127,7 +127,7 @@ public class AwsSecretManager implements ISecretManager
   }
   
   @Override
-  public IImmutableJsonDomNode getSecret(CredentialName name) throws NoSuchObjectException
+  public IImmutableJsonDomNode getSecret(CredentialName name) throws SecretNotFoundException
   {
     GetSecretValueRequest getSecretValueRequest = new GetSecretValueRequest()
         .withSecretId(name.toString());
@@ -156,7 +156,7 @@ public class AwsSecretManager implements ISecretManager
     }
     catch(ResourceNotFoundException e)
     {
-      throw new NoSuchObjectException("Unable to find secret " + name, e);
+      throw new SecretNotFoundException("Unable to find secret " + name, e);
     }
 }
   

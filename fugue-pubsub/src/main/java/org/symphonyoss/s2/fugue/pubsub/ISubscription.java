@@ -23,7 +23,7 @@
 
 package org.symphonyoss.s2.fugue.pubsub;
 
-import org.symphonyoss.s2.fugue.pipeline.IThreadSafeRetryableConsumer;
+import com.symphony.oss.fugue.pipeline.IThreadSafeRetryableConsumer;
 
 /**
  * A subscription.

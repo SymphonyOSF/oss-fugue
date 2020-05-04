@@ -28,12 +28,11 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.symphonyoss.s2.fugue.FugueLifecycleComponent;
-import org.symphonyoss.s2.fugue.FugueLifecycleState;
-import org.symphonyoss.s2.fugue.naming.SubscriptionName;
 
 import com.google.common.collect.ImmutableList;
-import com.symphony.oss.commons.fluent.BaseAbstractBuilder;
+import com.symphony.oss.fugue.FugueLifecycleComponent;
+import com.symphony.oss.fugue.FugueLifecycleState;
+import com.symphony.oss.fugue.naming.SubscriptionName;
 
 /**
  * Base class for subscriber managers.
@@ -42,16 +41,16 @@ import com.symphony.oss.commons.fluent.BaseAbstractBuilder;
  *
  * @param <T> Type of concrete manager, needed for fluent methods.
  */
-public abstract class AbstractSubscriberAdmin<T extends AbstractSubscriberAdmin<T>> extends FugueLifecycleComponent<T> implements ISubscriberAdmin<T>
+public abstract class AbstractSubscriberAdmin<T extends AbstractSubscriberAdmin<T>> extends FugueLifecycleComponent implements ISubscriberAdmin
 {
   private static final Logger                            log_ = LoggerFactory.getLogger(AbstractSubscriberAdmin.class);
 
   protected final ImmutableList<ITopicSubscriptionAdmin> obsoleteSubscribers_;
   protected final ImmutableList<ITopicSubscriptionAdmin> subscribers_;
   
-  protected AbstractSubscriberAdmin(Class<T> type, Builder<?,T> builder)
+  protected AbstractSubscriberAdmin(Builder<?,T> builder)
   {
-    super(type);
+    super(builder);
     
     obsoleteSubscribers_ = ImmutableList.copyOf(builder.obsoleteSubscribers_);
     subscribers_ = ImmutableList.copyOf(builder.subscribers_);
@@ -66,7 +65,7 @@ public abstract class AbstractSubscriberAdmin<T extends AbstractSubscriberAdmin<
    * @param <B>   The concrete type of the built object.
    */
   public static abstract class Builder<T extends Builder<T,B>, B extends AbstractSubscriberAdmin<B>>
-  extends BaseAbstractBuilder<T,B>
+  extends FugueLifecycleComponent.AbstractBuilder<T,B>
   implements ISubscriberAdminBuilder<T,B>
   {
     protected List<ITopicSubscriptionAdmin> obsoleteSubscribers_ = new LinkedList<>();

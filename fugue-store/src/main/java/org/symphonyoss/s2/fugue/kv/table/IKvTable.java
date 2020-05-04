@@ -30,8 +30,6 @@ import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
 
-import org.symphonyoss.s2.fugue.IFugueComponent;
-import org.symphonyoss.s2.fugue.core.trace.ITraceContext;
 import org.symphonyoss.s2.fugue.kv.IKvItem;
 import org.symphonyoss.s2.fugue.kv.IKvPagination;
 import org.symphonyoss.s2.fugue.kv.IKvPartitionKeyProvider;
@@ -41,6 +39,8 @@ import org.symphonyoss.s2.fugue.store.NoSuchObjectException;
 import org.symphonyoss.s2.fugue.store.ObjectExistsException;
 
 import com.symphony.oss.commons.hash.Hash;
+import com.symphony.oss.fugue.IFugueComponent;
+import com.symphony.oss.fugue.core.trace.ITraceContext;
 
 /**
  * Low level storage of KV Items.

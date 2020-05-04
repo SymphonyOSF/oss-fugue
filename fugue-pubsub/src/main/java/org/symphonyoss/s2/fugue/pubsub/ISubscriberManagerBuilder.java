@@ -23,13 +23,12 @@
 
 package org.symphonyoss.s2.fugue.pubsub;
 
-import org.symphonyoss.s2.fugue.config.IConfiguration;
-import org.symphonyoss.s2.fugue.core.trace.ITraceContextTransactionFactory;
-import org.symphonyoss.s2.fugue.counter.ICounter;
-import org.symphonyoss.s2.fugue.naming.INameFactory;
-import org.symphonyoss.s2.fugue.pipeline.IThreadSafeErrorConsumer;
-
 import com.symphony.oss.commons.fluent.IBuilder;
+import com.symphony.oss.fugue.config.IConfiguration;
+import com.symphony.oss.fugue.core.trace.ITraceContextTransactionFactory;
+import com.symphony.oss.fugue.counter.ICounter;
+import com.symphony.oss.fugue.naming.INameFactory;
+import com.symphony.oss.fugue.pipeline.IThreadSafeErrorConsumer;
 
 /**
  * A builder for a subscriber manager of payload type P.
@@ -40,7 +39,7 @@ import com.symphony.oss.commons.fluent.IBuilder;
  * @param <P> Type of the payloads processed.
  * @param <B> Type of concrete manager (built object), needed for fluent methods.
  */
-public interface ISubscriberManagerBuilder<T extends ISubscriberManagerBuilder<T,P,B>, P, B extends ISubscriberManager<B>> extends IBuilder<T,B>
+public interface ISubscriberManagerBuilder<T extends ISubscriberManagerBuilder<T,P,B>, P, B extends ISubscriberManager> extends IBuilder<T,B>
 {
   /**
    * Set the name factory to be used.
