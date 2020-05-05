@@ -22,7 +22,7 @@
 	<parent>
 		<groupId>com.symphony.oss</groupId>
 		<artifactId>oss-parent-pom</artifactId>
-		<version>0.0.8</version><!-- oss-parent-pom -->
+		<version>0.0.9</version><!-- oss-parent-pom -->
 	</parent>
 
   <groupId>com.symphony.oss.fugue</groupId>
@@ -94,24 +94,23 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<source.code.version>1.8</source.code.version>
 		<target.code.version>1.8</target.code.version>
-    <oss.commons.version>0.0.1</oss.commons.version>
-    <aws.java.sdk.version>1.11.766</aws.java.sdk.version>
+    <oss.commons.version>0.0.2</oss.commons.version>
 	</properties>
 
 
 	<modules>
-  <module>fugue-aws</module>
-	<module>fugue-core</module>
-  <module>fugue-deploy</module>
-  <module>fugue-deploy-aws</module>
-  <module>fugue-google</module>
-	<module>fugue-http</module>
-	<module>fugue-http-ui</module>
-  <module>fugue-inmemory</module>
-  <module>fugue-launch</module>
-  <module>fugue-pubsub</module>
-	<module>fugue-store</module>
-  <module>fugue-resources</module>
+	  <module>fugue-aws</module>
+		<module>fugue-core</module>
+	  <module>fugue-deploy</module>
+	  <module>fugue-deploy-aws</module>
+	  <module>fugue-google</module>
+		<module>fugue-http</module>
+		<module>fugue-http-ui</module>
+	  <module>fugue-inmemory</module>
+	  <module>fugue-launch</module>
+	  <module>fugue-pubsub</module>
+		<module>fugue-store</module>
+	  <module>fugue-resources</module>
 	</modules>
 
 	<build>

@@ -6,6 +6,7 @@
     </Console>
   </Appenders>
   <Loggers>
+    <Logger name="com.symphony.oss" level="DEBUG" />
     <Logger name="com.symphony.s2" level="DEBUG" />
     <Logger name="org.symphonyoss.s2" level="DEBUG" />
     <Root level="INFO">
