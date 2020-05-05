@@ -23,8 +23,7 @@
 
 package com.symphony.oss.fugue.secret;
 
-import org.symphonyoss.s2.common.dom.json.IImmutableJsonDomNode;
-
+import com.symphony.oss.commons.dom.json.IImmutableJsonDomNode;
 import com.symphony.oss.fugue.naming.CredentialName;
 
 public interface ISecretManager

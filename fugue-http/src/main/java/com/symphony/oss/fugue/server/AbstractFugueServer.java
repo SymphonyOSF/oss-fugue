@@ -39,8 +39,8 @@ import com.symphony.oss.commons.concurrent.NamedThreadFactory;
 import com.symphony.oss.commons.fault.FaultAccumulator;
 import com.symphony.oss.fugue.FugueComponentState;
 import com.symphony.oss.fugue.FugueLifecycleState;
-import com.symphony.oss.fugue.HealthCheckServlet;
 import com.symphony.oss.fugue.container.AbstractComponentContainer;
+import com.symphony.oss.fugue.server.http.HealthCheckServlet;
 
 /**
  * The main component for a Fugue process.

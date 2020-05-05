@@ -31,13 +31,8 @@ import com.google.common.collect.ImmutableList;
 import com.symphony.oss.commons.fault.FaultAccumulator;
 import com.symphony.oss.fugue.FugueComponentState;
 import com.symphony.oss.fugue.FugueLifecycleState;
-import com.symphony.oss.fugue.HealthCheckServlet;
 import com.symphony.oss.fugue.IFugueApplication;
 import com.symphony.oss.fugue.IFugueLifecycleComponent;
-import com.symphony.oss.fugue.http.HttpServer;
-import com.symphony.oss.fugue.http.HttpServerBuilder;
-import com.symphony.oss.fugue.http.IServletProvider;
-import com.symphony.oss.fugue.http.IUrlPathServlet;
 import com.symphony.oss.fugue.server.AbstractFugueServer;
 
 public class AbstractFugueHttpServer<T extends AbstractFugueHttpServer<T>> extends AbstractFugueServer<T> implements IFugeHttpServer

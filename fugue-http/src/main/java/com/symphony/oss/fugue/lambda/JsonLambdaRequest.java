@@ -30,12 +30,11 @@ import java.util.Map;
 
 import javax.annotation.Nullable;
 
-import org.symphonyoss.s2.common.dom.json.jackson.ReadOnlyMapAdaptor;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.symphony.oss.commons.dom.json.jackson.ReadOnlyMapAdaptor;
 
 public abstract class JsonLambdaRequest extends LambdaRequest
 {

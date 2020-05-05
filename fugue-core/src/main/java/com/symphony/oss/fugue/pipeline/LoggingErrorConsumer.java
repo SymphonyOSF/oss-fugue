@@ -26,7 +26,7 @@ package com.symphony.oss.fugue.pipeline;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.symphony.oss.fugue.core.trace.ITraceContext;
+import com.symphony.oss.fugue.trace.ITraceContext;
 
 /**
  * An implementation of IThreadSafeErrorConsumer which writes items to the log.

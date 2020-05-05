@@ -25,7 +25,7 @@ package com.symphony.oss.fugue.pipeline;
 
 import javax.annotation.concurrent.ThreadSafe;
 
-import com.symphony.oss.fugue.core.trace.ITraceContext;
+import com.symphony.oss.fugue.trace.ITraceContext;
 
 /**
  * A thread safe consumer of some payload.

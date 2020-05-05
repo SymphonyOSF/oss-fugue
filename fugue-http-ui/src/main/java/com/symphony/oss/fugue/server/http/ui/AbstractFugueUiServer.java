@@ -33,16 +33,16 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableList;
 import com.symphony.oss.fugue.FugueLifecycleState;
-import com.symphony.oss.fugue.http.HttpServerBuilder;
-import com.symphony.oss.fugue.http.IResourceProvider;
-import com.symphony.oss.fugue.http.RandomAuthFilter;
-import com.symphony.oss.fugue.http.ui.servlet.Command;
-import com.symphony.oss.fugue.http.ui.servlet.CommandServlet;
-import com.symphony.oss.fugue.http.ui.servlet.ICommand;
-import com.symphony.oss.fugue.http.ui.servlet.ICommandHandler;
-import com.symphony.oss.fugue.http.ui.servlet.IUIPanel;
-import com.symphony.oss.fugue.http.ui.servlet.StatusServlet;
 import com.symphony.oss.fugue.server.http.AbstractFugueHttpServer;
+import com.symphony.oss.fugue.server.http.HttpServerBuilder;
+import com.symphony.oss.fugue.server.http.IResourceProvider;
+import com.symphony.oss.fugue.server.http.RandomAuthFilter;
+import com.symphony.oss.fugue.server.http.ui.servlet.Command;
+import com.symphony.oss.fugue.server.http.ui.servlet.CommandServlet;
+import com.symphony.oss.fugue.server.http.ui.servlet.ICommand;
+import com.symphony.oss.fugue.server.http.ui.servlet.ICommandHandler;
+import com.symphony.oss.fugue.server.http.ui.servlet.IUIPanel;
+import com.symphony.oss.fugue.server.http.ui.servlet.StatusServlet;
 
 /**
  * The main component for a Fugue process.

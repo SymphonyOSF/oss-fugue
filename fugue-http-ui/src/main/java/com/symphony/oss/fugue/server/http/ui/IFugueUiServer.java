@@ -25,9 +25,9 @@ package com.symphony.oss.fugue.server.http.ui;
 
 import java.util.List;
 
-import com.symphony.oss.fugue.http.IResourceProvider;
-import com.symphony.oss.fugue.http.ui.servlet.ICommand;
 import com.symphony.oss.fugue.server.http.IFugeHttpServer;
+import com.symphony.oss.fugue.server.http.IResourceProvider;
+import com.symphony.oss.fugue.server.http.ui.servlet.ICommand;
 
 /**
  * The main component for a Fugue process.

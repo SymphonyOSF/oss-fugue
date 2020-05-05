@@ -26,7 +26,7 @@ package com.symphony.oss.fugue.pipeline;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
 
-import com.symphony.oss.fugue.core.trace.ITraceContext;
+import com.symphony.oss.fugue.trace.ITraceContext;
 
 /**
  * A consumer of some payload which cannot be processed normally.

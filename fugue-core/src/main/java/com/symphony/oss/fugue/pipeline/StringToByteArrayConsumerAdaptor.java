@@ -24,7 +24,7 @@
 package com.symphony.oss.fugue.pipeline;
 
 import com.symphony.oss.commons.immutable.ImmutableByteArray;
-import com.symphony.oss.fugue.core.trace.ITraceContext;
+import com.symphony.oss.fugue.trace.ITraceContext;
 
 /**
  * Adapts a consumer of ImmutableByteArray for use by classes requiring a
