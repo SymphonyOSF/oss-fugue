@@ -23,77 +23,40 @@
 
 package com.symphony.oss.fugue.server;
 
-import com.symphony.oss.fugue.server.AbstractFugueServer.AbstractBuilder;
-
 /**
  * The main component for a Fugue process.
  * 
  * @author Bruce Skingle
  *
  */
-public class FugueServer implements IFugueComponentRegistry
-{ 
-  private AbstractBuilder<?, ?> builder_;
-  private AbstractFugueServer<?> server_;
-
-  protected FugueServer(AbstractFugueServer.AbstractBuilder<?, ?> builder)
+public class FugueServer extends AbstractFugueServer<FugueServer>
+{
+  private FugueServer(AbstractBuilder<?, ?> builder)
   {
-    builder_ = builder;
+    super(FugueServer.class, builder);
   }
 
-  public <C> C register(C component)
+  /**
+   * Builder.
+   * 
+   * @author Bruce Skingle
+   *
+   */
+  public static class Builder extends AbstractFugueServer.AbstractBuilder<Builder, FugueServer>
   {
-    return builder_.register(component);
-  }
-
-  public synchronized final AbstractFugueServer<?> getServer()
-  {
-    if(server_ == null)
-      server_ = builder_.build();
-    
-    return server_;
-  }
-
-  public FugueServer start()
-  {
-    getServer().start();
-    
-    return this;
-  }
-
-  public FugueServer quiesce()
-  {
-    getServer().quiesce();
-    
-    return this;
-  }
-
-  public FugueServer stop()
-  {
-    getServer().stop();
-    
-    return this;
-  }
-  
-  class FugueServerImpl extends AbstractFugueServer<FugueServerImpl>
-  { 
-    protected FugueServerImpl(Builder builder)
+    /**
+     * Constructor.
+     */
+    public Builder()
     {
-      super(FugueServerImpl.class, builder);
+      super(Builder.class);
     }
 
-    public class Builder extends AbstractBuilder<Builder, FugueServerImpl>
+    @Override
+    protected FugueServer construct()
     {
-      protected Builder()
-      {
-        super(Builder.class);
-      }
-
-      @Override
-      protected FugueServerImpl construct()
-      {
-        return new FugueServerImpl(this);
-      }
+      return new FugueServer(this);
     }
+    
   }
 }

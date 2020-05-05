@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package com.symphony.oss.fugue.server;
+package com.symphony.oss.fugue.container;
 
 public interface IFugueComponentRegistry
 {

@@ -21,12 +21,13 @@
  * under the License.
  */
 
-package com.symphony.oss.fugue;
+package com.symphony.oss.fugue.server;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 
-import com.symphony.oss.fugue.server.IFugeComponentContainer;
+import com.symphony.oss.fugue.Fugue;
+import com.symphony.oss.fugue.container.IFugeComponentContainer;
 
 /**
  * The main component for a Fugue process.

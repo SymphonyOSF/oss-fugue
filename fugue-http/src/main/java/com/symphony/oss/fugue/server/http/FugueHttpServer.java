@@ -18,6 +18,12 @@
 
 package com.symphony.oss.fugue.server.http;
 
+/**
+ * The main component for an HTTP Fugue process.
+ * 
+ * @author Bruce Skingle
+ *
+ */
 public class FugueHttpServer extends AbstractFugueHttpServer<FugueHttpServer>
 {
   private FugueHttpServer(AbstractBuilder<?, ?> builder)

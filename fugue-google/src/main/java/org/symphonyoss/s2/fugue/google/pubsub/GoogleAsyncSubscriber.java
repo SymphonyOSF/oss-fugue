@@ -33,9 +33,11 @@ import org.slf4j.LoggerFactory;
 
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
+import com.google.protobuf.ByteString;
 import com.google.protobuf.Timestamp;
 import com.google.pubsub.v1.PubsubMessage;
 import com.symphony.oss.commons.concurrent.NamedThreadFactory;
+import com.symphony.oss.commons.immutable.ByteStringImmutableByteArray;
 import com.symphony.oss.commons.immutable.ImmutableByteArray;
 import com.symphony.oss.fugue.core.trace.ITraceContext;
 import com.symphony.oss.fugue.core.trace.ITraceContextTransaction;
@@ -116,7 +118,7 @@ public class GoogleAsyncSubscriber implements MessageReceiver
         counter_.increment(1);
       
       trace.trace("RECEIVED");
-      ImmutableByteArray byteArray = ImmutableByteArray.newInstance(message.getData());
+      ImmutableByteArray byteArray = new ByteStringImmutableByteArray(message.getData());
       
       long retryTime = manager_.handleMessage(consumer_, byteArray.toString(), trace, message.getMessageId());
       

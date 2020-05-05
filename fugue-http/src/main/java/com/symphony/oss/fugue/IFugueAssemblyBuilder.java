@@ -25,13 +25,13 @@ package com.symphony.oss.fugue;
 
 import com.symphony.oss.commons.fluent.IBuilder;
 import com.symphony.oss.fugue.config.IGlobalConfiguration;
+import com.symphony.oss.fugue.container.IFugueComponentRegistry;
 import com.symphony.oss.fugue.counter.ITopicBusyCounterFactory;
-import com.symphony.oss.fugue.server.IFugueComponentRegistry;
 
 public interface IFugueAssemblyBuilder<T extends IFugueAssemblyBuilder<T,B>, B extends IFugueAssembly> extends IBuilder<T, B>
 {
 
-  T withContainer(IFugueComponentRegistry registry);
+  T withComponentRegistry(IFugueComponentRegistry registry);
 
   IGlobalConfiguration getConfiguration();
 

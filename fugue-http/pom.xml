@@ -37,10 +37,19 @@
       <artifactId>commons-core</artifactId>
       <version>${oss.commons.version}</version>
     </dependency>
+    <dependency>
+      <groupId>com.symphony.oss.commons</groupId>
+      <artifactId>commons-dom-jackson</artifactId>
+      <version>${oss.commons.version}</version>
+    </dependency>
     
     <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>javax.servlet-api</artifactId>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
     </dependency>
     
     <dependency>
@@ -61,8 +70,18 @@
     </dependency>
     
     <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
+    
+    <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
+    </dependency>
+    
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
     </dependency>
   </dependencies>
 </project>

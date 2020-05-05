@@ -35,9 +35,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.symphony.oss.fugue.FugueLifecycleState;
+import com.symphony.oss.fugue.container.IFugeComponentContainer;
 import com.symphony.oss.fugue.http.IResourceProvider;
 import com.symphony.oss.fugue.http.IUrlPathServlet;
-import com.symphony.oss.fugue.server.IFugeComponentContainer;
 
 
 

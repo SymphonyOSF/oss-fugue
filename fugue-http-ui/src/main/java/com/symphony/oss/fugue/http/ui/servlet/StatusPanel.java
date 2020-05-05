@@ -28,7 +28,7 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 
 import com.symphony.oss.fugue.IFugueLifecycleComponent;
-import com.symphony.oss.fugue.server.IFugeComponentContainer;
+import com.symphony.oss.fugue.container.IFugeComponentContainer;
 
 
 public class StatusPanel extends UIPanel implements IUIPanel

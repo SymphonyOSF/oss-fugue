@@ -30,10 +30,9 @@ import com.symphony.oss.commons.fluent.BaseAbstractBuilder;
 import com.symphony.oss.fugue.IFugueAssembly;
 import com.symphony.oss.fugue.config.GlobalConfiguration;
 import com.symphony.oss.fugue.config.IGlobalConfiguration;
+import com.symphony.oss.fugue.container.IFugueComponentRegistry;
 import com.symphony.oss.fugue.naming.INameFactory;
 import com.symphony.oss.fugue.naming.NameFactory;
-import com.symphony.oss.fugue.server.IFugeComponentContainer;
-import com.symphony.oss.fugue.server.IFugueComponentRegistry;
 
 /**
  * A base assembly for In-Memory implementations.
@@ -49,7 +48,7 @@ public class InMemoryFugueAssembly implements IFugueAssembly
   
   protected InMemoryFugueAssembly(AbstractBuilder<?,?> builder)
   {
-    container_                = builder.container_;
+    container_                = builder.registry_;
     config_                   = builder.config_;
     nameFactory_              = builder.nameFactory_;
   }
@@ -65,7 +64,7 @@ public class InMemoryFugueAssembly implements IFugueAssembly
     protected IGlobalConfiguration              config_;
     protected INameFactory                      nameFactory_;
 
-    protected IFugueComponentRegistry           container_;
+    protected IFugueComponentRegistry           registry_;
     
     public AbstractBuilder(Class<T> type)
     {
@@ -89,9 +88,9 @@ public class InMemoryFugueAssembly implements IFugueAssembly
       return nameFactory_;
     }
 
-    public T withContainer(IFugueComponentRegistry container)
+    public T withComponentRegistry(IFugueComponentRegistry registry)
     {
-      container_ = container;
+      registry_ = registry;
       
       return self();
     }
@@ -101,7 +100,7 @@ public class InMemoryFugueAssembly implements IFugueAssembly
     {
       super.validate(faultAccumulator);
       
-      faultAccumulator.checkNotNull(container_, "container");
+      faultAccumulator.checkNotNull(registry_, "Component Registry");
       
       if(config_ == null)
         config_ = new GlobalConfiguration(InMemoryConfiguration.FACTORY.newInstance());

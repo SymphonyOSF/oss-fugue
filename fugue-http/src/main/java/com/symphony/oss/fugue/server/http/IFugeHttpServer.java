@@ -20,9 +20,9 @@ package com.symphony.oss.fugue.server.http;
 
 import java.util.List;
 
-import com.symphony.oss.fugue.IFugueServer;
 import com.symphony.oss.fugue.http.IServletProvider;
 import com.symphony.oss.fugue.http.IUrlPathServlet;
+import com.symphony.oss.fugue.server.IFugueServer;
 
 /**
  * A fluent HTTP container of Fugue components.

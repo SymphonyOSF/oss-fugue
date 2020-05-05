@@ -17,10 +17,10 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
 import com.symphony.oss.fugue.IFugueAssemblyBuilder;
 import com.symphony.oss.fugue.config.IConfiguration;
+import com.symphony.oss.fugue.container.FugueComponentContainer;
 import com.symphony.oss.fugue.counter.BusyCounter;
 import com.symphony.oss.fugue.counter.IBusyCounter;
 import com.symphony.oss.fugue.counter.ITopicBusyCounterFactory;
-import com.symphony.oss.fugue.server.FugueComponentContainer;
 
 /**
  * A lambda function implementation based on a Fugue Assembly.
@@ -47,7 +47,7 @@ public abstract class AwsAssemblyLambda implements RequestStreamHandler
           builder.getConfiguration().getConfiguration("com/symphony/s2/legacy/message/forwarder/AwsForwarderComponent"));
       
       builder
-          .withContainer(registry)
+          .withComponentRegistry(registry)
           .withBusyCounterFactory(busyCounterFactory) // TODO: refactor this into Symphony code
           .build();
             

@@ -16,27 +16,19 @@
  * limitations under the License.
  */
 
-package com.symphony.oss.fugue.server.http;
+package com.symphony.oss.fugue.server;
 
-import com.symphony.oss.fugue.IFugueApplication;
 import com.symphony.oss.fugue.container.IFugueComponentRegistry;
 
-public class FugueHttpServerAssembly
+public class FugueServerAssembly
 {
-  private FugueHttpServer.Builder builder_;
-  private FugueHttpServer server_;
-
-  public FugueHttpServerAssembly(IFugueApplication application)
-  {
-    builder_ = new FugueHttpServer.Builder()
-        .withFugueApplication(application);
-  }
+  private FugueServer.Builder builder_;
+  private FugueServer server_;
   
-  public FugueHttpServerAssembly(String applicationName, int httpPort)
+  public FugueServerAssembly(String applicationName)
   {
-    builder_ = new FugueHttpServer.Builder()
+    builder_ = new FugueServer.Builder()
         .withApplicationName(applicationName)
-        .withHttpPort(httpPort)
         ;
   }
 
@@ -45,7 +37,7 @@ public class FugueHttpServerAssembly
     return builder_;
   }
 
-  protected void setBuilder(FugueHttpServer.Builder builder)
+  protected void setBuilder(FugueServer.Builder builder)
   {
     builder_ = builder;
   }
@@ -55,7 +47,7 @@ public class FugueHttpServerAssembly
     return builder_.register(component);
   }
 
-  public synchronized final FugueHttpServer getServer()
+  public synchronized final FugueServer getServer()
   {
     if(server_ == null)
       server_ = builder_.build();

@@ -21,7 +21,7 @@
  * under the License.
  */
 
-package com.symphony.oss.fugue.server;
+package com.symphony.oss.fugue.container;
 
 import java.util.List;
 

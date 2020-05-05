@@ -21,7 +21,7 @@
  * under the License.
  */
 
-package com.symphony.oss.fugue.server;
+package com.symphony.oss.fugue.container;
 
 /**
  * A concrete generic container for Fugue components.
