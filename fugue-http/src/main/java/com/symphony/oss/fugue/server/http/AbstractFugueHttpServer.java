@@ -157,10 +157,14 @@ public class AbstractFugueHttpServer<T extends AbstractFugueHttpServer<T>> exten
   {
     public AbstractFugueHttpServer<?> server_;
 
+    public String getComponentId()
+    {
+      return "HttpServer";
+    }
+    
     @Override
     public void start()
     {
-  //    startFugueServer();
     }
     
     @Override
@@ -224,6 +228,7 @@ public class AbstractFugueHttpServer<T extends AbstractFugueHttpServer<T>> exten
 
   protected void stopFugueServer()
   {
+    setRunning(false);
     server_.stop();
     log_.info("FugueServer Stopping...");
     

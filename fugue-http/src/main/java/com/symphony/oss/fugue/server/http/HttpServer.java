@@ -74,7 +74,7 @@ public class HttpServer extends AbstractFugueComponent
   {
     try
     {
-      log_.info("Stopping S2HttpServer...");
+      log_.info("Stopping HttpServer...");
       jettyServer_.stop();
       setComponentStatus(FugueComponentState.Warn, "Shutdown");
     } catch (Exception e) // Jetty throws Exception

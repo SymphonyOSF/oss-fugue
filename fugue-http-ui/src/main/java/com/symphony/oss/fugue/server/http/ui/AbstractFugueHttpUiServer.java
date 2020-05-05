@@ -32,8 +32,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableList;
+import com.symphony.oss.commons.fault.FaultAccumulator;
 import com.symphony.oss.fugue.FugueLifecycleState;
 import com.symphony.oss.fugue.server.http.AbstractFugueHttpServer;
+import com.symphony.oss.fugue.server.http.FugueResourceHandler;
 import com.symphony.oss.fugue.server.http.HttpServerBuilder;
 import com.symphony.oss.fugue.server.http.IResourceProvider;
 import com.symphony.oss.fugue.server.http.RandomAuthFilter;
@@ -50,19 +52,17 @@ import com.symphony.oss.fugue.server.http.ui.servlet.StatusServlet;
  * @author Bruce Skingle
  *
  */
-public class AbstractFugueUiServer<T extends AbstractFugueUiServer<T>> extends AbstractFugueHttpServer<T> implements IFugueUiServer
+public class AbstractFugueHttpUiServer<T extends AbstractFugueHttpUiServer<T>> extends AbstractFugueHttpServer<T> implements IFugueUiServer
 {
-  private static final Logger                        log_              = LoggerFactory.getLogger(AbstractFugueUiServer.class);
+  private static final Logger                        log_              = LoggerFactory.getLogger(AbstractFugueHttpUiServer.class);
 
   private static final String APP_SERVLET_ROOT = "/app/";
 
   private final ImmutableList<IResourceProvider> resourceProviders_;
   private final ImmutableList<ICommand>          commands_;
-  private StatusServlet statusServlet_;
-  private boolean localWebLogin_;
-  private final RandomAuthFilter filter_;
+  private final RandomAuthFilter                 filter_;
 
-  public AbstractFugueUiServer(Class<T> type, AbstractBuilder<?,?> builder)
+  public AbstractFugueHttpUiServer(Class<T> type, AbstractBuilder<?,?> builder)
   {
     super(type, builder);
     
@@ -71,6 +71,7 @@ public class AbstractFugueUiServer<T extends AbstractFugueUiServer<T>> extends A
     filter_              = builder.filter;
     
     builder.statusServlet_.withComponentContainer(this);
+    builder.shutdownCommand_.server_ = this;
   }
 
   /**
@@ -84,28 +85,22 @@ public class AbstractFugueUiServer<T extends AbstractFugueUiServer<T>> extends A
    * @param <T> The type of the concrete Builder
    * @param <B> The type of the built class, some subclass of FugueLifecycleComponent
    */
-  protected static abstract class AbstractBuilder<T extends AbstractBuilder<T,B>, B extends AbstractFugueUiServer<B>>
+  protected static abstract class AbstractBuilder<T extends AbstractBuilder<T,B>, B extends AbstractFugueHttpUiServer<B>>
   extends AbstractFugueHttpServer.AbstractBuilder<T, B>
   {
-    private final List<IResourceProvider>        resourceProviders_   = new ArrayList<>();
-    private final List<ICommand>                 commands_            = new ArrayList<>();
-    private StatusServlet statusServlet_;
-    private boolean localWebLogin_;
-    private RandomAuthFilter filter = null;
+    
+    private final List<IResourceProvider> resourceProviders_ = new ArrayList<>();
+    private final List<ICommand>          commands_          = new ArrayList<>();
+    private final List<IUIPanel>          uiPanels_          = new ArrayList<>();
+    private IUIPanel                      defaultUiPanel_;
+    private StatusServlet                 statusServlet_;
+    private boolean                       localWebLogin_;
+    private RandomAuthFilter              filter             = null;
+    private ShutdownCommand               shutdownCommand_;
     
     protected AbstractBuilder(Class<T> type)
     {
       super(type);
-      
-//      withCommand(APP_SERVLET_ROOT, "shutdown", 
-//          EnumSet.of(FugueLifecycleState.Running,
-//              FugueLifecycleState.Initializing,
-//              FugueLifecycleState.Starting),
-//          () -> 
-//          {
-//            if(started_)
-//              stopFugueServer();
-//          });
     }
 
     @Override
@@ -124,6 +119,13 @@ public class AbstractFugueUiServer<T extends AbstractFugueUiServer<T>> extends A
           commands_.add((ICommand)o);
         }
       }
+      
+      return self();
+    }
+    
+    public T withResourceProvider(IResourceProvider provider)
+    {
+      resourceProviders_.add(provider);
       
       return self();
     }
@@ -150,7 +152,7 @@ public class AbstractFugueUiServer<T extends AbstractFugueUiServer<T>> extends A
      */
     public T withPanel(IUIPanel panel)
     {
-      statusServlet_.addPanel(panel);
+      uiPanels_.add(panel);
       
       return self();
     }
@@ -164,7 +166,7 @@ public class AbstractFugueUiServer<T extends AbstractFugueUiServer<T>> extends A
      */
     public T withDefaultPanel(IUIPanel panel)
     {
-      statusServlet_.setDefaultPanel(panel);
+      defaultUiPanel_ = panel;
       
       return self();
     }
@@ -195,21 +197,25 @@ public class AbstractFugueUiServer<T extends AbstractFugueUiServer<T>> extends A
 
     protected void configureServer(HttpServerBuilder httpServerBuilder)
     {
-      
-      
       if(localWebLogin_)
       {
         filter = new RandomAuthFilter();
         httpServerBuilder.withFilter(filter);
+        
+        shutdownCommand_ = new ShutdownCommand();
+        
+      withCommand(APP_SERVLET_ROOT, "shutdown", 
+          EnumSet.of(FugueLifecycleState.Running,
+              FugueLifecycleState.Initializing,
+              FugueLifecycleState.Starting),
+          shutdownCommand_);
       }
       for(IResourceProvider provider : resourceProviders_)
         httpServerBuilder.withResources(provider);
       
-      List<IResourceProvider> resourceProviders = resourceProviders_;
-      
-      if(!resourceProviders.isEmpty())
+      if(!resourceProviders_.isEmpty())
       {
-        statusServlet_ = new StatusServlet(resourceProviders.get(0));
+        statusServlet_ = new StatusServlet(resourceProviders_.get(0));
         httpServerBuilder.withServlet(statusServlet_);
         
         for(ICommand command : commands_)
@@ -217,9 +223,38 @@ public class AbstractFugueUiServer<T extends AbstractFugueUiServer<T>> extends A
           httpServerBuilder.withServlet(command.getPath(),  new CommandServlet(command.getHandler()));
           statusServlet_.addCommand(command);
         }
+        
+        for(IUIPanel panel : uiPanels_)
+          statusServlet_.addPanel(panel);
+        
+        if(defaultUiPanel_ != null)
+          statusServlet_.setDefaultPanel(defaultUiPanel_);
       }
       
       super.configureServer(httpServerBuilder);
+    }
+
+    @Override
+    protected void validate(FaultAccumulator faultAccumulator)
+    {
+      if(resourceProviders_.isEmpty())
+        faultAccumulator.error("At least one resource provider is required.");
+        
+      super.validate(faultAccumulator);
+    }
+  }
+  
+  private static class ShutdownCommand implements ICommandHandler
+  {
+    private AbstractFugueHttpUiServer<?> server_;
+    
+    @Override
+    public void handle()
+    {
+      if(server_ != null)
+      {
+        server_.setRunning(false);
+      }
     }
   }
   
