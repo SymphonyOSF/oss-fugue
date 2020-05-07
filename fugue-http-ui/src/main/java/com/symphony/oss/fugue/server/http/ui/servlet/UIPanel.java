@@ -28,6 +28,7 @@ public abstract class UIPanel implements IUIBasePanel
   private final String id_;
   private final String name_;
   private IUIPanel  parent_;
+  private String uiServletRoot_ = "";
   
   public UIPanel(String id, String name)
   {
@@ -65,13 +66,26 @@ public abstract class UIPanel implements IUIBasePanel
     parent_ = parent;
   }
   
+  public void setPathRoot(String uiServletRoot)
+  {
+    uiServletRoot_ = uiServletRoot;
+  }
+  
   @Override
   public String getPath()
   {
     if(parent_ == null)
-      return "/" + id_;
+      return uiServletRoot_ + "/" + id_;
     else
       return parent_.getPath() + "/" + id_;
   }
-
+  
+  @Override
+  public String getPath(String panelId)
+  {
+    if(parent_ == null)
+      return uiServletRoot_ + "/" + panelId;
+    else
+      return parent_.getPath() + "/" + panelId;
+  }
 }

@@ -14,5 +14,6 @@ public interface ICommand
   EnumSet<FugueLifecycleState> getValidStates();
 
   ICommandHandler getHandler();
-
+  
+  boolean isCloseWindow();
 }

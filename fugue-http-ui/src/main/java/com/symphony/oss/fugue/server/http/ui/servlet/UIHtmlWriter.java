@@ -52,11 +52,21 @@ public class UIHtmlWriter extends HtmlWriter
     closeElement();
   }
 
+  public void printError(Throwable cause)
+  {
+    openError();
+    println(cause.getClass().getSimpleName() + ": " + cause.getLocalizedMessage());
+    closeElement();
+  }
+
   public void printError(String error, Throwable cause)
   {
     openError();
     println(error);
+    
+    openElement("pre");
     cause.printStackTrace(this);
+    closeElement(); //pre
     closeElement();
   }
 

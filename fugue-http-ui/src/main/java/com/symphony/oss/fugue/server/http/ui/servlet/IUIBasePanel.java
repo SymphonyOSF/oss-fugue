@@ -38,4 +38,8 @@ public interface IUIBasePanel
   void setParent(IUIPanel parent);
 
   String getPath();
+  
+  String getPath(String panelId);
+  
+  void setPathRoot(String uiServletRoot);
 }

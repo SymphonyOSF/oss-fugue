@@ -52,6 +52,5 @@ public class FugueHttpUiServer extends AbstractFugueHttpUiServer<FugueHttpUiServ
     {
       return new FugueHttpUiServer(this);
     }
-    
   }
 }

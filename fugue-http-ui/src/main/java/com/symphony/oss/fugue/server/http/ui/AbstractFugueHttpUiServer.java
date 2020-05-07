@@ -56,11 +56,10 @@ public class AbstractFugueHttpUiServer<T extends AbstractFugueHttpUiServer<T>> e
 {
   private static final Logger                        log_              = LoggerFactory.getLogger(AbstractFugueHttpUiServer.class);
 
-  private static final String APP_SERVLET_ROOT = "/app/";
-
   private final ImmutableList<IResourceProvider> resourceProviders_;
   private final ImmutableList<ICommand>          commands_;
   private final RandomAuthFilter                 filter_;
+  private final String                           uiServletRoot_;
 
   public AbstractFugueHttpUiServer(Class<T> type, AbstractBuilder<?,?> builder)
   {
@@ -69,6 +68,7 @@ public class AbstractFugueHttpUiServer<T extends AbstractFugueHttpUiServer<T>> e
     resourceProviders_   = ImmutableList.copyOf(builder.resourceProviders_);
     commands_            = ImmutableList.copyOf(builder.commands_);
     filter_              = builder.filter;
+    uiServletRoot_       = builder.uiServletRoot_;
     
     builder.statusServlet_.withComponentContainer(this);
     builder.shutdownCommand_.server_ = this;
@@ -97,6 +97,8 @@ public class AbstractFugueHttpUiServer<T extends AbstractFugueHttpUiServer<T>> e
     private boolean                       localWebLogin_;
     private RandomAuthFilter              filter             = null;
     private ShutdownCommand               shutdownCommand_;
+    private String                        uiServletRoot_     = "/fugue";
+    private String                        appServletRoot_    = "/app";
     
     protected AbstractBuilder(Class<T> type)
     {
@@ -152,6 +154,8 @@ public class AbstractFugueHttpUiServer<T extends AbstractFugueHttpUiServer<T>> e
      */
     public T withPanel(IUIPanel panel)
     {
+      panel.setPathRoot(uiServletRoot_);
+      
       uiPanels_.add(panel);
       
       return self();
@@ -166,6 +170,8 @@ public class AbstractFugueHttpUiServer<T extends AbstractFugueHttpUiServer<T>> e
      */
     public T withDefaultPanel(IUIPanel panel)
     {
+      panel.setPathRoot(uiServletRoot_);
+      
       defaultUiPanel_ = panel;
       
       return self();
@@ -178,19 +184,44 @@ public class AbstractFugueHttpUiServer<T extends AbstractFugueHttpUiServer<T>> e
      * @param name            The command name for the UI.
      * @param validStates     Lifecycle states from which this command can be invoked.
      * @param handler         The handler which implements the command.
+     * @param closeWindow 
      * 
      * @return this (Fluent method).
      */
     public T withCommand(String path, String name, 
         EnumSet<FugueLifecycleState> validStates,
-        ICommandHandler handler)
+        ICommandHandler handler, boolean closeWindow)
     {
       path = path + name;
       name = name.substring(0,1).toUpperCase() + name.substring(1);
       
-      ICommand command = new Command(name, path, validStates, handler);
+      ICommand command = new Command(name, path, validStates, handler, closeWindow);
       
       register(command);
+      
+      return self();
+    }
+
+    public String getUiServletRoot()
+    {
+      return uiServletRoot_;
+    }
+
+    public T setUiServletRoot(String uiServletRoot)
+    {
+      uiServletRoot_ = uiServletRoot;
+      
+      return self();
+    }
+
+    public String getAppServletRoot()
+    {
+      return appServletRoot_;
+    }
+
+    public T setAppServletRoot(String appServletRoot)
+    {
+      appServletRoot_ = appServletRoot;
       
       return self();
     }
@@ -204,18 +235,18 @@ public class AbstractFugueHttpUiServer<T extends AbstractFugueHttpUiServer<T>> e
         
         shutdownCommand_ = new ShutdownCommand();
         
-      withCommand(APP_SERVLET_ROOT, "shutdown", 
+      withCommand(appServletRoot_ + "/", "shutdown", 
           EnumSet.of(FugueLifecycleState.Running,
               FugueLifecycleState.Initializing,
               FugueLifecycleState.Starting),
-          shutdownCommand_);
+          shutdownCommand_, true);
       }
       for(IResourceProvider provider : resourceProviders_)
         httpServerBuilder.withResources(provider);
       
       if(!resourceProviders_.isEmpty())
       {
-        statusServlet_ = new StatusServlet(resourceProviders_.get(0));
+        statusServlet_ = new StatusServlet(uiServletRoot_, resourceProviders_.get(0));
         httpServerBuilder.withServlet(statusServlet_);
         
         for(ICommand command : commands_)

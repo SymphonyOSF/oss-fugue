@@ -47,9 +47,8 @@ public class StatusServlet extends UIServlet implements IUrlPathServlet, IUIPane
 
   private static final String     PLAIN_CONTENT_TYPE = "text/plain";
 
-  private static final String BasePath = "/fugue";
-  private static final String PathPrefix = BasePath + "/";
-
+  private final String uiServletRoot_;
+  
   private Map<String, ICommand>   commandMap_        = new TreeMap<>();
   private Map<String, IUIPanel>   panelMap_          = new HashMap<>();
   private List<IUIPanel>          panelList_         = new ArrayList<>();
@@ -58,11 +57,14 @@ public class StatusServlet extends UIServlet implements IUrlPathServlet, IUIPane
 
   private IFugeComponentContainer app_;
 
-  public StatusServlet(IResourceProvider provider)
+
+  public StatusServlet(String uiServletRoot, IResourceProvider provider)
   {
     super(provider);
+    
+    uiServletRoot_ = uiServletRoot;
 
-    addCommand(new Command("Refresh", "#", null));
+    //addCommand(new Command("Refresh", "#", null, false));
   }
   
   public StatusServlet withComponentContainer(IFugeComponentContainer app)
@@ -127,7 +129,7 @@ public class StatusServlet extends UIServlet implements IUrlPathServlet, IUIPane
   private void printNav(UIHtmlWriter out, IUIPanel p)
   {
     out.openElement("li", "class=", "w3-padding");
-    out.openElement("a", "href", PathPrefix + p.getId());
+    out.openElement("a", "href", uiServletRoot_ + "/" + p.getId());
     out.print(p.getName());
     out.closeElement(); // a
     out.closeElement(); // li
@@ -174,16 +176,21 @@ public class StatusServlet extends UIServlet implements IUrlPathServlet, IUIPane
 
   private void printCommand(UIHtmlWriter out, ICommand command)
   {
-    out.openElement("form", "method", "GET", "action", command.getPath(), "class", "commandForm");
-    out.println(
-        "<button class=\"w3-btn\">" + command.getName() + " &nbsp;<i class=\"fa fa-arrow-right\"></i></button>");
+    String options = command.isCloseWindow() ?
+        " onClick=\"var r = confirm('Exit Application?');if(r == true) {;"
+        + "document.getElementById('" + command.getName() + "').submit(); window.close();}\""
+        : "";
+    
+    out.openElement("form", "method", "GET", "action", command.getPath(), "class", "commandForm", "id", command.getName());
     out.closeElement(); // form
+    out.println(
+        "<button class=\"sym-btn\"" + options + ">" + command.getName() + " &nbsp;<i class=\"fa fa-arrow-right\"></i></button>");
   }
 
   @Override
   public String getUrlPath()
   {
-    return PathPrefix + "*" ;
+    return uiServletRoot_ + "/*" ;
   }
 
   public void addCommand(ICommand command)

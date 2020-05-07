@@ -30,22 +30,24 @@ import com.symphony.oss.fugue.FugueLifecycleState;
 
 public class Command implements ICommand
 {
-  private final String                           name_;
-  private final String                           path_;
+  private final String                       name_;
+  private final String                       path_;
   private final EnumSet<FugueLifecycleState> validStates_;
-  private final ICommandHandler                  handler_;
+  private final ICommandHandler              handler_;
+  private final boolean                      closeWindow_;
   
-  public Command(String name, String path, ICommandHandler handler)
+  public Command(String name, String path, ICommandHandler handler, boolean closeWindow)
   {
-    this(name, path, EnumSet.allOf(FugueLifecycleState.class), handler);
+    this(name, path, EnumSet.allOf(FugueLifecycleState.class), handler, closeWindow);
   }
   
-  public Command(String name, String path, EnumSet<FugueLifecycleState> validStates, ICommandHandler handler)
+  public Command(String name, String path, EnumSet<FugueLifecycleState> validStates, ICommandHandler handler, boolean closeWindow)
   {
     name_ = name;
     path_ = path;
     validStates_ = validStates;
     handler_ = handler;
+    closeWindow_ = closeWindow;
   }
 
   @Override
@@ -70,6 +72,12 @@ public class Command implements ICommand
   public ICommandHandler getHandler()
   {
     return handler_;
+  }
+
+  @Override
+  public boolean isCloseWindow()
+  {
+    return closeWindow_;
   }
   
  
