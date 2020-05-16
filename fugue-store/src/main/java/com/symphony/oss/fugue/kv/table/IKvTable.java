@@ -93,18 +93,15 @@ public interface IKvTable extends IFugueComponent
       ITraceContext trace) throws NoSuchObjectException;
   
   /**
-   * Delete the given object.
+   * Physically delete the given object.
    * 
    * @param partitionSortKeyProvider  The partition and sort key of the existing item.
-   * @param absoluteHash              The absolute hash of the existing item.
    * @param versionPartitionKey       Partition key for the versions partition.
    * @param absoluteHashPrefix        Prefix for Absolute records to delete
    * @param trace                     Trace context.
-   * 
-   * @throws NoSuchObjectException If the object to be deleted has changed. 
    */
-  void delete(IKvPartitionSortKeyProvider partitionSortKeyProvider, Hash absoluteHash, IKvPartitionKeyProvider versionPartitionKey,
-      IKvPartitionSortKeyProvider absoluteHashPrefix, ITraceContext trace) throws NoSuchObjectException;
+  void delete(IKvPartitionSortKeyProvider partitionSortKeyProvider, IKvPartitionKeyProvider versionPartitionKey,
+      IKvPartitionSortKeyProvider absoluteHashPrefix, ITraceContext trace);
   
   /**
    * Fetch the object with the given partition key and sort key.
@@ -183,6 +180,4 @@ public interface IKvTable extends IFugueComponent
    * @param trace                     Trace context.
    */
   void deleteRow(IKvPartitionSortKeyProvider partitionSortKeyProvider, ITraceContext trace);
-
-
 }

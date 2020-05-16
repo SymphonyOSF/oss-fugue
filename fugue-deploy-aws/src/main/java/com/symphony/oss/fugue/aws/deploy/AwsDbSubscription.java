@@ -33,9 +33,6 @@ import com.amazonaws.services.dynamodbv2.model.DescribeStreamResult;
 import com.amazonaws.services.dynamodbv2.model.ListStreamsRequest;
 import com.amazonaws.services.dynamodbv2.model.ListStreamsResult;
 import com.amazonaws.services.dynamodbv2.model.Stream;
-import com.amazonaws.services.dynamodbv2.model.StreamSpecification;
-import com.amazonaws.services.dynamodbv2.model.StreamViewType;
-import com.amazonaws.services.dynamodbv2.model.UpdateTableRequest;
 import com.amazonaws.services.lambda.AWSLambda;
 import com.amazonaws.services.lambda.model.CreateEventSourceMappingRequest;
 import com.amazonaws.services.lambda.model.DeleteEventSourceMappingRequest;
@@ -55,10 +52,12 @@ class AwsDbSubscription extends DbSubscription
 
   private final AWSLambda             lambdaClient_;
   private final AmazonDynamoDBStreams dynamoStreamsClient_;
-  private final AmazonDynamoDB        amazonDynamoDB_;
+//  private final AmazonDynamoDB        amazonDynamoDB_;
 
   private final int batchSize_;
   private final int concurrency_;
+
+//  private StreamViewType streamViewType_ = StreamViewType.NEW_AND_OLD_IMAGES;
   
   AwsDbSubscription(JsonObject<?> json, INameFactory nameFactory, AWSLambda lambdaClient, AmazonDynamoDBStreams dynamoStreamsClient,
       AmazonDynamoDB amazonDynamoDB)
@@ -67,7 +66,7 @@ class AwsDbSubscription extends DbSubscription
     
     lambdaClient_ = lambdaClient;
     dynamoStreamsClient_ = dynamoStreamsClient;
-    amazonDynamoDB_ = amazonDynamoDB;
+//    amazonDynamoDB_ = amazonDynamoDB;
 
     batchSize_ = json.getInteger("batchSize", 5);
     concurrency_ = json.getInteger("concurrency", 1);
@@ -80,23 +79,24 @@ class AwsDbSubscription extends DbSubscription
     
     if(eventSourceArn == null)
     {
-      // create the stream
-      amazonDynamoDB_.updateTable(new UpdateTableRequest()
-          .withTableName(getTableName())
-          .withStreamSpecification(new StreamSpecification()
-              .withStreamEnabled(true)
-              .withStreamViewType(StreamViewType.NEW_IMAGE)
-              )
-          );
-      
-      eventSourceArn = fetchEventSourceArn();
-      
-      if(eventSourceArn == null)
-        throw new IllegalStateException("Stream does not exist after creating it!");
-      
-      log_.info("DynamoDb stream created as " + eventSourceArn);
+      throw new IllegalStateException("Table " + getTableName() + " does not have streams enabled, cannot create lambda subscription!");
+//      // create the stream
+//      amazonDynamoDB_.updateTable(new UpdateTableRequest()
+//          .withTableName(getTableName())
+//          .withStreamSpecification(new StreamSpecification()
+//              .withStreamEnabled(true)
+//              .withStreamViewType(streamViewType_)
+//              )
+//          );
+//      eventSourceArn = fetchEventSourceArn();
+//      
+//      if(eventSourceArn == null)
+//        throw new IllegalStateException("Stream does not exist after creating it!");
+//      
+//      log_.info("DynamoDb stream created as " + eventSourceArn);
     }
     
+    // delete any obsolete mapping to the bare function, we need to use an alias to get provisioned concurrency
     deleteEventSourceMapping(functionName, eventSourceArn);
     createEventSourceMapping(functionName + ":" + AwsFugueDeploy.LAMBDA_ALIAS_NAME, eventSourceArn);
   }
@@ -112,18 +112,6 @@ class AwsDbSubscription extends DbSubscription
     {
       if(mapping.getEventSourceArn().startsWith(eventSourceArn))
       {
-//        if("Enabled".equals(mapping.getState()))
-//        {
-//          log_.info("Event source mapping to " + functionName + " exists and is " + mapping.getState());
-//          
-//          UpdateEventSourceMappingResult updateResult = lambdaClient_.updateEventSourceMapping(new UpdateEventSourceMappingRequest()
-//              .withUUID(mapping.getUUID())
-//              .withEnabled(false)
-//              );
-//          
-//          log_.info("Event source mapping updated to state " + updateResult.getState());
-//        }
-        
         lambdaClient_.deleteEventSourceMapping(new DeleteEventSourceMappingRequest()
             .withUUID(mapping.getUUID())
             );

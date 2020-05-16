@@ -186,6 +186,16 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
     }
   }
 
+  /**
+   * Return the name of this table.
+   * 
+   * @return the name of this table.
+   */
+  public String getTableName()
+  {
+    return objectTableName_;
+  }
+
   @Override
   public String fetch(IKvPartitionSortKeyProvider partitionSortKey, ITraceContext trace) throws NoSuchObjectException
   {
@@ -509,16 +519,11 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
   }
   
   @Override
-  public void delete(IKvPartitionSortKeyProvider partitionSortKeyProvider, Hash absoluteHash,
-      IKvPartitionKeyProvider versionPartitionKey, IKvPartitionSortKeyProvider absoluteHashPrefix, ITraceContext trace) throws NoSuchObjectException
+  public void delete(IKvPartitionSortKeyProvider partitionSortKeyProvider, 
+      IKvPartitionKeyProvider versionPartitionKey, IKvPartitionSortKeyProvider absoluteHashPrefix, ITraceContext trace)
   {
-    List<TransactWriteItem> actions = new ArrayList<>(2);
-    
     String    existingPartitionKey = getPartitionKey(partitionSortKeyProvider);
     String    existingSortKey = partitionSortKeyProvider.getSortKey().asString();
-    Condition condition = new Condition(ColumnNameAbsoluteHash + " = :ah").withString(":ah", absoluteHash.toStringBase64());
-    
-    deleteFromSecondaryStorage(absoluteHash, trace);
     
     String after = null;
     do
@@ -534,17 +539,11 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
     
     itemKey.put(ColumnNamePartitionKey, new AttributeValue(existingPartitionKey));
     itemKey.put(ColumnNameSortKey, new AttributeValue(existingSortKey));
-   
-    Delete delete = new Delete()
-        .withTableName(objectTable_.getTableName())
-        .withConditionExpression(condition.expression_)
-        .withExpressionAttributeValues(condition.attributeValues_)
+    
+    amazonDynamoDB_.deleteItem(new DeleteItemRequest()
+        .withTableName(objectTableName_)
         .withKey(itemKey)
-        ;
-    
-    actions.add(new TransactWriteItem().withDelete(delete));
-    
-    write(actions, absoluteHash, "Object to be deleted (" + absoluteHash + ") has changed.", trace);
+        );
   }
   
   @Override

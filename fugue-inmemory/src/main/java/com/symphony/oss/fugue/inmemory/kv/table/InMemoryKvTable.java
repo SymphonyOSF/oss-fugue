@@ -92,9 +92,8 @@ public class InMemoryKvTable implements IKvTable
   }
 
   @Override
-  public void delete(IKvPartitionSortKeyProvider partitionSortKeyProvider, Hash absoluteHash,
+  public void delete(IKvPartitionSortKeyProvider partitionSortKeyProvider,
       IKvPartitionKeyProvider versionPartitionKey, IKvPartitionSortKeyProvider absoluteHashPrefix, ITraceContext trace)
-      throws NoSuchObjectException
   {
     String partitionKey = getPartitionKey(partitionSortKeyProvider);
     String sortKey = partitionSortKeyProvider.getSortKey().asString();
@@ -103,14 +102,6 @@ public class InMemoryKvTable implements IKvTable
     
     synchronized (partition)
     {
-      IKvItem existing = partition.get(sortKey);
-      
-      if(existing == null)
-        throw new NoSuchObjectException("Object does not exist");
-      
-      if(!absoluteHash.equals(existing.getAbsoluteHash()))
-        throw new NoSuchObjectException("Object has changed");
-      
       partition.remove(sortKey);
     }
     

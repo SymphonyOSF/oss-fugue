@@ -27,7 +27,19 @@ public interface IUIBasePanel
 {
   public static final String CLASS_STRIPY_TABLE = "w3-striped w3-bordered w3-border w3-hoverable w3-white";
   public static final String CLASS = "class";
+  public static final String TYPE = "type";
+  public static final String CHECKBOX = "checkbox";
+  public static final String CHECKED = "checked";
+  public static final String VALUE = "value";
+  public static final String ON_CHANGE = "onchange";
+  public static final String ON_CLICK = "onclick";
+  public static final String ID = "id";
+  public static final String STYLE = "style";
+  public static final String VISIBILITY_COLLAPSE = "visibility: collapse";
+  public static final String VISIBILITY_SHOW = "visibility:";
   public static final String TABLE = "table";
+  public static final String TRUE = "true";
+  public static final String FALSE = "false";
   
   String getName();
   

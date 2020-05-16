@@ -164,7 +164,7 @@ public class S3DynamoDbKvTable extends AbstractDynamoDbKvTable<S3DynamoDbKvTable
   }
   
   @Override
-  protected void deleteFromSecondaryStorage(Hash absoluteHash, ITraceContext trace)
+  public void deleteFromSecondaryStorage(Hash absoluteHash, ITraceContext trace)
   {
     s3Client_.deleteObject(objectBucketName_, s3Key(absoluteHash));
     

@@ -71,13 +71,15 @@ public class AbstractFugueHttpUiServer<T extends AbstractFugueHttpUiServer<T>> e
     uiServletRoot_       = builder.uiServletRoot_;
     
     builder.statusServlet_.withComponentContainer(this);
-    builder.shutdownCommand_.server_ = this;
+    
+    if(builder.shutdownCommand_ != null)
+      builder.shutdownCommand_.server_ = this;
   }
 
   /**
    * The builder implementation.
    * 
-   * Any sub-class of FugueLifecycleComponent would need to implement its own Abstract sub-class of this class
+   * Any sub-class would need to implement its own Abstract sub-class of this class
    * and then a concrete Builder class which is itself a sub-class of that.
    * 
    * @author Bruce Skingle

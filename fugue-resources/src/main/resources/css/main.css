@@ -29,7 +29,7 @@ legend{color:inherit;display:table;max-width:100%;padding:0;white-space:normal}t
 ::-webkit-input-placeholder{color:inherit;opacity:0.54}
 ::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}
 /* End extract */
-html,body{font-family:Verdana,sans-serif;font-size:15px;line-height:1.5}html{overflow-x:hidden}
+html,body{font-family:Verdana,sans-serif;font-size:15px;line-height:1.5}html
 h1,h2,h3,h4,h5,h6,.w3-slim,.w3-wide{font-family:"Segoe UI",Arial,sans-serif}
 h1{font-size:36px}h2{font-size:30px}h3{font-size:24px}h4{font-size:20px}h5{font-size:18px}h6{font-size:16px}
 .w3-serif{font-family:"Times New Roman",Times,serif}
@@ -225,6 +225,7 @@ input[type=checkbox].w3-check:disabled+.w3-validate,input[type=radio].w3-radio:d
 .w3-panel{padding:0.01em 16px;margin-top:16px!important;margin-bottom:16px!important}
 .w3-example{background-color:#f1f1f1;padding:0.01em 16px}
 .w3-code,.w3-codespan{font-family:Consolas,"courier new";font-size:16px}
+.sym-codespan{font-family:monospace,monospace;font-size:16px}
 .w3-code{line-height:1.4;width:auto;background-color:#fff;padding:8px 12px;border-left:4px solid #4CAF50;word-wrap:break-word}
 .w3-codespan{color:crimson;background-color:#f1f1f1;padding-left:4px;padding-right:4px;font-size:110%}
 .w3-example,.w3-code{margin:20px 0}.w3-card{border:1px solid #ccc}
@@ -348,3 +349,49 @@ input[type=checkbox].w3-check:disabled+.w3-validate,input[type=radio].w3-radio:d
 .w3-border-dark-grey,.w3-hover-border-dark-grey:hover{border-color:#616161!important}
 .w3-border-pale-red,.w3-hover-border-pale-red:hover{border-color:#ffe7e7!important}.w3-border-pale-green,.w3-hover-border-pale-green:hover{border-color:#e7ffe7!important}
 .w3-border-pale-yellow,.w3-hover-border-pale-yellow:hover{border-color:#ffffcc!important}.w3-border-pale-blue,.w3-hover-border-pale-blue:hover{border-color:#e7ffff!important}
+
+/* Dropdown Button */
+.dropbtn {
+  background-color:#f5f6fa;
+  color: #7253ed;
+  padding: 16px;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+}
+
+/* Dropdown button on hover & focus */
+.dropbtn:hover, .dropbtn:focus {
+  background-color: #7253ed;
+  color: white;
+}
+
+/* The container <div> - needed to position the dropdown content */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+/* Dropdown Content (Hidden by Default) */
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #f1f1f1;
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  z-index: 1;
+}
+
+/* Links inside the dropdown */
+.dropdown-content a {
+  color: black;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+}
+
+/* Change color of dropdown links on hover */
+.dropdown-content a:hover {background-color: #ddd}
+
+/* Show the dropdown menu (use JS to add this class to the .dropdown-content container when the user clicks on the dropdown button) */
+.show {display:block;}
