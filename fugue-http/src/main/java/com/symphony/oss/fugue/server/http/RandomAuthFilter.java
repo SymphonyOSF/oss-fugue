@@ -45,11 +45,18 @@ public class RandomAuthFilter implements Filter
   
   private String authToken_;
   private String sessionToken_;
+  private boolean allowMultipleLogins_;
 
   public RandomAuthFilter()
   {
+    this(false);
+  }
+  
+  public RandomAuthFilter(boolean allowMultipleLogins)
+  {
     authToken_ = UUID.randomUUID().toString();
     sessionToken_ = UUID.randomUUID().toString();
+    allowMultipleLogins_ = allowMultipleLogins;
   }
   
   
@@ -95,7 +102,8 @@ public class RandomAuthFilter implements Filter
       
       if(authToken_.equals(loginToken))
       {
-        authToken_ = null;
+        if(!allowMultipleLogins_)
+          authToken_ = null;
         
         Cookie cookie = new Cookie(SESSION_TOKEN, sessionToken_);
         resp.addCookie(cookie);

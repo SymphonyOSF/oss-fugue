@@ -232,7 +232,7 @@ public class AbstractFugueHttpUiServer<T extends AbstractFugueHttpUiServer<T>> e
     {
       if(localWebLogin_)
       {
-        filter = new RandomAuthFilter();
+        filter = new RandomAuthFilter(true);
         httpServerBuilder.withFilter(filter);
         
         shutdownCommand_ = new ShutdownCommand();

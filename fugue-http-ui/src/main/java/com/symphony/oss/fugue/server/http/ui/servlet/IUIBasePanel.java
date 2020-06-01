@@ -26,6 +26,7 @@ package com.symphony.oss.fugue.server.http.ui.servlet;
 public interface IUIBasePanel
 {
   public static final String CLASS_STRIPY_TABLE = "w3-striped w3-bordered w3-border w3-hoverable w3-white";
+  public static final String CLASS_CHOOSER_CONTROL = "chooser-control";
   public static final String CLASS = "class";
   public static final String TYPE = "type";
   public static final String CHECKBOX = "checkbox";
