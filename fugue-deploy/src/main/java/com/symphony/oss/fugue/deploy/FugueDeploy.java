@@ -1102,6 +1102,7 @@ public abstract class FugueDeploy extends CommandLineHandler
     protected abstract void deployLambdaContainer(String name, String imageName, String roleId, String handler, int memorySize, int timeout, 
         int provisionedConcurrentExecutions, Map<String, String> variables, Collection<String> paths);
     protected abstract void postDeployLambdaContainer(String name, Collection<String> paths, Collection<Subscription> subscriptions);
+    protected abstract void postDeployExternalLambdaContainer(String name, String arn, Collection<String> paths);
     protected abstract void postDeployContainers();
     
     protected abstract void deployService();
@@ -1231,6 +1232,8 @@ public abstract class FugueDeploy extends CommandLineHandler
     
     protected void populateTemplateVariables(ImmutableJsonObject config, Map<String, String> templateVariables)
     {
+      populateTemplateVariables("/", config, templateVariables);
+      
       IJsonObject<?>      id = config.getRequiredObject(ID);
       Iterator<String>    it;
       
@@ -1278,6 +1281,27 @@ public abstract class FugueDeploy extends CommandLineHandler
 
     }
     
+    private void populateTemplateVariables(String prefix, ImmutableJsonObject config,
+        Map<String, String> templateVariables)
+    {
+      Iterator<String>    it = config.getNameIterator();
+      while(it.hasNext())
+      {
+        String name = it.next();
+        
+        IJsonDomNode value = config.get(name);
+        
+        if(value instanceof IStringProvider)
+        {
+          templateVariables.put(prefix + name, ((IStringProvider)value).asString());
+        }
+        else if(value instanceof ImmutableJsonObject)
+        {
+          populateTemplateVariables(prefix + name + "/", (ImmutableJsonObject) value, templateVariables);
+        }
+      }
+    }
+
     /**
      * Load a template and perform variable substitution.
      * 
@@ -1542,6 +1566,7 @@ public abstract class FugueDeploy extends CommandLineHandler
       if(!getContainerMap().isEmpty())
       {
         postDeployLambdaContainers(ContainerType.LAMBDA);
+        postDeployExternalLambdaContainers(ContainerType.EXTERNAL_LAMBDA);
       }
       postDeployContainers();
     }
@@ -1562,6 +1587,29 @@ public abstract class FugueDeploy extends CommandLineHandler
           postDeployLambdaContainer(name,
               paths,
               subscriptions
+              );
+        }
+      }
+    }
+
+    private void postDeployExternalLambdaContainers(ContainerType containerType)
+    {
+      Map<String, JsonObject<?>> map = containerMap_.get(containerType);
+      
+      if(map != null)
+      {
+        for(String name : map.keySet())
+        {
+          JsonObject<?> container = map.get(name);
+
+          Collection<String> paths = container.getListOf(String.class, PATHS);
+          
+          String arn = container.getRequiredString("arn");
+          
+          arn = sub_.replace(arn);
+          
+          postDeployExternalLambdaContainer(name, arn,
+              paths
               );
         }
       }

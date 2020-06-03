@@ -44,8 +44,9 @@ import com.symphony.oss.fugue.kv.IKvPartitionSortKeyProvider;
 import com.symphony.oss.fugue.kv.KvCondition;
 import com.symphony.oss.fugue.kv.KvPagination;
 import com.symphony.oss.fugue.kv.table.IKvTable;
+import com.symphony.oss.fugue.kv.table.IKvTableTransaction;
 import com.symphony.oss.fugue.store.NoSuchObjectException;
-import com.symphony.oss.fugue.store.ObjectExistsException;
+import com.symphony.oss.fugue.store.TransactionFailedException;
 import com.symphony.oss.fugue.trace.ITraceContext;
 
 /**
@@ -124,51 +125,6 @@ public class InMemoryKvTable implements IKvTable
     }
   }
 
-  @Override
-  public void update(IKvPartitionSortKeyProvider partitionSortKeyProvider, Hash absoluteHash, Set<IKvItem> kvItems,
-      ITraceContext trace) throws NoSuchObjectException
-  {
-    String partitionKey = getPartitionKey(partitionSortKeyProvider);
-    String sortKey = partitionSortKeyProvider.getSortKey().asString();
-    
-    Map<String, IKvItem> partition = getPartition(partitionKey);
-    
-    synchronized (partition)
-    {
-      IKvItem existing = partition.get(sortKey);
-      
-      if(existing == null)
-        throw new NoSuchObjectException("Object does not exist");
-      
-      if(!absoluteHash.equals(existing.getAbsoluteHash()))
-        throw new NoSuchObjectException("Object has changed");
-      
-      for(IKvItem kvItem : kvItems)
-      {
-        String updatePartitionKey = getPartitionKey(kvItem);
-        
-        Map<String, IKvItem> updatePartition = getPartition(updatePartitionKey);
-        
-        if(partition == updatePartition && !sortKey.equals(kvItem.getSortKey().asString()))
-        {
-          if(updatePartition.containsKey(sortKey))
-            throw new NoSuchObjectException("An object with the new sort key already exists.");
-        }
-      }
-      
-      partition.remove(sortKey);
-      
-      for(IKvItem kvItem : kvItems)
-      {
-        String updatePartitionKey = getPartitionKey(kvItem);
-        
-        Map<String, IKvItem> updatePartition = getPartition(updatePartitionKey);
-        
-        updatePartition.put(kvItem.getSortKey().asString(), kvItem);
-      }
-    }
-  }
-
   private void store(IKvItem kvItem)
   { 
     String partitionKey = getPartitionKey(kvItem);
@@ -241,24 +197,131 @@ public class InMemoryKvTable implements IKvTable
     for(IKvItem item : kvItems)
       store(item);
   }
-
+  
   @Override
-  public void store(IKvPartitionSortKeyProvider partitionSortKeyProvider, Collection<IKvItem> kvItems,
-      ITraceContext trace) throws ObjectExistsException
+  public IKvTableTransaction createTransaction()
   {
-    if(partitionSortKeyProvider != null)
+    return new Transaction();
+  }
+
+  class Transaction implements IKvTableTransaction
+  {
+    private final Map<String, TreeMap<String, IKvItem>>  txnPartitionMap_ = new HashMap<>();
+    private TransactionFailedException  exception_;
+    
+    private synchronized Map<String, IKvItem> getTxnPartition(String partitionKey)
     {
+      TreeMap<String, IKvItem> partition = txnPartitionMap_.get(partitionKey);
+      
+      if(partition == null)
+      {
+        TreeMap<String, IKvItem> p = getPartition(partitionKey);
+        
+        partition = new TreeMap<String, IKvItem>(p);
+        
+        txnPartitionMap_.put(partitionKey, partition);
+      }
+      return partition;
+    }
+    
+    private void txnStore(IKvItem kvItem)
+    { 
+      String partitionKey = getPartitionKey(kvItem);
+      String sortKey = kvItem.getSortKey().asString();
+      
+      Map<String, IKvItem> partition = getTxnPartition(partitionKey);
+      
+      partition.put(sortKey, kvItem);
+    }
+    
+    @Override
+    public void store(IKvPartitionSortKeyProvider partitionSortKeyProvider, Collection<IKvItem> kvItems)
+    {
+      if(exception_ != null)
+        return;
+      
+      if(partitionSortKeyProvider != null)
+      {
+        String partitionKey = getPartitionKey(partitionSortKeyProvider);
+        String sortKey = partitionSortKeyProvider.getSortKey().asString();
+        
+        Map<String, IKvItem> partition = getTxnPartition(partitionKey);
+        
+        if(partition.containsKey(sortKey))
+        {
+          exception_ = new TransactionFailedException("Object with key " + partitionSortKeyProvider + " already exists.");
+          return;
+        }
+      }
+      
+      for(IKvItem item : kvItems)
+        txnStore(item);
+    }
+
+    @Override
+    public void update(IKvPartitionSortKeyProvider partitionSortKeyProvider, Hash absoluteHash, Set<IKvItem> kvItems)
+    {
+      if(exception_ != null)
+        return;
+      
       String partitionKey = getPartitionKey(partitionSortKeyProvider);
       String sortKey = partitionSortKeyProvider.getSortKey().asString();
       
-      Map<String, IKvItem> partition = getPartition(partitionKey);
+      Map<String, IKvItem> partition = getTxnPartition(partitionKey);
       
-      if(partition.containsKey(sortKey))
-          throw new ObjectExistsException("Object with key " + partitionSortKeyProvider + " already exists.");
+      synchronized (partition)
+      {
+        IKvItem existing = partition.get(sortKey);
+        
+        if(existing == null)
+        {
+          exception_ = new TransactionFailedException("Object does not exist");
+          return;
+        }
+        
+        if(!absoluteHash.equals(existing.getAbsoluteHash()))
+        {
+          exception_ = new TransactionFailedException("Object has changed");
+          return;
+        }
+        
+        for(IKvItem kvItem : kvItems)
+        {
+          String updatePartitionKey = getPartitionKey(kvItem);
+          
+          Map<String, IKvItem> updatePartition = getPartition(updatePartitionKey);
+          
+          if(partition == updatePartition && !sortKey.equals(kvItem.getSortKey().asString()))
+          {
+            if(updatePartition.containsKey(sortKey))
+            {
+              exception_ = new TransactionFailedException("An object with the new sort key already exists.");
+              return;
+            }
+          }
+        }
+        
+        partition.remove(sortKey);
+        
+        for(IKvItem kvItem : kvItems)
+        {
+          String updatePartitionKey = getPartitionKey(kvItem);
+          
+          Map<String, IKvItem> updatePartition = getTxnPartition(updatePartitionKey);
+          
+          updatePartition.put(kvItem.getSortKey().asString(), kvItem);
+        }
+      }
     }
-    
-    for(IKvItem item : kvItems)
-      store(item);
+
+    @Override
+    public void commit(ITraceContext trace) throws TransactionFailedException
+    {
+      if(exception_ != null)
+        throw exception_;
+      
+      partitionMap_.putAll(txnPartitionMap_);
+    }
   }
 
   @Override

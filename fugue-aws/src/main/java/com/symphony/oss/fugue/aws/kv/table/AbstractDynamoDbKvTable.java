@@ -27,10 +27,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
@@ -58,6 +60,7 @@ import com.amazonaws.services.dynamodbv2.document.TableWriteItems;
 import com.amazonaws.services.dynamodbv2.document.spec.GetItemSpec;
 import com.amazonaws.services.dynamodbv2.document.spec.QuerySpec;
 import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
+import com.amazonaws.services.dynamodbv2.model.AmazonDynamoDBException;
 import com.amazonaws.services.dynamodbv2.model.AttributeDefinition;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.BillingMode;
@@ -101,8 +104,9 @@ import com.symphony.oss.fugue.kv.IKvPartitionSortKeyProvider;
 import com.symphony.oss.fugue.kv.KvCondition;
 import com.symphony.oss.fugue.kv.KvPagination;
 import com.symphony.oss.fugue.kv.table.AbstractKvTable;
+import com.symphony.oss.fugue.kv.table.IKvTableTransaction;
 import com.symphony.oss.fugue.store.NoSuchObjectException;
-import com.symphony.oss.fugue.store.ObjectExistsException;
+import com.symphony.oss.fugue.store.TransactionFailedException;
 import com.symphony.oss.fugue.trace.ITraceContext;
 import com.symphony.oss.fugue.trace.NoOpTraceContext;
 
@@ -129,6 +133,7 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
   protected static final int          MAX_RECORD_SIZE        = 400 * 1024;
 
   private static final String KEY_EXISTS = "An object with given partition and sort key already exists.";
+  private static final String KEY_EXISTS_OR_OBJECT_CHANGED = "An object with given partition and sort key already exists, or the object to be updated has changed.";
 
   protected final String              region_;
 
@@ -295,79 +300,91 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
   }
 
   @Override
+  public Transaction createTransaction()
+  {
+    return new Transaction();
+  }
+
+  @Override
   public void store(Collection<IKvItem> kvItems, ITraceContext trace)
   {
     try
     {
-      store(null, kvItems, trace);
+//      store(null, kvItems, trace);
+      
+      Transaction transaction = new Transaction();
+      
+      transaction.store(null, kvItems);
+      
+      transaction.commit(trace);
     }
-    catch (ObjectExistsException e)
+    catch (TransactionFailedException e)
     {
       throw new IllegalStateException(e);
     }
   }
 
-  @Override
-  public void store(@Nullable IKvPartitionSortKeyProvider partitionSortKeyProvider, Collection<IKvItem> kvItems, ITraceContext trace) throws ObjectExistsException
-  {
-    if(kvItems.isEmpty())
-      return;
-
-    Hash        absoluteHash = null;
-    List<TransactWriteItem> actions = new ArrayList<>(kvItems.size());
-    String    existingPartitionKey = partitionSortKeyProvider==null ? null : getPartitionKey(partitionSortKeyProvider);
-    String    existingSortKey = partitionSortKeyProvider==null ? null : partitionSortKeyProvider.getSortKey().asString();
-      
-    
-    Hash secondaryStoredHash = null;
-    
-    for(IKvItem kvItem : kvItems)
-    {
-      String partitionKey = getPartitionKey(kvItem);
-      String sortKey = kvItem.getSortKey().asString();
-      
-      UpdateOrPut updateOrPut = new UpdateOrPut(kvItem, partitionKey, sortKey, payloadLimit_);
-      
-      absoluteHash = kvItem.getAbsoluteHash();
-      
-      if(kvItem.isSaveToSecondaryStorage())
-      {
-        if(storeToSecondaryStorage(kvItem, updateOrPut.payloadNotStored_, trace))
-          secondaryStoredHash = kvItem.getAbsoluteHash();
-      }
-      
-      Put put = updateOrPut.createPut();
-      
-      // It's not strictly necessary to check both things for null but it stops the compiler complaining...
-      if(existingPartitionKey!=null && existingSortKey!=null && existingPartitionKey.equals(partitionKey) && existingSortKey.equals(sortKey))
-      {
-        put.withConditionExpression("attribute_not_exists(" + ColumnNamePartitionKey + ") and attribute_not_exists(" + ColumnNameSortKey + ")");
-      }
-      
-      actions.add(new TransactWriteItem().withPut(put));
-    }
-    
-    try
-    {
-      write(actions, absoluteHash, KEY_EXISTS, trace);
-    }
-    catch (NoSuchObjectException e)
-    {
-      log_.error("Failed to wite objects", e);
-      if(secondaryStoredHash != null)
-      {
-        try
-        {
-          deleteFromSecondaryStorage(secondaryStoredHash, trace);
-        }
-        catch(RuntimeException e2)
-        {
-          log_.error("Failed to delete secondary copy of " + secondaryStoredHash, e2);
-        }
-      }
-      throw new ObjectExistsException(KEY_EXISTS, e);
-    }
-  }
+//  @Override
+//  public void store(@Nullable IKvPartitionSortKeyProvider partitionSortKeyProvider, Collection<IKvItem> kvItems, ITraceContext trace) throws ObjectExistsException
+//  {
+//    if(kvItems.isEmpty())
+//      return;
+//
+//    Hash        absoluteHash = null;
+//    List<TransactWriteItem> actions = new ArrayList<>(kvItems.size());
+//    String    existingPartitionKey = partitionSortKeyProvider==null ? null : getPartitionKey(partitionSortKeyProvider);
+//    String    existingSortKey = partitionSortKeyProvider==null ? null : partitionSortKeyProvider.getSortKey().asString();
+//      
+//    
+//    Hash secondaryStoredHash = null;
+//    
+//    for(IKvItem kvItem : kvItems)
+//    {
+//      String partitionKey = getPartitionKey(kvItem);
+//      String sortKey = kvItem.getSortKey().asString();
+//      
+//      UpdateOrPut updateOrPut = new UpdateOrPut(kvItem, partitionKey, sortKey, payloadLimit_);
+//      
+//      absoluteHash = kvItem.getAbsoluteHash();
+//      
+//      if(kvItem.isSaveToSecondaryStorage())
+//      {
+//        if(storeToSecondaryStorage(kvItem, updateOrPut.payloadNotStored_, trace))
+//          secondaryStoredHash = kvItem.getAbsoluteHash();
+//      }
+//      
+//      Put put = updateOrPut.createPut();
+//      
+//      // It's not strictly necessary to check both things for null but it stops the compiler complaining...
+//      if(existingPartitionKey!=null && existingSortKey!=null && existingPartitionKey.equals(partitionKey) && existingSortKey.equals(sortKey))
+//      {
+//        put.withConditionExpression("attribute_not_exists(" + ColumnNamePartitionKey + ") and attribute_not_exists(" + ColumnNameSortKey + ")");
+//      }
+//      
+//      actions.add(new TransactWriteItem().withPut(put));
+//    }
+//    
+//    try
+//    {
+//      write(actions, absoluteHash.toStringBase64(), KEY_EXISTS, trace);
+//    }
+//    catch (NoSuchObjectException e)
+//    {
+//      log_.error("Failed to wite objects", e);
+//      if(secondaryStoredHash != null)
+//      {
+//        try
+//        {
+//          deleteFromSecondaryStorage(secondaryStoredHash, trace);
+//        }
+//        catch(RuntimeException e2)
+//        {
+//          log_.error("Failed to delete secondary copy of " + secondaryStoredHash, e2);
+//        }
+//      }
+//      throw new ObjectExistsException(KEY_EXISTS, e);
+//    }
+//  }
   
   @Override
   public void store(IKvItem kvItem, KvCondition kvCondition, ITraceContext trace)
@@ -404,7 +421,7 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
     try
     {
       trace.trace("ABOUT_TO_STORE_CONDITIONAL", kvItem);
-      write(actions, absoluteHash, "Conditions not met.", trace);
+      write(actions, absoluteHash.toStringBase64(), "Conditions not met.", trace);
       trace.trace("STORED_CONDITIONAL", kvItem);
     }
     catch (NoSuchObjectException e)
@@ -563,102 +580,271 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
         );
   }
   
-  @Override
-  public void update(IKvPartitionSortKeyProvider partitionSortKeyProvider, Hash absoluteHash, Set<IKvItem> kvItems,
-      ITraceContext trace) throws NoSuchObjectException
+  public class Transaction implements IKvTableTransaction
   {
-    List<TransactWriteItem> actions = new ArrayList<>(kvItems.size() + 2);
-    
-    String    existingPartitionKey = getPartitionKey(partitionSortKeyProvider);
-    String    existingSortKey = partitionSortKeyProvider.getSortKey().asString();
-    Condition condition = new Condition(ColumnNameAbsoluteHash + " = :ah").withString(":ah", absoluteHash.toStringBase64());
-    
-    Hash secondaryStoredHash = null;
-    
-    for(IKvItem kvItem : kvItems)
+    String                  id_ = UUID.randomUUID().toString();
+    List<TransactWriteItem> actions_ = new LinkedList<>();
+    List<IKvItem>           secondaryStorageItemNotStored_ = new LinkedList<>();
+    List<IKvItem>           secondaryStorageItemStored_ = new LinkedList<>();
+
+    @Override
+    public void commit(ITraceContext trace) throws TransactionFailedException
     {
-      String partitionKey = getPartitionKey(kvItem);
-      String sortKey = kvItem.getSortKey().asString();
+      List<Hash> secondaryStoredHashes = new LinkedList<>();
       
-      UpdateOrPut updateOrPut = new UpdateOrPut(kvItem, partitionKey, sortKey, payloadLimit_);
-      
-      if(existingPartitionKey.equals(partitionKey) && existingSortKey.equals(sortKey))
+      for(IKvItem kvItem : secondaryStorageItemNotStored_)
       {
-        actions.add(new TransactWriteItem()
-            .withUpdate(
-                updateOrPut.createUpdate(condition)
-                )
-            );
-        
-        condition = null;
+        if(storeToSecondaryStorage(kvItem, true, trace))
+          secondaryStoredHashes.add(kvItem.getAbsoluteHash());
       }
-      else
+      
+      for(IKvItem kvItem : secondaryStorageItemStored_)
       {
+        if(storeToSecondaryStorage(kvItem, false, trace))
+          secondaryStoredHashes.add(kvItem.getAbsoluteHash());
+      }
+      
+      try
+      {
+        write(actions_, id_, KEY_EXISTS_OR_OBJECT_CHANGED, trace);
+      }
+      catch(AmazonDynamoDBException e)
+      {
+        int i = e.getErrorMessage().lastIndexOf(':');
+        
+        if(i != -1)
+        {
+          String s =  e.getErrorMessage().substring(i);
+          
+          if(s.startsWith(": Member must have length less than or equal to "))
+          {
+            throw new IllegalArgumentException("Transaction too large" + s);
+          }
+        }
+        
+        throw e;
+      }
+      catch (NoSuchObjectException e)
+      {
+        log_.error("Failed to wite objects", e);
+        for(Hash secondaryStoredHash : secondaryStoredHashes)
+        {
+          try
+          {
+            deleteFromSecondaryStorage(secondaryStoredHash, trace);
+          }
+          catch(RuntimeException e2)
+          {
+            log_.error("Failed to delete secondary copy of " + secondaryStoredHash, e2);
+          }
+        }
+        throw new TransactionFailedException(KEY_EXISTS_OR_OBJECT_CHANGED, e);
+      }
+    }
+
+    @Override
+    public void store(@Nullable IKvPartitionSortKeyProvider partitionSortKeyProvider, Collection<IKvItem> kvItems)
+    {
+      if(kvItems.isEmpty())
+        return;
+
+      //Hash        absoluteHash = null;
+      String    existingPartitionKey = partitionSortKeyProvider==null ? null : getPartitionKey(partitionSortKeyProvider);
+      String    existingSortKey = partitionSortKeyProvider==null ? null : partitionSortKeyProvider.getSortKey().asString();
+
+      
+      for(IKvItem kvItem : kvItems)
+      {
+        String partitionKey = getPartitionKey(kvItem);
+        String sortKey = kvItem.getSortKey().asString();
+        
+        UpdateOrPut updateOrPut = new UpdateOrPut(kvItem, partitionKey, sortKey, payloadLimit_);
+        
+        if(kvItem.isSaveToSecondaryStorage())
+        {
+          if(updateOrPut.payloadNotStored_)
+            secondaryStorageItemNotStored_.add(kvItem);
+          else
+            secondaryStorageItemStored_.add(kvItem);
+        }
+        
         Put put = updateOrPut.createPut();
         
-        if(existingPartitionKey.equals(partitionKey))
+        // It's not strictly necessary to check both things for null but it stops the compiler complaining...
+        if(existingPartitionKey!=null && existingSortKey!=null && existingPartitionKey.equals(partitionKey) && existingSortKey.equals(sortKey))
         {
           put.withConditionExpression("attribute_not_exists(" + ColumnNamePartitionKey + ") and attribute_not_exists(" + ColumnNameSortKey + ")");
         }
-            
-        actions.add(new TransactWriteItem()
-            .withPut(put)
-            );
-                
-      }
-      
-      if(kvItem.isSaveToSecondaryStorage())
-      {
-        if(storeToSecondaryStorage(kvItem, updateOrPut.payloadNotStored_, trace))
-          secondaryStoredHash = kvItem.getAbsoluteHash();
+        
+        actions_.add(new TransactWriteItem().withPut(put));
       }
     }
     
-    String error = "Object to be updated (" + absoluteHash + ") has changed.";
-    
-    if(condition != null)
+    @Override
+    public void update(IKvPartitionSortKeyProvider partitionSortKeyProvider, Hash absoluteHash, Set<IKvItem> kvItems)
     {
-      // The prev version has a different sort key
+      String    existingPartitionKey = getPartitionKey(partitionSortKeyProvider);
+      String    existingSortKey = partitionSortKeyProvider.getSortKey().asString();
+      Condition condition = new Condition(ColumnNameAbsoluteHash + " = :ah").withString(":ah", absoluteHash.toStringBase64());
+      
+      for(IKvItem kvItem : kvItems)
+      {
+        String partitionKey = getPartitionKey(kvItem);
+        String sortKey = kvItem.getSortKey().asString();
+        
+        UpdateOrPut updateOrPut = new UpdateOrPut(kvItem, partitionKey, sortKey, payloadLimit_);
+        
+        if(existingPartitionKey.equals(partitionKey) && existingSortKey.equals(sortKey))
+        {
+          actions_.add(new TransactWriteItem()
+              .withUpdate(
+                  updateOrPut.createUpdate(condition)
+                  )
+              );
+          
+          condition = null;
+        }
+        else
+        {
+          Put put = updateOrPut.createPut();
+          
+          if(existingPartitionKey.equals(partitionKey))
+          {
+            put.withConditionExpression("attribute_not_exists(" + ColumnNamePartitionKey + ") and attribute_not_exists(" + ColumnNameSortKey + ")");
+          }
+              
+          actions_.add(new TransactWriteItem()
+              .withPut(put)
+              );
+                  
+        }
+        
+        if(kvItem.isSaveToSecondaryStorage())
+        {
+          if(updateOrPut.payloadNotStored_)
+            secondaryStorageItemNotStored_.add(kvItem);
+          else
+            secondaryStorageItemStored_.add(kvItem);
+        }
+      }
+      
+      if(condition != null)
+      {
+        // The prev version has a different sort key
 
-      final Map<String, AttributeValue> itemKey = new HashMap<>();
-      
-      itemKey.put(ColumnNamePartitionKey, new AttributeValue(existingPartitionKey));
-      itemKey.put(ColumnNameSortKey, new AttributeValue(existingSortKey));
-     
-      Delete delete = new Delete()
-          .withTableName(objectTable_.getTableName())
-          .withConditionExpression(condition.expression_)
-          .withExpressionAttributeValues(condition.attributeValues_)
-          .withKey(itemKey)
-          ;
-      
-      actions.add(new TransactWriteItem().withDelete(delete));
-      
-      error = "Object to be updated (" + absoluteHash + ") has changed or an object already exists with the new sort key.";
-    }
-    
-    try
-    {
-      write(actions, absoluteHash, error, trace);
-    }
-    catch (NoSuchObjectException e)
-    {
-      if(secondaryStoredHash != null)
-      {
-        try
-        {
-          deleteFromSecondaryStorage(secondaryStoredHash, trace);
-        }
-        catch(RuntimeException e2)
-        {
-          log_.error("Failed to delete secondary copy of " + secondaryStoredHash, e2);
-        }
+        final Map<String, AttributeValue> itemKey = new HashMap<>();
+        
+        itemKey.put(ColumnNamePartitionKey, new AttributeValue(existingPartitionKey));
+        itemKey.put(ColumnNameSortKey, new AttributeValue(existingSortKey));
+       
+        Delete delete = new Delete()
+            .withTableName(objectTable_.getTableName())
+            .withConditionExpression(condition.expression_)
+            .withExpressionAttributeValues(condition.attributeValues_)
+            .withKey(itemKey)
+            ;
+        
+        actions_.add(new TransactWriteItem().withDelete(delete));
       }
-      throw e;
     }
   }
   
-  protected void write(Collection<TransactWriteItem> actions, Hash absoluteHash, String errorMessage, ITraceContext trace) throws NoSuchObjectException
+//  @Override
+//  public void update(IKvPartitionSortKeyProvider partitionSortKeyProvider, Hash absoluteHash, Set<IKvItem> kvItems,
+//      ITraceContext trace) throws NoSuchObjectException
+//  {
+//    List<TransactWriteItem> actions = new ArrayList<>(kvItems.size() + 2);
+//    
+//    String    existingPartitionKey = getPartitionKey(partitionSortKeyProvider);
+//    String    existingSortKey = partitionSortKeyProvider.getSortKey().asString();
+//    Condition condition = new Condition(ColumnNameAbsoluteHash + " = :ah").withString(":ah", absoluteHash.toStringBase64());
+//    
+//    Hash secondaryStoredHash = null;
+//    
+//    for(IKvItem kvItem : kvItems)
+//    {
+//      String partitionKey = getPartitionKey(kvItem);
+//      String sortKey = kvItem.getSortKey().asString();
+//      
+//      UpdateOrPut updateOrPut = new UpdateOrPut(kvItem, partitionKey, sortKey, payloadLimit_);
+//      
+//      if(existingPartitionKey.equals(partitionKey) && existingSortKey.equals(sortKey))
+//      {
+//        actions.add(new TransactWriteItem()
+//            .withUpdate(
+//                updateOrPut.createUpdate(condition)
+//                )
+//            );
+//        
+//        condition = null;
+//      }
+//      else
+//      {
+//        Put put = updateOrPut.createPut();
+//        
+//        if(existingPartitionKey.equals(partitionKey))
+//        {
+//          put.withConditionExpression("attribute_not_exists(" + ColumnNamePartitionKey + ") and attribute_not_exists(" + ColumnNameSortKey + ")");
+//        }
+//            
+//        actions.add(new TransactWriteItem()
+//            .withPut(put)
+//            );
+//                
+//      }
+//      
+//      if(kvItem.isSaveToSecondaryStorage())
+//      {
+//        if(storeToSecondaryStorage(kvItem, updateOrPut.payloadNotStored_, trace))
+//          secondaryStoredHash = kvItem.getAbsoluteHash();
+//      }
+//    }
+//    
+//    String error = "Object to be updated (" + absoluteHash + ") has changed.";
+//    
+//    if(condition != null)
+//    {
+//      // The prev version has a different sort key
+//
+//      final Map<String, AttributeValue> itemKey = new HashMap<>();
+//      
+//      itemKey.put(ColumnNamePartitionKey, new AttributeValue(existingPartitionKey));
+//      itemKey.put(ColumnNameSortKey, new AttributeValue(existingSortKey));
+//     
+//      Delete delete = new Delete()
+//          .withTableName(objectTable_.getTableName())
+//          .withConditionExpression(condition.expression_)
+//          .withExpressionAttributeValues(condition.attributeValues_)
+//          .withKey(itemKey)
+//          ;
+//      
+//      actions.add(new TransactWriteItem().withDelete(delete));
+//      
+//      error = "Object to be updated (" + absoluteHash + ") has changed or an object already exists with the new sort key.";
+//    }
+//    
+//    try
+//    {
+//      write(actions, absoluteHash.toStringBase64(), error, trace);
+//    }
+//    catch (NoSuchObjectException e)
+//    {
+//      if(secondaryStoredHash != null)
+//      {
+//        try
+//        {
+//          deleteFromSecondaryStorage(secondaryStoredHash, trace);
+//        }
+//        catch(RuntimeException e2)
+//        {
+//          log_.error("Failed to delete secondary copy of " + secondaryStoredHash, e2);
+//        }
+//      }
+//      throw e;
+//    }
+//  }
+  
+  protected void write(Collection<TransactWriteItem> actions, String txnId, String errorMessage, ITraceContext trace) throws NoSuchObjectException
   {
     TransactWriteItemsRequest request = new TransactWriteItemsRequest()
         .withTransactItems(actions);
@@ -673,9 +859,9 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
       {
         try
         {
-          trace.trace("ABOUT_TO_STORE_TRANSACTIONAL", "OBJECT", absoluteHash.toStringBase64());
+          trace.trace("ABOUT_TO_STORE_TRANSACTIONAL", "OBJECT", txnId);
           amazonDynamoDB_.transactWriteItems(request);
-          trace.trace("STORED_TRANSACTIONAL", "OBJECT", absoluteHash.toStringBase64());
+          trace.trace("STORED_TRANSACTIONAL", "OBJECT", txnId);
           return null;
         }
         catch (TransactionCanceledException tce)
@@ -687,7 +873,7 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
             switch(reason.getCode())
             {
               case "ConditionalCheckFailed":
-                trace.trace("FAILED_FATAL_STORE_TRANSACTIONAL", "OBJECT", absoluteHash.toStringBase64());
+                trace.trace("FAILED_FATAL_STORE_TRANSACTIONAL", "OBJECT", txnId);
                 throw new NoSuchObjectException(errorMessage);
                 
               case "None":
@@ -697,7 +883,7 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
               case "TransactionConflict":
                 log_.info("Retry transaction after " + delay + "ms.");
 
-                trace.trace("WAIT_RETRY_TO_STORE_TRANSACTIONAL", "OBJECT", absoluteHash.toStringBase64());
+                trace.trace("WAIT_RETRY_TO_STORE_TRANSACTIONAL", "OBJECT", txnId);
                 try
                 {
                   Thread.sleep(delay);
@@ -712,19 +898,19 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
                 break;
                 
               default:
-                trace.trace("FAILED_TRANSIENT_STORE_TRANSACTIONAL", "OBJECT", absoluteHash.toStringBase64());
-                throw new IllegalStateException("Transient failure to store object " + absoluteHash, tce);
+                trace.trace("FAILED_TRANSIENT_STORE_TRANSACTIONAL", "OBJECT", txnId);
+                throw new IllegalStateException("Transient failure to store object " + txnId, tce);
             }
           }
         }
         catch(RuntimeException e)
         {
-          trace.trace("FAILED_TRANSIENT_STORE_TRANSACTIONAL", "OBJECT", absoluteHash.toStringBase64());
+          trace.trace("FAILED_TRANSIENT_STORE_TRANSACTIONAL", "OBJECT", txnId);
           throw e;
         }
       }
-      trace.trace("FAILED_TRANSIENT_STORE_TRANSACTIONAL", "OBJECT", absoluteHash.toStringBase64());
-      throw new IllegalStateException("Transient failure to update (after " + retryCnt + " retries) object " + absoluteHash, lastException);
+      trace.trace("FAILED_TRANSIENT_STORE_TRANSACTIONAL", "OBJECT", txnId);
+      throw new IllegalStateException("Transient failure to update (after " + retryCnt + " retries) object " + txnId, lastException);
     }
     , trace);  
     

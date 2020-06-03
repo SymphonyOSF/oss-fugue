@@ -38,7 +38,9 @@ public enum ContainerType
   /** Docker images executed on a schedule, expected to run to completion. */
   SCHEDULED,
   /** Lambda executable jar images. */
-  LAMBDA;
+  LAMBDA,
+  /** A Lambda deployed elsewhere (usually in another AWS account) */
+  EXTERNAL_LAMBDA;
   
   /**
    * Parse the given string as the name of a value of this enum.
@@ -65,6 +67,6 @@ public enum ContainerType
       if(s.equalsIgnoreCase(t.toString()))
         return t;
         
-    throw new IllegalArgumentException("\"${s}\" is not a valid ContainerType");
+    throw new IllegalArgumentException("\"" + s + "\" is not a valid ContainerType");
   }
 }

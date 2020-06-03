@@ -427,6 +427,13 @@ public abstract class AwsFugueDeploy extends FugueDeploy
         LAMBDA_ALIAS_NAME);
   }
   
+  private String getExternalFunctionInvocationArn(String arn)
+  {
+    return String.format("arn:aws:apigateway:%s:lambda:path/2015-03-31/functions/%s/invocations",
+        awsRegion_,
+        arn);
+  }
+  
   private String getQueueArn(String name)
   {
     return String.format("arn:aws:sqs:%s:%s:%s",
@@ -1681,6 +1688,18 @@ public abstract class AwsFugueDeploy extends FugueDeploy
     }
 
     @Override
+    protected void postDeployExternalLambdaContainer(String name, String arn, Collection<String> paths)
+    {
+      log_.info("postDeployExternalLambdaContainer(" + name + ", " + paths + ");");
+      
+      if(action_.isDeploy_)
+      {
+        if(!paths.isEmpty())
+          createApiGatewayPaths(getExternalFunctionInvocationArn(arn), paths);
+      }
+    }
+
+    @Override
     protected void postDeployLambdaContainer(String name, Collection<String> paths, Collection<Subscription> subscriptions)
     {
       String  functionName  = getNameFactory().getLogicalServiceItemName(name).toString();
@@ -2069,6 +2088,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
                   );
                 
                 if(NONE.equals(method.getAuthorizationType())
+                    && method.getMethodIntegration() != null
                     && IntegrationType.AWS_PROXY.toString().equals(method.getMethodIntegration().getType())
                     && functionInvokeArn.equals(method.getMethodIntegration().getUri())
                     )

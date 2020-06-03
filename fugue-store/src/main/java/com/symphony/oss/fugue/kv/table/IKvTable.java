@@ -66,31 +66,32 @@ public interface IKvTable extends IFugueComponent
    */
   void store(IKvItem kvItem, KvCondition kvCondition, ITraceContext trace);
   
+  IKvTableTransaction createTransaction();
 
-  /**
-   * Store the given collection of items, checking that the given ppartition sort key pair does not already exist.
-   * 
-   * @param partitionSortKeyProvider  The partition and sort key of the item.
-   * @param kvItems Items to be stored.
-   * @param trace   Trace context.
-   * 
-   * @throws ObjectExistsException If an object with the give partition and sort key already exists. 
-   */
-  void store(IKvPartitionSortKeyProvider partitionSortKeyProvider, Collection<IKvItem> kvItems, ITraceContext trace) throws ObjectExistsException;
-  
-
-  /**
-   * Update an existing object.
-   * 
-   * @param partitionSortKeyProvider  The partition and sort key of the existing item.
-   * @param absoluteHash    The absolute hash of the existing item.
-   * @param kvItems         A set of items to be put.
-   * @param trace           Trace context.
-   * 
-   * @throws NoSuchObjectException If the object to be updated has changed. 
-   */
-  void update(IKvPartitionSortKeyProvider partitionSortKeyProvider, Hash absoluteHash, Set<IKvItem> kvItems,
-      ITraceContext trace) throws NoSuchObjectException;
+//  /**
+//   * Store the given collection of items, checking that the given ppartition sort key pair does not already exist.
+//   * 
+//   * @param partitionSortKeyProvider  The partition and sort key of the item.
+//   * @param kvItems Items to be stored.
+//   * @param trace   Trace context.
+//   * 
+//   * @throws ObjectExistsException If an object with the give partition and sort key already exists. 
+//   */
+//  void store(IKvPartitionSortKeyProvider partitionSortKeyProvider, Collection<IKvItem> kvItems, ITraceContext trace) throws ObjectExistsException;
+//  
+//
+//  /**
+//   * Update an existing object.
+//   * 
+//   * @param partitionSortKeyProvider  The partition and sort key of the existing item.
+//   * @param absoluteHash    The absolute hash of the existing item.
+//   * @param kvItems         A set of items to be put.
+//   * @param trace           Trace context.
+//   * 
+//   * @throws NoSuchObjectException If the object to be updated has changed. 
+//   */
+//  void update(IKvPartitionSortKeyProvider partitionSortKeyProvider, Hash absoluteHash, Set<IKvItem> kvItems,
+//      ITraceContext trace) throws NoSuchObjectException;
   
   /**
    * Physically delete the given object.

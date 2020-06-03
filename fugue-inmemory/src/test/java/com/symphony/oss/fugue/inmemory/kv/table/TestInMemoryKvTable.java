@@ -32,8 +32,10 @@ import com.symphony.oss.fugue.kv.KvPartitionKey;
 import com.symphony.oss.fugue.kv.KvPartitionKeyProvider;
 import com.symphony.oss.fugue.kv.KvPartitionSortKeyProvider;
 import com.symphony.oss.fugue.kv.KvSortKey;
+import com.symphony.oss.fugue.kv.table.IKvTableTransaction;
 import com.symphony.oss.fugue.store.IFuguePodId;
 import com.symphony.oss.fugue.store.NoSuchObjectException;
+import com.symphony.oss.fugue.store.TransactionFailedException;
 import com.symphony.oss.fugue.trace.ITraceContext;
 import com.symphony.oss.fugue.trace.NoOpTraceContext;
 
@@ -224,7 +226,7 @@ public class TestInMemoryKvTable
   }
   
   @Test
-  public void testUpdate() throws NoSuchObjectException
+  public void testUpdate() throws NoSuchObjectException, TransactionFailedException
   {
     InMemoryKvTable table = createTable();
     
@@ -236,12 +238,16 @@ public class TestInMemoryKvTable
     
     items.add(new KvItem(PART1, "2", "Updated Two"));
     
-    table.update(ITEMS[1], ITEMS[1].getAbsoluteHash(), 
-        items, trace);
+    IKvTableTransaction txn = table.createTransaction();
+    
+    txn.update(ITEMS[1], ITEMS[1].getAbsoluteHash(), 
+        items);
+    
+    txn.commit(trace);
   }
   
-  @Test(expected = NoSuchObjectException.class)
-  public void testUpdate2() throws NoSuchObjectException
+  @Test(expected = TransactionFailedException.class)
+  public void testUpdate2() throws NoSuchObjectException, TransactionFailedException
   {
     InMemoryKvTable table = createTable();
     
@@ -253,11 +259,42 @@ public class TestInMemoryKvTable
     
     items.add(new KvItem(PART1, "2", "Updated Two"));
     
-    table.update(ITEMS[1], ITEMS[1].getAbsoluteHash(), 
-        items, trace);
+    IKvTableTransaction txn = table.createTransaction();
     
-    table.update(ITEMS[1], ITEMS[1].getAbsoluteHash(), 
-        items, trace);
+    txn.update(ITEMS[1], ITEMS[1].getAbsoluteHash(), 
+        items);
+    
+    txn.commit(trace);
+    txn = table.createTransaction();
+    
+    txn.update(ITEMS[1], ITEMS[1].getAbsoluteHash(), 
+        items);
+    
+    txn.commit(trace);
+  }
+  
+  @Test(expected = TransactionFailedException.class)
+  public void testUpdate3() throws NoSuchObjectException, TransactionFailedException
+  {
+    InMemoryKvTable table = createTable();
+    
+    String object = table.fetch(ITEMS[1], trace);
+    
+    assertEquals(ITEMS[1].getJson(), object);
+    
+    Set<IKvItem> items = new HashSet<>();
+    
+    items.add(new KvItem(PART1, "2", "Updated Two"));
+    
+    IKvTableTransaction txn = table.createTransaction();
+    
+    txn.update(ITEMS[1], ITEMS[1].getAbsoluteHash(), 
+        items);
+    
+    txn.update(ITEMS[1], ITEMS[1].getAbsoluteHash(), 
+        items);
+    
+    txn.commit(trace);
   }
   
   private InMemoryKvTable createTable()
