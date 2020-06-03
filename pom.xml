@@ -94,7 +94,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<source.code.version>1.8</source.code.version>
 		<target.code.version>1.8</target.code.version>
-    <oss.commons.version>0.0.4-SNAPSHOT</oss.commons.version>
+    <oss.commons.version>0.0.4</oss.commons.version>
 	</properties>
 
 
