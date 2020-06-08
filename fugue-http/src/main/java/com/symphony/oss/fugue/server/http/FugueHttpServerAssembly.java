@@ -40,6 +40,16 @@ public class FugueHttpServerAssembly
         ;
   }
 
+  public void setKeyStorePath(String keyStorePath)
+  {
+    builder_.withKeyStorePath(keyStorePath);
+  }
+
+  public void setKeyStorePassword(String keyStorePassword)
+  {
+    builder_.withKeyStorePassword(keyStorePassword);
+  }
+
   public IFugueComponentRegistry getRegistry()
   {
     return builder_;

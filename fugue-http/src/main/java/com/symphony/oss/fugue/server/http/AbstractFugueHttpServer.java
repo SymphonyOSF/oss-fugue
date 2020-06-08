@@ -20,7 +20,6 @@ package com.symphony.oss.fugue.server.http;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -79,6 +78,8 @@ public class AbstractFugueHttpServer<T extends AbstractFugueHttpServer<T>> exten
     private final List<IUrlPathServlet>  servlets_         = new ArrayList<>();
     private final LifecycleComponent     lifecycleComponent_;
     private HttpServerBuilder            httpServerBuilder_;
+    private String keyStorePath_;
+    private String keyStorePassword_;
     
     protected AbstractBuilder(Class<T> type)
     {
@@ -126,6 +127,20 @@ public class AbstractFugueHttpServer<T extends AbstractFugueHttpServer<T>> exten
       return withApplicationName(application.getName());
     }
     
+    public T withKeyStorePath(String keyStorePath)
+    {
+      keyStorePath_ = keyStorePath;
+      
+      return self();
+    }
+
+    public T withKeyStorePassword(String keyStorePassword)
+    {
+      keyStorePassword_ = keyStorePassword;
+      
+      return self();
+    }
+
     @Override
     protected void validate(FaultAccumulator faultAccumulator)
     {
@@ -138,7 +153,16 @@ public class AbstractFugueHttpServer<T extends AbstractFugueHttpServer<T>> exten
 
     protected void configureServer(HttpServerBuilder httpServerBuilder)
     {
-      httpServerBuilder.withHttpPort(httpPort_);
+      if(keyStorePath_ == null)
+      {
+        httpServerBuilder.withHttpPort(httpPort_);
+      }
+      else
+      {
+        httpServerBuilder.withHttpsPort(httpPort_);
+        httpServerBuilder.withKeyStorePath(keyStorePath_);
+        httpServerBuilder.withKeyStorePassword(keyStorePassword_);
+      }
 
     
       for(IServletProvider servletProvider : servletProviders_)

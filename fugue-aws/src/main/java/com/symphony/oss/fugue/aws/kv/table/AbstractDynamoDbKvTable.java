@@ -1101,7 +1101,10 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
           ColumnNameSortKey.length() + sortKey.length();
       
       withHash(   ColumnNameAbsoluteHash, kvItem.getAbsoluteHash());
-      withNumber( ColumnNamePodId,        kvItem.getPodId().getValue());
+      
+      if(kvItem.getPodId() != null)
+        withNumber( ColumnNamePodId,        kvItem.getPodId().getValue());
+      
       withString( ColumnNamePayloadType,  kvItem.getType());
       
       if(kvItem.getAdditionalAttributes() != null)

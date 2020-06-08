@@ -204,6 +204,13 @@ public interface INameFactory
   
   CredentialName getCredentialName(Integer podId, String owner);
 
+  /**
+   * Return the service credential for the current configuration.
+   * 
+   * @return the service credential for the current configuration.
+   */
+  CredentialName getCredentialName();
+  
   CredentialName getCredentialName(String owner);
 
   CredentialName getCredentialName(Integer podId, Hash principalBaseHash);

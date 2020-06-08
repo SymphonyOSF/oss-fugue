@@ -397,8 +397,17 @@ public class NameFactory implements INameFactory
   public CredentialName getEnvironmentCredentialName(String owner)
   {
     return createCredentialName(getGlobalNamePrefix(), environmentType_, environmentId_, null, owner, CredentialName.SUFFIX);
-}
+  }
   
+  @Override
+  public CredentialName getCredentialName()
+  {
+    if(podId_ == null)
+      return getMultiTenantCredentialName(serviceId_);
+    else
+      return getCredentialName(podId_, serviceId_);
+  }
+
   @Override
   public CredentialName getCredentialName(String owner)
   {
