@@ -30,7 +30,6 @@ import com.symphony.oss.commons.hash.Hash;
 import com.symphony.oss.commons.hash.HashProvider;
 import com.symphony.oss.fugue.trace.ITraceContext;
 import com.symphony.oss.fugue.trace.ITraceContextTransaction;
-import com.symphony.oss.fugue.trace.NoOpTraceContextTransaction;
 
 class FileTraceContext implements ITraceContext
 {

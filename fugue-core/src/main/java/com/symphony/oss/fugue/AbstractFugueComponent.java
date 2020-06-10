@@ -25,8 +25,6 @@ package com.symphony.oss.fugue;
 
 /**
  * An abstract super-class for FugueComponents, which handles the status parts of IFugueComponent.
- * 
- * @param <T>   Concrete type for fluent methods. 
  *
  * @author Bruce Skingle
  */

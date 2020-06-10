@@ -25,20 +25,26 @@ package com.symphony.oss.fugue.naming;
 
 import javax.annotation.Nonnull;
 
+/**
+ * The name of a Table.
+ * 
+ * @author Bruce Skingle
+ *
+ */
 public class TableName extends Name
 {
   private final String serviceId_;
   private final String tableId_;
 
   /**
-   * Connstructor.
+   * Constructor.
    * 
    * @param serviceId       The ID of the service which owns this table.
    * @param tableId         The tableId (simple name).
    * @param name            The first element of the actual name.
    * @param additional      Zero or more optional suffix elements.
    */
-  protected TableName(String serviceId, String tableId, @Nonnull String name, String ...additional)
+  protected TableName(String serviceId, String tableId, @Nonnull String name, Object ...additional)
   {
     super(name, additional);
     

@@ -43,6 +43,8 @@ import com.symphony.oss.fugue.FugueLifecycleState;
 import com.symphony.oss.fugue.IFugueComponent;
 import com.symphony.oss.fugue.IFugueLifecycleComponent;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /**
  * An abstract fluent container of Fugue components.
  * 
@@ -175,6 +177,7 @@ public abstract class AbstractComponentContainer<T extends AbstractComponentCont
    * 
    * @return This (fluent method).
    */
+  @SuppressFBWarnings("DM_EXIT")
   public T start()
   {
     Runtime.getRuntime().addShutdownHook(new Thread(new Runnable()
@@ -311,6 +314,7 @@ public abstract class AbstractComponentContainer<T extends AbstractComponentCont
    * 
    * @return This (fluent method).
    */
+  @SuppressFBWarnings("DM_EXIT")
   public T stop()
   {
     setLifeCycleState(FugueLifecycleState.Stopping);

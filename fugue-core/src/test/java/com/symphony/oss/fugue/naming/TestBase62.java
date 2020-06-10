@@ -31,8 +31,7 @@ import java.security.NoSuchAlgorithmException;
 
 import org.junit.Test;
 
-import com.symphony.oss.fugue.naming.Base62;
-
+@SuppressWarnings("javadoc")
 public class TestBase62
 {
   @Test

@@ -39,6 +39,8 @@ import org.slf4j.LoggerFactory;
 
 import com.symphony.oss.commons.fault.CodingFault;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /**
  * An implementation of IBatch based on an Executor.
  * 
@@ -102,7 +104,8 @@ public class ExecutorBatch<T extends Runnable> implements IBatch<T>
     taskCnt_--;
     return remove(future);
   }
-  
+
+  @SuppressFBWarnings("BC_UNCONFIRMED_CAST_OF_RETURN_VALUE")
   private T remove(Future<T> future)
   {
     try

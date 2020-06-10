@@ -35,6 +35,11 @@ public abstract class FugueLifecycleComponent extends FugueLifecycleBase impleme
   private FugueComponentState componentState_         = FugueComponentState.OK;
   private String              componentStatusMessage_ = "OK";
 
+  /**
+   * Constructor.
+   * 
+   * @param builder Builder object.
+   */
   protected FugueLifecycleComponent(AbstractBuilder<?,?> builder)
   {
   }

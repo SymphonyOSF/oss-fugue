@@ -25,16 +25,13 @@ package com.symphony.oss.fugue.naming;
 
 import static org.junit.Assert.assertEquals;
 
-import java.security.NoSuchAlgorithmException;
-
 import org.junit.Test;
 
-import com.symphony.oss.fugue.naming.Name;
-
+@SuppressWarnings("javadoc")
 public class TestName
 {
   @Test
-  public void testBase62() throws NoSuchAlgorithmException
+  public void testBase62()
   {
     Name name = new Name("Hello", "this", "is", "a", "test", "of", "averylongnameindeed");
     

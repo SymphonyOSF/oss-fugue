@@ -23,7 +23,6 @@
 
 package com.symphony.oss.fugue.trace;
 
-import java.io.IOException;
 import java.time.Instant;
 
 import com.symphony.oss.commons.hash.Hash;

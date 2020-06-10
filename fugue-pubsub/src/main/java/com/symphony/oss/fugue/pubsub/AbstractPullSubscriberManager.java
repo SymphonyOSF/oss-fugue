@@ -121,7 +121,7 @@ public abstract class AbstractPullSubscriberManager<P, T extends AbstractPullSub
     
     if(Fugue.isDebugSingleThread())
     {
-      subscriberThreadPoolSize_ = totalSubscriptionCnt_ == 0 ? 1 : totalSubscriptionCnt_;
+      subscriberThreadPoolSize_ = totalSubscriptionCnt_;
       handlerThreadPoolSize_ = 1;
     }
     else

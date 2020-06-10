@@ -59,6 +59,8 @@ class InMemoryPubSub
     if(list == null)
     {
       list = new LinkedList<>();
+      
+      topicMap_.put(topicName, list);
     }
   }
   

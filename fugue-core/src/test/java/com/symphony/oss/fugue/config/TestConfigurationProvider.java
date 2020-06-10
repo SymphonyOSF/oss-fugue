@@ -30,14 +30,13 @@ import java.nio.file.Paths;
 
 import org.junit.Test;
 
-import com.symphony.oss.fugue.config.GitHubConfiguration;
-
+@SuppressWarnings("javadoc")
 public class TestConfigurationProvider
 {
   private static final String ABSENT_PROPERTY_NAME = "ABSENT_PROPERTY_NAME";
   private static final String TEST_PROPERTY_NAME = "TEST_PROPERTY_NAME";
   private static final String TEST_PROPERTY_VALUE = "TEST_PROPERTY_VALUE";
-  private static final String DIRECT_CONFIG_URL = "https://api.github.com/repos/symphonyoss/fugue/contents/fugue-core/src/test/resources/config.json";
+//  private static final String DIRECT_CONFIG_URL = "https://api.github.com/repos/symphonyoss/fugue/contents/fugue-core/src/test/resources/config.json";
 
   @Test
   public void testInline() throws URISyntaxException, NoSuchConfigException

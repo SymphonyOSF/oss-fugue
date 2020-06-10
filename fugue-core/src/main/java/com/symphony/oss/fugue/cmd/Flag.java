@@ -54,11 +54,13 @@ public class Flag<T> extends AbstractFlag
     return type_;
   }
 
+  @Override
   public boolean isMultiple()
   {
     return multiple_;
   }
 
+  @Override
   public boolean isRequired()
   {
     return required_;
@@ -69,6 +71,7 @@ public class Flag<T> extends AbstractFlag
     setter_.accept(value);
   }
 
+  @Override
   public void process(ArrayIterator it, boolean boolVal)
   {
     if(it.hasNext())

@@ -47,6 +47,12 @@ public abstract class AbstractPublisherManager<T extends AbstractPublisherManage
 {
   protected final INameFactory   nameFactory_;
   
+  /**
+   * Constructor.
+   * 
+   * @param builtType The type of the built object. (we might make this fluent).
+   * @param builder   The builder.
+   */
   protected AbstractPublisherManager(Class<T> builtType, Builder<?,T> builder)
   {
     super(builder);

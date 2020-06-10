@@ -21,7 +21,6 @@ import org.junit.Test;
 
 import com.symphony.oss.commons.hash.Hash;
 import com.symphony.oss.commons.hash.HashProvider;
-import com.symphony.oss.fugue.inmemory.kv.table.InMemoryKvTable;
 import com.symphony.oss.fugue.kv.IKvItem;
 import com.symphony.oss.fugue.kv.IKvPagination;
 import com.symphony.oss.fugue.kv.IKvPartitionKey;
@@ -39,6 +38,7 @@ import com.symphony.oss.fugue.store.TransactionFailedException;
 import com.symphony.oss.fugue.trace.ITraceContext;
 import com.symphony.oss.fugue.trace.NoOpTraceContext;
 
+@SuppressWarnings("javadoc")
 public class TestInMemoryKvTable
 {
   private static final IFuguePodId    POD_ID = new IFuguePodId()
@@ -155,7 +155,7 @@ public class TestInMemoryKvTable
    }
   
   @Test
-  public void testGetAll() throws NoSuchObjectException
+  public void testGetAll()
   {
     InMemoryKvTable table = createTable();
     
@@ -169,7 +169,7 @@ public class TestInMemoryKvTable
   }
   
   @Test
-  public void testGetAllReverse() throws NoSuchObjectException
+  public void testGetAllReverse()
   {
     InMemoryKvTable table = createTable();
     
@@ -183,7 +183,7 @@ public class TestInMemoryKvTable
   }
   
   @Test
-  public void testGetTwo() throws NoSuchObjectException
+  public void testGetTwo()
   {
     InMemoryKvTable table = createTable();
     
@@ -197,7 +197,7 @@ public class TestInMemoryKvTable
   }
   
   @Test
-  public void testGetThreeFour() throws NoSuchObjectException
+  public void testGetThreeFour()
   {
     InMemoryKvTable table = createTable();
     
@@ -211,7 +211,7 @@ public class TestInMemoryKvTable
   }
   
   @Test
-  public void testGetFourThree() throws NoSuchObjectException
+  public void testGetFourThree()
   {
     InMemoryKvTable table = createTable();
     

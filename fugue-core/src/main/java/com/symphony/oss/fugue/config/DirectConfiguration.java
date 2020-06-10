@@ -30,7 +30,7 @@ import com.symphony.oss.commons.fluent.BaseAbstractBuilder;
  * @author Bruce Skingle
  *
  */
-public class DirectConfiguration extends Configuration implements IConfiguration
+public class DirectConfiguration extends Configuration
 {
   DirectConfiguration(AbstractBuilder<?,?> builder)
   {

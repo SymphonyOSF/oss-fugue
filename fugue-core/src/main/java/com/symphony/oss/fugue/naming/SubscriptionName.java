@@ -85,7 +85,7 @@ public class SubscriptionName extends Name
    * @param name            The first element of the actual name.
    * @param additional      Zero or more optional suffix elements.
    */
-  protected SubscriptionName(TopicName topicName, String serviceId, String subscriptionId, @Nonnull String name, String ...additional)
+  protected SubscriptionName(TopicName topicName, String serviceId, String subscriptionId, @Nonnull String name, Object ...additional)
   {
     super(name, additional);
     

@@ -30,8 +30,6 @@ import java.util.concurrent.Executors;
 
 import org.junit.Test;
 
-import com.symphony.oss.fugue.batch.ExecutorBatch;
-
 @SuppressWarnings("javadoc")
 public class ExecutorBatchTest
 {
@@ -155,8 +153,5 @@ public class ExecutorBatchTest
     {
       // expected
     }
-
-    
   }
-
 }

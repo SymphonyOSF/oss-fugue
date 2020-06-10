@@ -42,6 +42,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.apache.commons.text.StringSubstitutor;
 import org.slf4j.Logger;
@@ -792,7 +793,7 @@ public abstract class FugueDeploy extends CommandLineHandler
     }
   }
 
-  private ImmutableJsonObject createIdConfig(String podName)
+  private ImmutableJsonObject createIdConfig(@Nullable String podName)
   {
     MutableJsonObject idConfig = new MutableJsonObject();
     MutableJsonObject id = new MutableJsonObject();
@@ -803,7 +804,9 @@ public abstract class FugueDeploy extends CommandLineHandler
     id.addIfNotNull(ENVIRONMENT_TYPE,         environmentType_);
     id.addIfNotNull(REGION + ID_SUFFIX,       region_);
     id.addIfNotNull(SERVICE + ID_SUFFIX,      service_);
-    id.addIfNotNull(POD_NAME,                 podName);
+    
+    if(podName != null)
+      id.addIfNotNull(POD_NAME,                 podName);
     
     return idConfig.immutify();
   }

@@ -27,8 +27,6 @@ package com.symphony.oss.fugue.pubsub;
  * A subscriber manager.
  * 
  * @author Bruce Skingle
- *
- * @param <T> Type of concrete manager, needed for fluent methods.
  */
 public interface ISubscriberManager
 {

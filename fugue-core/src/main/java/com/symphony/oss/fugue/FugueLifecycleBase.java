@@ -23,8 +23,12 @@
 
 package com.symphony.oss.fugue;
 
-import com.symphony.oss.commons.fluent.BaseAbstractBuilder;
-
+/**
+ * Base class for lifecycle components.
+ * 
+ * @author Bruce Skingle
+ *
+ */
 public abstract class FugueLifecycleBase
 {
   private FugueLifecycleState lifecycleState_ = FugueLifecycleState.Initializing;
@@ -34,6 +38,11 @@ public abstract class FugueLifecycleBase
     lifecycleState_ = state;
   }
 
+  /**
+   * Return the lifecycle state.
+   * 
+   * @return The lifecycle state.
+   */
   public FugueLifecycleState getLifecycleState()
   {
     return lifecycleState_;

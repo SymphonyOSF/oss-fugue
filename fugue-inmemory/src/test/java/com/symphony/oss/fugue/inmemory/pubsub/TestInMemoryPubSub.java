@@ -25,7 +25,7 @@ import java.util.Map;
 
 import org.junit.Test;
 
-import com.symphony.oss.fugue.inmemory.pubsub.InMemoryPublisherManager;
+import com.google.common.collect.ImmutableMap;
 import com.symphony.oss.fugue.naming.INameFactory;
 import com.symphony.oss.fugue.naming.NameFactory;
 import com.symphony.oss.fugue.pubsub.IPubSubMessage;
@@ -42,6 +42,7 @@ import com.symphony.oss.fugue.trace.NoOpTraceContext;
 public class TestInMemoryPubSub
 {
   private static final String TEST_TOPIC = "TestTopic";
+  private static final Map<String, Object>  EMPTY_ATTRIBUTES = ImmutableMap.of();
   
   private INameFactory nameFactory_ = new NameFactory("sym-s2-", "test", "s2test1", "us-east-1", "testTenant", 101, "testService");
 
@@ -71,7 +72,7 @@ public class TestInMemoryPubSub
       @Override
       public Map<String, Object> getAttributes()
       {
-        return null;
+        return EMPTY_ATTRIBUTES;
       }
 
       @Override

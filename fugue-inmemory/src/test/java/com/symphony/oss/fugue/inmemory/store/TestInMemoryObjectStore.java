@@ -31,7 +31,6 @@ import org.junit.Test;
 import com.symphony.oss.commons.hash.Hash;
 import com.symphony.oss.commons.hash.HashProvider;
 import com.symphony.oss.commons.immutable.ImmutableByteArray;
-import com.symphony.oss.fugue.inmemory.store.InMemoryObjectStoreWritable;
 import com.symphony.oss.fugue.store.IFugueObject;
 import com.symphony.oss.fugue.store.IFugueObjectPayload;
 import com.symphony.oss.fugue.store.IFuguePodId;
@@ -46,6 +45,7 @@ import com.symphony.oss.fugue.trace.NoOpTraceContext;
  * @author Bruce Skingle
  *
  */
+@SuppressWarnings("javadoc")
 public class TestInMemoryObjectStore
 {
   private InMemoryObjectStoreWritable objectStore_ = new InMemoryObjectStoreWritable.Builder()
@@ -149,7 +149,7 @@ public class TestInMemoryObjectStore
     @Override
     public boolean equals(Object obj)
     {
-      return value_.equals(obj);
+      return obj instanceof FugueObjectPayload && value_.equals(((FugueObjectPayload)obj).value_);
     }
 
     @Override

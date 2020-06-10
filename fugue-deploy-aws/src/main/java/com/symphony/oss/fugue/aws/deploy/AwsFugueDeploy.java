@@ -1160,7 +1160,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
 
     private static final String NONE = "NONE";
 
-    private LoadBalancer loadBalancer_;
+//    private LoadBalancer loadBalancer_;
   
     // ARN and ID of the actual API gateway
     private String apiGatewayArn_;
@@ -2439,8 +2439,8 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       if(host != null)
         doCreateR53RecordSet(host, regionalHostName, false, true);
       
-      if(loadBalancer_ != null)
-        doCreateR53RecordSet(regionalHostName, loadBalancer_.getDNSName(), false, false);
+//      if(loadBalancer_ != null)
+//        doCreateR53RecordSet(regionalHostName, loadBalancer_.getDNSName(), false, false);
     }
     
     private void doCreateR53RecordSet(String source, String target, boolean create, boolean multiValue)

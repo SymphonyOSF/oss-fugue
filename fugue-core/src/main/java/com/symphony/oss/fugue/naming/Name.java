@@ -149,7 +149,7 @@ public class Name
   @Override
   public boolean equals(Object obj)
   {
-    if(getClass().equals(obj.getClass()))
+    if(obj != null && getClass().equals(obj.getClass()))
       return name_.equals(((Name)obj).toString());
     else
       return false;

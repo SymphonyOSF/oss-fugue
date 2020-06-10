@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -228,7 +229,7 @@ public class CommandLineHandler
     }
   }
   
-  class ArrayIterator implements Iterator<String>
+  static class ArrayIterator implements Iterator<String>
   {
     private int i_;
     private String[] args_;
@@ -247,6 +248,9 @@ public class CommandLineHandler
     @Override
     public String next()
     {
+      if(i_ >= args_.length)
+        throw new NoSuchElementException();
+      
       return args_[i_++];
     }
   }

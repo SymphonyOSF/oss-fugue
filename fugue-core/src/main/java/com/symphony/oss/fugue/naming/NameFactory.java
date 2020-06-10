@@ -449,17 +449,17 @@ public class NameFactory implements INameFactory
     return new ServiceName(serviceId, podName, podId, name, additional);
   }
 
-  protected TableName createTableName(String serviceId, String tableId, @Nonnull String name, String ...additional)
+  protected TableName createTableName(String serviceId, String tableId, @Nonnull String name, Object ...additional)
   {
     return new TableName(serviceId, tableId, name, additional);
   }
 
-  protected TopicName createTopicName(String serviceId, boolean isLocal, String topicId, @Nonnull String name, String ...additional)
+  protected TopicName createTopicName(String serviceId, boolean isLocal, String topicId, @Nonnull String name, Object ...additional)
   {
     return new TopicName(serviceId, isLocal, topicId, name, additional);
   }
 
-  protected SubscriptionName createSubscriptionName(TopicName topicName, String serviceId, String subscriptionId, @Nonnull String name, String ...additional)
+  protected SubscriptionName createSubscriptionName(TopicName topicName, String serviceId, String subscriptionId, @Nonnull String name, Object ...additional)
   {
     return new SubscriptionName(topicName, serviceId, subscriptionId, name, additional);
   }

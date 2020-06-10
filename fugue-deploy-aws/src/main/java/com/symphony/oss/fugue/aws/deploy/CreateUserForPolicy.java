@@ -93,7 +93,12 @@ public class CreateUserForPolicy
     System.out.print("Enter policy name: ");
     System.out.flush();
     
-    baseName_ = in_.readLine().trim();
+    baseName_ = in_.readLine();
+    
+    if(baseName_ == null)
+      throw new IllegalArgumentException("You need to enter a policy name.");
+    
+    baseName_ = baseName_.trim();
     
     if(baseName_.endsWith("-policy"))
       baseName_ = baseName_.substring(0, baseName_.length()-7);

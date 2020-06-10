@@ -31,8 +31,8 @@ import org.junit.Test;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.symphony.oss.fugue.config.Configuration;
 
+@SuppressWarnings("javadoc")
 public class TestBaseConfigurationProvider
 {
   private static final String ABSENT_PROPERTY_NAME = "ABSENT_PROPERTY_NAME";
