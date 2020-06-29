@@ -2046,11 +2046,9 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       
         log_.info("Added lambda permission " + permissionResult);      
       }
-//      catch(com.amazonaws.services.lambda.model.ResourceNotFoundException e)
       catch(ResourceConflictException e)
       {
         // already exists which is fine.
-        //e.printStackTrace();
       }
       
     }
@@ -2167,32 +2165,6 @@ public abstract class AwsFugueDeploy extends FugueDeploy
                 if(!mapEquals(httpRequestParams, requestParams))
                   ok = false;
                 
-//                if(httpRequestParams == null || httpRequestParams.isEmpty())
-//                {
-//                  if(requestParams != null && !requestParams.isEmpty())
-//                  {
-//                    ok = false;
-//                  }
-//                }
-//                else
-//                {
-//                  if(requestParams == null)
-//                  {
-//                    ok = false;
-//                  }
-//                  else
-//                  {
-//                    for(Entry<String, String> entry : httpRequestParams.entrySet())
-//                    {
-//                      if(!entry.getValue().equals(requestParams.get(entry.getKey())))
-//                      {
-//                        ok = false;
-//                        break;
-//                      }
-//                    }
-//                  }
-//                }
-                
                 if(ok)
                 {
                   Map<String, Boolean> rp = method.getRequestParameters();
@@ -2220,32 +2192,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
                   if(!collectionEquals(httpCacheKeyParams, cacheKeyParams))
                     ok = false;
                 }
-                
-//                if(httpCacheKeyParams == null || httpCacheKeyParams.isEmpty())
-//                {
-//                  if(cacheKeyParams != null && !cacheKeyParams.isEmpty())
-//                  {
-//                    ok = false;
-//                  }
-//                }
-//                else
-//                {
-//                  if(cacheKeyParams == null)
-//                  {
-//                    ok = false;
-//                  }
-//                  else
-//                  {
-//                    for(String s : httpCacheKeyParams)
-//                    {
-//                      if(!cacheKeyParams.contains(s))
-//                      {
-//                        ok = false;
-//                        break;
-//                      }
-//                    }
-//                  }
-//                }
+
                 if(ok &&
                     NONE.equals(method.getAuthorizationType())
                     && method.getMethodIntegration() != null
