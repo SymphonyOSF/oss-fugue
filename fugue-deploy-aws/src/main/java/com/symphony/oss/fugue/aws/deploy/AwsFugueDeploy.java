@@ -59,7 +59,6 @@ import com.amazonaws.services.apigateway.model.CreateResourceResult;
 import com.amazonaws.services.apigateway.model.CreateRestApiRequest;
 import com.amazonaws.services.apigateway.model.CreateRestApiResult;
 import com.amazonaws.services.apigateway.model.DeleteMethodRequest;
-import com.amazonaws.services.apigateway.model.DeleteRestApiRequest;
 import com.amazonaws.services.apigateway.model.EndpointConfiguration;
 import com.amazonaws.services.apigateway.model.EndpointType;
 import com.amazonaws.services.apigateway.model.GetBasePathMappingRequest;
@@ -74,6 +73,7 @@ import com.amazonaws.services.apigateway.model.GetRestApisRequest;
 import com.amazonaws.services.apigateway.model.GetRestApisResult;
 import com.amazonaws.services.apigateway.model.GetStageRequest;
 import com.amazonaws.services.apigateway.model.GetStageResult;
+import com.amazonaws.services.apigateway.model.Integration;
 import com.amazonaws.services.apigateway.model.IntegrationType;
 import com.amazonaws.services.apigateway.model.Op;
 import com.amazonaws.services.apigateway.model.PatchOperation;
@@ -137,7 +137,6 @@ import com.amazonaws.services.ecs.model.TaskOverride;
 import com.amazonaws.services.ecs.model.TransportProtocol;
 import com.amazonaws.services.ecs.model.UpdateServiceRequest;
 import com.amazonaws.services.ecs.model.UpdateServiceResult;
-import com.amazonaws.services.elasticloadbalancingv2.model.LoadBalancer;
 import com.amazonaws.services.elasticloadbalancingv2.model.Tag;
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagement;
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClientBuilder;
@@ -204,8 +203,6 @@ import com.amazonaws.services.lambda.model.PublishVersionRequest;
 import com.amazonaws.services.lambda.model.PublishVersionResult;
 import com.amazonaws.services.lambda.model.PutProvisionedConcurrencyConfigRequest;
 import com.amazonaws.services.lambda.model.PutProvisionedConcurrencyConfigResult;
-import com.amazonaws.services.lambda.model.RemovePermissionRequest;
-import com.amazonaws.services.lambda.model.RemovePermissionResult;
 import com.amazonaws.services.lambda.model.ResourceConflictException;
 import com.amazonaws.services.lambda.model.ResourceNotFoundException;
 import com.amazonaws.services.lambda.model.UpdateAliasRequest;
@@ -253,6 +250,8 @@ import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder
 import com.amazonaws.services.securitytoken.model.GetCallerIdentityRequest;
 import com.amazonaws.services.securitytoken.model.GetCallerIdentityResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.symphony.oss.commons.dom.json.IJsonArray;
 import com.symphony.oss.commons.dom.json.IJsonDomNode;
 import com.symphony.oss.commons.dom.json.IJsonObject;
@@ -339,12 +338,13 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       "    }\n" + 
       "  ]\n" + 
       "}";
+  
+  private static final Map<String, String>  HTTP_REQUEST_PARAMS = ImmutableMap.of("integration.request.path.proxy", "method.request.path.proxy");
+  private static final List<String>         HTTP_CACHE_KEY_PARAMS = ImmutableList.of("method.request.path.proxy");
 
-  private static final String HOST_HEADER = "host-header";
-
-  private static final String PATH_PATERN = "path-pattern";
-
-  private static final String DEFAULT = "default";
+  private static final String               HOST_HEADER = "host-header";
+  private static final String               PATH_PATERN = "path-pattern";
+  private static final String               DEFAULT = "default";
 
 
   private final AmazonIdentityManagement iam_                          = AmazonIdentityManagementClientBuilder
@@ -1157,6 +1157,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
     private static final String API_GATEWAY_PATH = "(none)";
 
     private static final String ANY = "ANY";
+    private static final String POST = "POST";
 
     private static final String NONE = "NONE";
 
@@ -1688,6 +1689,25 @@ public abstract class AwsFugueDeploy extends FugueDeploy
     }
 
     @Override
+    protected void postDeployExternalHttpContainer(String name, String url, Collection<String> paths)
+    {
+      log_.info("postDeployExternalHttpContainer(" + name + ", " + paths + ");");
+      
+      if(action_.isDeploy_)
+      {
+        if(!paths.isEmpty())
+        {
+          while(url.endsWith("/"))
+            url = url.substring(0, url.length() - 1);
+          
+          url = url + "/{proxy}";
+          
+          createApiGatewayPaths(url, IntegrationType.HTTP_PROXY, ANY, HTTP_REQUEST_PARAMS, HTTP_CACHE_KEY_PARAMS, paths);
+        }
+      }
+    }
+
+    @Override
     protected void postDeployExternalLambdaContainer(String name, String arn, Collection<String> paths)
     {
       log_.info("postDeployExternalLambdaContainer(" + name + ", " + paths + ");");
@@ -1695,7 +1715,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       if(action_.isDeploy_)
       {
         if(!paths.isEmpty())
-          createApiGatewayPaths(getExternalFunctionInvocationArn(arn), paths);
+          createApiGatewayPaths(getExternalFunctionInvocationArn(arn), IntegrationType.AWS_PROXY, POST, null, null, paths);
       }
     }
 
@@ -1709,7 +1729,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       if(action_.isDeploy_)
       {
         if(!paths.isEmpty())
-          createApiGatewayPaths(getFunctionInvocationArn(functionName), paths);
+          createApiGatewayPaths(getFunctionInvocationArn(functionName), IntegrationType.AWS_PROXY, POST, null, null, paths);
         
         if(!subscriptions.isEmpty())
           createLambdaSubscriptions(functionName, subscriptions);
@@ -2030,12 +2050,64 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       catch(ResourceConflictException e)
       {
         // already exists which is fine.
-        e.printStackTrace();
+        //e.printStackTrace();
       }
       
     }
+    
+    private <T> boolean collectionEquals(Collection<T> a, Collection<T> b)
+    {
+      if(a == null || a.isEmpty())
+      {
+        return b==null || b.isEmpty();
+      }
+      
+      if(b == null || b.isEmpty())
+        return false;
+      
+      List<T> bb = new ArrayList<>(b);
+      
+      for(T v : a)
+      {
+        if(!bb.remove(v))
+          return false;
+      }
+      
+      return bb.isEmpty();
+    }
+    
+    private <K,V> boolean mapEquals(Map<K,V> a, Map<K,V> b)
+    {
+      if(a == null || a.isEmpty())
+      {
+        return b==null || b.isEmpty();
+      }
+      
+      if(b == null || b.isEmpty())
+        return false;
+      
+      Map<K,V> bb = new HashMap<>(b);
+      
+      for(Entry<K, V> e : a.entrySet())
+      {
+        V v = bb.remove(e.getKey());
+        if(e.getValue() == null)
+        {
+          if(v != null)
+            return false;
+        }
+        else
+        {
+          if(!e.getValue().equals(v))
+            return false;
+        }
+      }
+      
+      return bb.isEmpty();
+    }
 
-    private void createApiGatewayPaths(String functionInvokeArn, Collection<String> paths)
+    private void createApiGatewayPaths(String uri, IntegrationType integrationType, String integrationHttpMethod,
+        Map<String, String> httpRequestParams, List<String> httpCacheKeyParams, Collection<String> paths)
     {
       Map<String, String> pathIdMap = new HashMap<>();
       Set<String> remainingPaths = new HashSet<>();
@@ -2087,10 +2159,99 @@ public abstract class AwsFugueDeploy extends FugueDeploy
                   .withRestApiId(apiGatewayId_)
                   );
                 
-                if(NONE.equals(method.getAuthorizationType())
+                Integration integration = method.getMethodIntegration();
+                Map<String, String> requestParams = integration == null ? null : integration.getRequestParameters();
+                
+                boolean ok = integration != null;
+                
+                if(!mapEquals(httpRequestParams, requestParams))
+                  ok = false;
+                
+//                if(httpRequestParams == null || httpRequestParams.isEmpty())
+//                {
+//                  if(requestParams != null && !requestParams.isEmpty())
+//                  {
+//                    ok = false;
+//                  }
+//                }
+//                else
+//                {
+//                  if(requestParams == null)
+//                  {
+//                    ok = false;
+//                  }
+//                  else
+//                  {
+//                    for(Entry<String, String> entry : httpRequestParams.entrySet())
+//                    {
+//                      if(!entry.getValue().equals(requestParams.get(entry.getKey())))
+//                      {
+//                        ok = false;
+//                        break;
+//                      }
+//                    }
+//                  }
+//                }
+                
+                if(ok)
+                {
+                  Map<String, Boolean> rp = method.getRequestParameters();
+                  
+                  if(rp == null)
+                  {
+                    if(!collectionEquals(null, httpCacheKeyParams))
+                    {
+                      ok = false;
+                    }
+                  }
+                  else
+                  {
+                    if(!collectionEquals(rp.keySet(), httpCacheKeyParams))
+                    {
+                      ok = false;
+                    }
+                  }
+                }
+                
+                if(ok)
+                {
+                  List<String> cacheKeyParams = integration == null ? null : integration.getCacheKeyParameters();
+                  
+                  if(!collectionEquals(httpCacheKeyParams, cacheKeyParams))
+                    ok = false;
+                }
+                
+//                if(httpCacheKeyParams == null || httpCacheKeyParams.isEmpty())
+//                {
+//                  if(cacheKeyParams != null && !cacheKeyParams.isEmpty())
+//                  {
+//                    ok = false;
+//                  }
+//                }
+//                else
+//                {
+//                  if(cacheKeyParams == null)
+//                  {
+//                    ok = false;
+//                  }
+//                  else
+//                  {
+//                    for(String s : httpCacheKeyParams)
+//                    {
+//                      if(!cacheKeyParams.contains(s))
+//                      {
+//                        ok = false;
+//                        break;
+//                      }
+//                    }
+//                  }
+//                }
+                if(ok &&
+                    NONE.equals(method.getAuthorizationType())
                     && method.getMethodIntegration() != null
-                    && IntegrationType.AWS_PROXY.toString().equals(method.getMethodIntegration().getType())
-                    && functionInvokeArn.equals(method.getMethodIntegration().getUri())
+                    && integrationType.toString().equals(integration.getType())
+                    && integrationHttpMethod.equals(integration.getHttpMethod())
+                    && uri.equals(method.getMethodIntegration().getUri())
                     )
                 {
                   log_.info("Existing method is good.");
@@ -2118,7 +2279,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       {
         log_.info("Creating path " + path);
         
-        createApiGatewayPath(pathIdMap, functionInvokeArn, rootResourceId, path.split("/"), 1, "");
+        createApiGatewayPath(pathIdMap, uri, integrationType, integrationHttpMethod, httpRequestParams, httpCacheKeyParams, rootResourceId, path.split("/"), 1, "");
         deploy_=true;
       }
       
@@ -2126,7 +2287,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       {
         log_.info("Creating method for resource " + resourceId);
         
-        createMethod(functionInvokeArn, resourceId);
+        createMethod(uri, integrationType, integrationHttpMethod, httpRequestParams, httpCacheKeyParams, resourceId);
         deploy_=true;
       }
       
@@ -2145,8 +2306,6 @@ public abstract class AwsFugueDeploy extends FugueDeploy
         createStage_ = true;
         deploy_=true;
       }
-      
-      
     }
 
     @Override
@@ -2217,7 +2376,9 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       }
     }
 
-    private void createApiGatewayPath(Map<String, String> pathIdMap, String functionInvokeArn, String parentResourceId, String[] pathElements, int cnt, String currentPath)
+    private void createApiGatewayPath(Map<String, String> pathIdMap, String uri, IntegrationType integrationType, String integrationHttpMethod,
+        Map<String, String> httpRequestParams, List<String> httpCacheKeyParams,
+        String parentResourceId, String[] pathElements, int cnt, String currentPath)
     {
       currentPath = currentPath + "/" + pathElements[cnt];
       
@@ -2238,31 +2399,41 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       
       if(pathElements.length > ++cnt)
       {
-        createApiGatewayPath(pathIdMap, functionInvokeArn, resourceId, pathElements, cnt, currentPath);
+        createApiGatewayPath(pathIdMap, uri, integrationType, integrationHttpMethod,
+            httpRequestParams, httpCacheKeyParams, resourceId, pathElements, cnt, currentPath);
       }
       else
       {
-        createMethod(functionInvokeArn, resourceId);
+        createMethod(uri, integrationType, integrationHttpMethod, httpRequestParams, httpCacheKeyParams, resourceId);
       }
     }
 
-    private void createMethod(String functionInvokeArn, String resourceId)
+    private void createMethod(String uri, IntegrationType integrationType, String integrationHttpMethod,
+        Map<String, String> httpRequestParams, List<String> httpCacheKeyParams, String resourceId)
     {
+      Map<String, Boolean> rp = new HashMap<>(httpCacheKeyParams.size());
+      
+      for(String p : httpCacheKeyParams)
+        rp.put(p, Boolean.TRUE);
+      
       PutMethodResult method = apiClient_.putMethod(new PutMethodRequest()
           .withHttpMethod(ANY)
           .withResourceId(resourceId)
           .withRestApiId(apiGatewayId_)
           .withAuthorizationType(NONE)
+          .withRequestParameters(rp)
           );
       
       PutIntegrationResult integration = apiClient_.putIntegration(new PutIntegrationRequest()
           .withResourceId(resourceId)
           .withRestApiId(apiGatewayId_)
           .withHttpMethod(ANY)
-          .withUri(functionInvokeArn)
-          .withIntegrationHttpMethod("POST")
-          .withType(IntegrationType.AWS_PROXY)
+          .withUri(uri)
+          .withIntegrationHttpMethod(integrationHttpMethod)
+          .withType(integrationType)
           .withConnectionType(ConnectionType.INTERNET)
+          .withRequestParameters(httpRequestParams)
+          .withCacheKeyParameters(httpCacheKeyParams)
           );
       
       log_.info("Created method " + method.getHttpMethod() + " with integration " + integration.getType() + " to " + integration.getUri());

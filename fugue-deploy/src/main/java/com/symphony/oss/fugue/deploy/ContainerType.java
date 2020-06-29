@@ -40,7 +40,10 @@ public enum ContainerType
   /** Lambda executable jar images. */
   LAMBDA,
   /** A Lambda deployed elsewhere (usually in another AWS account) */
-  EXTERNAL_LAMBDA;
+  EXTERNAL_LAMBDA,
+  /** An HTTP endpoint deployed elsewhere (usually in another AWS account) */
+  EXTERNAL_HTTP
+  ;
   
   /**
    * Parse the given string as the name of a value of this enum.
