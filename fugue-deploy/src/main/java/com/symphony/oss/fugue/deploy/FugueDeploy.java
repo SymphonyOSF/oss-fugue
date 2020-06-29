@@ -1106,6 +1106,7 @@ public abstract class FugueDeploy extends CommandLineHandler
         int provisionedConcurrentExecutions, Map<String, String> variables, Collection<String> paths);
     protected abstract void postDeployLambdaContainer(String name, Collection<String> paths, Collection<Subscription> subscriptions);
     protected abstract void postDeployExternalLambdaContainer(String name, String arn, Collection<String> paths);
+    protected abstract void postDeployExternalHttpContainer(String name, String url, Collection<String> paths);
     protected abstract void postDeployContainers();
     
     protected abstract void deployService();
@@ -1570,6 +1571,7 @@ public abstract class FugueDeploy extends CommandLineHandler
       {
         postDeployLambdaContainers(ContainerType.LAMBDA);
         postDeployExternalLambdaContainers(ContainerType.EXTERNAL_LAMBDA);
+        postDeployExternalHttpContainers(ContainerType.EXTERNAL_HTTP);
       }
       postDeployContainers();
     }
@@ -1612,6 +1614,29 @@ public abstract class FugueDeploy extends CommandLineHandler
           arn = sub_.replace(arn);
           
           postDeployExternalLambdaContainer(name, arn,
+              paths
+              );
+        }
+      }
+    }
+
+    private void postDeployExternalHttpContainers(ContainerType containerType)
+    {
+      Map<String, JsonObject<?>> map = containerMap_.get(containerType);
+      
+      if(map != null)
+      {
+        for(String name : map.keySet())
+        {
+          JsonObject<?> container = map.get(name);
+
+          Collection<String> paths = container.getListOf(String.class, PATHS);
+          
+          String url = container.getRequiredString("url");
+          
+          url = sub_.replace(url);
+          
+          postDeployExternalHttpContainer(name, url,
               paths
               );
         }
