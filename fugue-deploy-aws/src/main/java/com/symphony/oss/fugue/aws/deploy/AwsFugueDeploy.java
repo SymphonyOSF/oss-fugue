@@ -2358,10 +2358,19 @@ public abstract class AwsFugueDeploy extends FugueDeploy
     private void createMethod(String uri, IntegrationType integrationType, String integrationHttpMethod,
         Map<String, String> httpRequestParams, List<String> httpCacheKeyParams, String resourceId)
     {
-      Map<String, Boolean> rp = new HashMap<>(httpCacheKeyParams.size());
+      Map<String, Boolean> rp;
       
-      for(String p : httpCacheKeyParams)
-        rp.put(p, Boolean.TRUE);
+      if(httpCacheKeyParams == null)
+      {
+        rp = null;
+      }
+      else
+      {
+        rp = new HashMap<>(httpCacheKeyParams.size());
+        
+        for(String p : httpCacheKeyParams)
+          rp.put(p, Boolean.TRUE);
+      }
       
       PutMethodResult method = apiClient_.putMethod(new PutMethodRequest()
           .withHttpMethod(ANY)
