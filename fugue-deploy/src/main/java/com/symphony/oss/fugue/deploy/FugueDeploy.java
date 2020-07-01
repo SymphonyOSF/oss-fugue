@@ -1550,13 +1550,30 @@ public abstract class FugueDeploy extends CommandLineHandler
             
             Collection<String> paths = container.getListOf(String.class, PATHS);
             
+            int provisionedCapacity = 0;
+            IJsonDomNode node = container.get(PROVISIONED_CONCURRENCY);
+
+            if(node instanceof IIntegerProvider)
+            {
+              provisionedCapacity = ((IIntegerProvider) node).asInteger();
+            }
+            else if(node instanceof IStringProvider)
+            {
+              String s = ((IStringProvider) node).asString();
+              
+              StringSubstitutor sub = new StringSubstitutor(templateVariables_);
+              s = sub.replace(s);
+              
+              provisionedCapacity = Integer.parseInt(s);
+            }
+            
             deployLambdaContainer(name,
                 container.getString(IMAGE, name),
                 container.getRequiredString(ROLE),
                 container.getRequiredString(HANDLER),
                 container.getRequiredInteger(MEMORY),
                 container.getRequiredInteger(TIMEOUT),
-                container.getInteger(PROVISIONED_CONCURRENCY, 0),
+                provisionedCapacity,
                 environment,
                 paths
                 );
