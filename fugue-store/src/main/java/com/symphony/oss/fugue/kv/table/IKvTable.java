@@ -25,12 +25,10 @@ package com.symphony.oss.fugue.kv.table;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
 
-import com.symphony.oss.commons.hash.Hash;
 import com.symphony.oss.fugue.IFugueComponent;
 import com.symphony.oss.fugue.kv.IKvItem;
 import com.symphony.oss.fugue.kv.IKvPagination;
@@ -39,7 +37,6 @@ import com.symphony.oss.fugue.kv.IKvPartitionSortKeyProvider;
 import com.symphony.oss.fugue.kv.KvCondition;
 import com.symphony.oss.fugue.kv.KvPartitionUser;
 import com.symphony.oss.fugue.store.NoSuchObjectException;
-import com.symphony.oss.fugue.store.ObjectExistsException;
 import com.symphony.oss.fugue.trace.ITraceContext;
 
 /**
@@ -176,7 +173,7 @@ public interface IKvTable extends IFugueComponent
       Consumer<String> consumer, ITraceContext trace);
   
   /**
-   * Return objects from the given partition.
+   * Return Users Permissions from the given partition.
    * 
    * @param partitionKey      The ID of the partition.
    * @param limit             An optional limit to the number of objects retrieved.
