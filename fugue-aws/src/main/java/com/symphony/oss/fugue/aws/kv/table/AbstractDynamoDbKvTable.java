@@ -103,6 +103,7 @@ import com.symphony.oss.fugue.kv.IKvPartitionKeyProvider;
 import com.symphony.oss.fugue.kv.IKvPartitionSortKeyProvider;
 import com.symphony.oss.fugue.kv.KvCondition;
 import com.symphony.oss.fugue.kv.KvPagination;
+import com.symphony.oss.fugue.kv.KvPartitionUser;
 import com.symphony.oss.fugue.kv.table.AbstractKvTable;
 import com.symphony.oss.fugue.kv.table.IKvTableTransaction;
 import com.symphony.oss.fugue.store.NoSuchObjectException;
@@ -151,11 +152,11 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
   {
     super(builder);
     
-    region_ = builder.region_;
-    payloadLimit_ = builder.payloadLimit_;
-    validate_ = builder.validate_;
+    region_                 = builder.region_;
+    payloadLimit_           = builder.payloadLimit_;
+    validate_               = builder.validate_;
     enableSecondaryStorage_ = builder.enableSecondaryStorage_;
-    streamSpecification_ = builder.streamSpecification_;
+    streamSpecification_    = builder.streamSpecification_;
   
     log_.info("Starting storage...");
     
@@ -1846,6 +1847,79 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
       return new KvPagination(before, null);
     });
   }
+  
+  @Override
+  public IKvPagination fetchPartitionUsers(IKvPartitionKeyProvider partitionKey, Integer limit, 
+      @Nullable String after,
+      Consumer<KvPartitionUser> consumer, ITraceContext trace)
+  {
+    return doFetchPartitionUsers(partitionKey, limit, after, new PartitionUserConsumer(consumer), trace);
+  }
+
+  private IKvPagination doFetchPartitionUsers(IKvPartitionKeyProvider partitionKey, Integer limit, 
+      @Nullable String after,
+      AbstractItemConsumer consumer, ITraceContext trace)
+  {
+	    ValueMap valueMap = new ValueMap()
+	            .withString(":v_partition", getPartitionKey(partitionKey))
+	            ;
+	        
+	        String keyConditionExpression = ColumnNamePartitionKey + " = :v_partition";
+	        
+	        QuerySpec spec = new QuerySpec()
+	            .withKeyConditionExpression(keyConditionExpression)
+	            .withValueMap(valueMap);
+	            
+	        
+	        if(limit != null)
+	        {
+	          spec.withMaxResultSize(limit);
+	        }
+	        
+	        if(after != null && after.length()>0)
+	        {
+	          spec.withExclusiveStartKey(
+	              new KeyAttribute(ColumnNamePartitionKey, getPartitionKey(partitionKey)),
+	              new KeyAttribute(ColumnNameSortKey,      after)
+	              );
+	        }
+	      
+	        Map<String, AttributeValue> lastEvaluatedKey = null;
+	        ItemCollection<QueryOutcome> items = objectTable_.query(spec);
+	        String before = null;
+	        for(Page<Item, QueryOutcome> page : items.pages())
+	        {
+	          Iterator<Item> it = page.iterator();
+	          
+	          while(it.hasNext())
+	          {
+	            Item item = it.next();
+	            
+	            consumer.consume(item, trace);
+	            
+	            if(before == null && after != null)
+	            {
+	              before = item.getString(ColumnNameSortKey);
+	            }
+	          }
+	        }
+	        
+	        if(before == null && after != null)
+	        {
+	          before = "";
+	        }
+	        
+	        lastEvaluatedKey = items.getLastLowLevelResult().getQueryResult().getLastEvaluatedKey();
+	        
+	        if(lastEvaluatedKey != null)
+	        {
+	          AttributeValue sequenceKeyAttr = lastEvaluatedKey.get(ColumnNameSortKey);
+	          
+	          return new KvPagination(before, sequenceKeyAttr.getS());
+	        }
+	        
+	        return new KvPagination(before, null);
+   };
 
   abstract class AbstractItemConsumer
   {
@@ -1884,6 +1958,43 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
       consumer_.accept(payloadString);
     }
   }
+  
+  class PartitionUserConsumer extends AbstractItemConsumer
+  {
+    Consumer<KvPartitionUser> consumer_;
+    
+    PartitionUserConsumer(Consumer<KvPartitionUser> consumer)
+    {
+      consumer_ = consumer;
+    }
+    @Override
+    void consume(Item item, ITraceContext trace)
+    {
+      String payloadString = item.getString(ColumnNameDocument);
+      
+      if(payloadString == null)
+      {
+        String hashString = item.getString(ColumnNameAbsoluteHash);
+        Hash absoluteHash = Hash.newInstance(hashString);
+        
+        try
+        {
+          payloadString = fetchFromSecondaryStorage(absoluteHash, trace);
+        }
+        catch (NoSuchObjectException e)
+
+        {
+          throw new IllegalStateException("Unable to read known object from S3", e);
+
+        }
+      }
+      
+      String sortKey = item.getString(ColumnNameSortKey);
+      consumer_.accept(new KvPartitionUser(sortKey, payloadString));
+
+    }
+  }
+  
 
   protected static abstract class AbstractBuilder<T extends AbstractBuilder<T,B>, B extends AbstractDynamoDbKvTable<B>> extends AbstractKvTable.AbstractBuilder<T,B>
   {
@@ -1953,4 +2064,5 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
       return self();
     }
   }
-}
+ }
+

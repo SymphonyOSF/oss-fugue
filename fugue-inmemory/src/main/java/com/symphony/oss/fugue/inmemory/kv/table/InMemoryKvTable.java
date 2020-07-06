@@ -43,6 +43,7 @@ import com.symphony.oss.fugue.kv.IKvPartitionKeyProvider;
 import com.symphony.oss.fugue.kv.IKvPartitionSortKeyProvider;
 import com.symphony.oss.fugue.kv.KvCondition;
 import com.symphony.oss.fugue.kv.KvPagination;
+import com.symphony.oss.fugue.kv.KvPartitionUser;
 import com.symphony.oss.fugue.kv.table.IKvTable;
 import com.symphony.oss.fugue.kv.table.IKvTableTransaction;
 import com.symphony.oss.fugue.store.NoSuchObjectException;
@@ -445,6 +446,46 @@ public class InMemoryKvTable implements IKvTable
     }
         
     return new KvPagination(before, null);
+  }
+  
+  @Override
+  public IKvPagination fetchPartitionUsers(IKvPartitionKeyProvider partitionKeyProvider, Integer limit,
+	      String after, Consumer<KvPartitionUser> consumer, ITraceContext trace)
+  {
+	    String partitionKey = getPartitionKey(partitionKeyProvider);
+	    
+	    TreeMap<String, IKvItem> partition = getPartition(partitionKey);
+
+	    NavigableMap<String, IKvItem> map; 
+	    String before = null;
+	    
+	    if(after == null)
+	    {
+	        map = partition;
+	    }
+	    else
+	    {
+	      map   = partition.tailMap(after, false);
+	      before = map.isEmpty() ||  map.firstKey().equals(partition.firstKey()) ? null : map.firstKey();
+	    }
+	    
+	    if(limit == null)
+	      limit = 100;
+	    
+	    int available = map.entrySet().size();
+	    
+	    for(Entry<String, IKvItem> entry : map.entrySet())
+	    {
+
+	      available--;
+	 
+	      consumer.accept(new KvPartitionUser(entry.getKey(), entry.getValue().getJson()));
+	      
+	        if(--limit <= 0)
+	          return new KvPagination(before, available==0 ? null : entry.getKey());
+	    }
+	        
+	    return new KvPagination(before, null);
   }
   
   /**

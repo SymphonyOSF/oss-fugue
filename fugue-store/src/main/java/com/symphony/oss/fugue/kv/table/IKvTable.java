@@ -25,20 +25,18 @@ package com.symphony.oss.fugue.kv.table;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
 
-import com.symphony.oss.commons.hash.Hash;
 import com.symphony.oss.fugue.IFugueComponent;
 import com.symphony.oss.fugue.kv.IKvItem;
 import com.symphony.oss.fugue.kv.IKvPagination;
 import com.symphony.oss.fugue.kv.IKvPartitionKeyProvider;
 import com.symphony.oss.fugue.kv.IKvPartitionSortKeyProvider;
 import com.symphony.oss.fugue.kv.KvCondition;
+import com.symphony.oss.fugue.kv.KvPartitionUser;
 import com.symphony.oss.fugue.store.NoSuchObjectException;
-import com.symphony.oss.fugue.store.ObjectExistsException;
 import com.symphony.oss.fugue.trace.ITraceContext;
 
 /**
@@ -173,6 +171,21 @@ public interface IKvTable extends IFugueComponent
       @Nullable String sortKeyPrefix,
       @Nullable Map<String, Object> filterAttributes,
       Consumer<String> consumer, ITraceContext trace);
+  
+  /**
+   * Return Users Permissions from the given partition.
+   * 
+   * @param partitionKey      The ID of the partition.
+   * @param limit             An optional limit to the number of objects retrieved.
+   * @param after             An optional page cursor to continue a previous query.
+   * @param consumer          A consumer to receive the retrieved objects.
+   * @param trace             Trace context.
+   * 
+   * @return              Pagination tokens to allow a continuation query to be made.
+   */
+  IKvPagination fetchPartitionUsers(IKvPartitionKeyProvider partitionKey, Integer limit, 
+      @Nullable String after,
+      Consumer<KvPartitionUser> consumer, ITraceContext trace);
 
   /**
    * Delete the single row whose primary key is given.
