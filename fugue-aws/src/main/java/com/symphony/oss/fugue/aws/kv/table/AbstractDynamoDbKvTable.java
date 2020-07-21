@@ -536,7 +536,14 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
           )
         );
       
-      deleteFromSecondaryStorage(absoluteHash, trace); //TODO DELETE
+      try
+      {
+        deleteFromSecondaryStorage(absoluteHash, trace);
+      }
+      catch(RuntimeException e2)
+      {
+        log_.error("Failed to delete secondary copy of " + absoluteHash, e2);
+      }
     }
   }
   
