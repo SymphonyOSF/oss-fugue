@@ -92,7 +92,8 @@ public interface IKvTable extends IFugueComponent
 //      ITraceContext trace) throws NoSuchObjectException;
   
   /**
-   * Physically delete the given object.
+   * Physically delete the given application object.
+
    * 
    * @param partitionSortKeyProvider  The partition and sort key of the existing item.
    * @param versionPartitionKey       Partition key for the versions partition.
@@ -101,6 +102,15 @@ public interface IKvTable extends IFugueComponent
    */
   void delete(IKvPartitionSortKeyProvider partitionSortKeyProvider, IKvPartitionKeyProvider versionPartitionKey,
       IKvPartitionSortKeyProvider absoluteHashPrefix, ITraceContext trace);
+  
+
+  /**
+   * Physically delete all the system objects from the given partition.
+   * 
+   * @param partitionSortKeyProvider  The partition and sort key of the existing item.
+   * @param trace                     Trace context.
+   */
+  void deleteSystemPartitionObjects(IKvPartitionKeyProvider partitionKeyProvider, ITraceContext trace);
   
   /**
    * Fetch the object with the given partition key and sort key.

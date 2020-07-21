@@ -37,7 +37,6 @@ import com.amazonaws.services.cloudwatch.model.StandardUnit;
 import com.symphony.oss.fugue.config.IConfiguration;
 import com.symphony.oss.fugue.metrics.IMetricManager;
 import com.symphony.oss.fugue.naming.INameFactory;
-import com.symphony.oss.fugue.naming.NameFactory;
 import com.symphony.oss.fugue.server.IFugueServer;
 
 public class AwsMetricManager implements IMetricManager
