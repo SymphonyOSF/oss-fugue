@@ -460,35 +460,10 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
     }
   }
   
-  class DeleteConsumer extends AbstractItemConsumer
-  {
+  abstract class AbstractDeleteConsumer extends AbstractItemConsumer
+  {  
     List<PrimaryKey>            primaryKeysToDelete_ = new ArrayList<>(24);
     IKvPartitionSortKeyProvider absoluteHashPrefix_;
-    
-    public DeleteConsumer(IKvPartitionSortKeyProvider absoluteHashPrefix)
-    {
-      absoluteHashPrefix_ = absoluteHashPrefix;
-    }
-
-    @Override
-    void consume(Item item, ITraceContext trace)
-    {
-      primaryKeysToDelete_.add(new PrimaryKey(
-          new KeyAttribute(ColumnNamePartitionKey,  item.getString(ColumnNamePartitionKey)),
-          new KeyAttribute(ColumnNameSortKey,       item.getString(ColumnNameSortKey))
-          )
-        );
-      
-      Hash absoluteHash = Hash.newInstance(item.getString(ColumnNameAbsoluteHash));
-      
-      primaryKeysToDelete_.add(new PrimaryKey(
-          new KeyAttribute(ColumnNamePartitionKey,  getPartitionKey(absoluteHashPrefix_) + absoluteHash),
-          new KeyAttribute(ColumnNameSortKey,       absoluteHashPrefix_.getSortKey().asString())
-          )
-        );
-      
-      deleteFromSecondaryStorage(absoluteHash, trace);
-    }
     
     void dynamoBatchWrite()
     {
@@ -536,6 +511,49 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
     }
   }
   
+  class DeleteConsumer extends AbstractDeleteConsumer
+  {
+    
+    public DeleteConsumer(IKvPartitionSortKeyProvider absoluteHashPrefix)
+    {
+      absoluteHashPrefix_ = absoluteHashPrefix;
+    }
+
+    @Override
+    void consume(Item item, ITraceContext trace)
+    {
+      primaryKeysToDelete_.add(new PrimaryKey(
+          new KeyAttribute(ColumnNamePartitionKey,  item.getString(ColumnNamePartitionKey)),
+          new KeyAttribute(ColumnNameSortKey,       item.getString(ColumnNameSortKey))
+          )
+        );
+      
+      Hash absoluteHash = Hash.newInstance(item.getString(ColumnNameAbsoluteHash));
+      
+      primaryKeysToDelete_.add(new PrimaryKey(
+          new KeyAttribute(ColumnNamePartitionKey,  getPartitionKey(absoluteHashPrefix_) + absoluteHash),
+          new KeyAttribute(ColumnNameSortKey,       absoluteHashPrefix_.getSortKey().asString())
+          )
+        );
+      
+      deleteFromSecondaryStorage(absoluteHash, trace); //TODO DELETE
+    }
+  }
+  
+  class DeleteSystemObjectConsumer extends AbstractDeleteConsumer
+  {
+
+  @Override
+  void consume(Item item, ITraceContext trace)
+  {
+    primaryKeysToDelete_.add(new PrimaryKey(
+        new KeyAttribute(ColumnNamePartitionKey,  item.getString(ColumnNamePartitionKey)),
+        new KeyAttribute(ColumnNameSortKey,       item.getString(ColumnNameSortKey))
+        )
+      );    
+  }
+}
+  
   @Override
   public void delete(IKvPartitionSortKeyProvider partitionSortKeyProvider, 
       IKvPartitionKeyProvider versionPartitionKey, IKvPartitionSortKeyProvider absoluteHashPrefix, ITraceContext trace)
@@ -564,6 +582,22 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
         );
   }
   
+  @Override
+  public void deleteSystemPartitionObjects(IKvPartitionKeyProvider partitionKeyProvider, ITraceContext trace)
+  {
+    String after = null;
+    
+    do
+    {
+      DeleteSystemObjectConsumer deleteConsumer = new DeleteSystemObjectConsumer();
+      
+      after = doFetchPartitionObjects(partitionKeyProvider, true, 24, after, null, null, deleteConsumer, trace).getAfter();
+      
+      deleteConsumer.dynamoBatchWrite();
+    } while (after != null);
+
+  }
+    
   @Override
   public void deleteRow(IKvPartitionSortKeyProvider partitionSortKeyProvider, ITraceContext trace)
   {
@@ -628,7 +662,7 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
       catch (NoSuchObjectException e)
       {
         log_.error("Failed to wite objects", e);
-        for(Hash secondaryStoredHash : secondaryStoredHashes)
+         for(Hash secondaryStoredHash : secondaryStoredHashes)
         {
           try
           {
