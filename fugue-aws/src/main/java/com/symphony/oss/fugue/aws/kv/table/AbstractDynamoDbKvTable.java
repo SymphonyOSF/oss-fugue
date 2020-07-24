@@ -544,6 +544,7 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
       {
         log_.error("Failed to delete secondary copy of " + absoluteHash, e2);
       }
+
     }
   }
   
