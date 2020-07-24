@@ -333,7 +333,7 @@ public class SqsQueueManager implements IQueueManager
               }
               catch (InterruptedException ie)
               {
-
+                throw ex;
               }
             }
             else
