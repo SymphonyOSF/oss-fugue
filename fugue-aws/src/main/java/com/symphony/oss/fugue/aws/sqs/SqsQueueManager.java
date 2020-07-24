@@ -35,6 +35,7 @@ import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
+import com.amazonaws.services.sqs.model.QueueDeletedRecentlyException;
 import com.amazonaws.services.sqs.model.QueueDoesNotExistException;
 import com.amazonaws.services.sqs.model.TagQueueRequest;
 import com.google.common.cache.CacheBuilder;
@@ -290,7 +291,7 @@ public class SqsQueueManager implements IQueueManager
   @Override
   public String createQueue(String queueName, Map<String, String> tags, boolean dryRun)
   {
-    String  queueUrl;
+    String  queueUrl = "";
     
     try
     {
@@ -307,9 +308,39 @@ public class SqsQueueManager implements IQueueManager
       }
       else
       {
-        queueUrl = sqsClient_.createQueue(new CreateQueueRequest(queueName.toString())).getQueueUrl();        
+        int count = 1;
         
-        log_.info("Created queue " + queueName + " as " + queueUrl);
+        boolean created = false;
+
+        while (!created)
+        {
+          try
+          {
+            queueUrl = sqsClient_.createQueue(new CreateQueueRequest(queueName.toString())).getQueueUrl();
+            
+            log_.info("Created queue " + queueName + " as " + queueUrl);
+            
+            created = true;
+          }
+          catch (QueueDeletedRecentlyException ex)
+          {
+            
+            if (count++ <= 4)
+            {
+              try
+              {
+                Thread.sleep(15000);
+              }
+              catch (InterruptedException ie)
+              {
+
+              }
+            }
+            else
+              throw ex;
+          }
+        }
+        
       }
     }
     
