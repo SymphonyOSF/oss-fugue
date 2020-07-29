@@ -378,9 +378,16 @@ public class SqsQueueManager implements IQueueManager
       }
       else
       {
-        sqsClient_.deleteQueue(existingQueueUrl);
-
-        log_.info("Deleted queue " + queueName + " with URL " + existingQueueUrl);
+        try
+        {
+          sqsClient_.deleteQueue(existingQueueUrl);
+          
+          log_.info("Deleted queue " + queueName + " with URL " + existingQueueUrl);
+        }
+        catch (QueueDoesNotExistException e)
+        {
+          log_.info("Queue was already deleted " + queueName + " with URL " + existingQueueUrl);
+        }
       }
     }
     catch(QueueDoesNotExistException e)
