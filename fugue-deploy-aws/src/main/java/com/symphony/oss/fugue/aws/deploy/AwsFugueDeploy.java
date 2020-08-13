@@ -1838,7 +1838,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
           revisionId = createFunctionResult.getRevisionId();
         }
 
-        log_.info("RevisionId " + revisionId);
+        log_.info("Function " + functionName + " is now revisionId " + revisionId);
         
         
         PublishVersionResult publishVersionResult = lambdaClient_.publishVersion(new PublishVersionRequest()
@@ -1846,6 +1846,13 @@ public abstract class AwsFugueDeploy extends FugueDeploy
             .withRevisionId(revisionId)
             .withFunctionName(functionName)
             );
+        
+        if(!publishVersionResult.getRevisionId().equals(revisionId))
+        {
+          log_.warn("PUBLISHED VERSION IS NOT OUR REVISION " + publishVersionResult);
+        }
+        
+        log_.info("Function " + functionName + " revisionId " + publishVersionResult.getRevisionId() + " published to version " + publishVersionResult.getVersion());
         
         try
         {
@@ -1862,6 +1869,9 @@ public abstract class AwsFugueDeploy extends FugueDeploy
               .withFunctionVersion(publishVersionResult.getVersion())
               .withName(LAMBDA_ALIAS_NAME)
               );
+          
+          log_.info("Lambda function " + functionName + " alias " + LAMBDA_ALIAS_NAME + " updated to version " + updateAliasResult.getFunctionVersion() + " (revision " + updateAliasResult.getRevisionId() + ")");
+
         }
         catch(ResourceNotFoundException e)
         {
@@ -1874,6 +1884,9 @@ public abstract class AwsFugueDeploy extends FugueDeploy
               .withFunctionVersion(publishVersionResult.getVersion())
               .withName(LAMBDA_ALIAS_NAME)
               );
+          
+          log_.info("Lambda function " + functionName + " alias " + LAMBDA_ALIAS_NAME + " created to version " + createAliasResult.getFunctionVersion() + " (revision " + createAliasResult.getRevisionId() + ")");
+
         }
 
 
@@ -1890,7 +1903,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
           
           revisionId = getFunctionResult.getConfiguration().getRevisionId();
 
-          log_.info("Updated RevisionId " + revisionId);
+          log_.info("Updated LambdaApiGatewayPolicy RevisionId " + revisionId);
         }
         
         int versionLimit = Integer.parseInt(publishVersionResult.getVersion()) - 1;
@@ -1915,6 +1928,10 @@ public abstract class AwsFugueDeploy extends FugueDeploy
                     .withFunctionName(functionName)
                     .withQualifier(version.getVersion())
                     );
+              }
+              else
+              {
+                log_.info("Leaving version " + functionName + ":" + version.getVersion() + " (revision " + version.getRevisionId() + ")");
               }
             }
             catch(NumberFormatException e)
