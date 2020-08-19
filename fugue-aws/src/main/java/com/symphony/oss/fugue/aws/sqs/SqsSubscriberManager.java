@@ -185,7 +185,7 @@ public class SqsSubscriberManager extends AbstractPullSubscriberManager<String, 
       String queueUrl = sqsClient_.getQueueUrl(subscriptionName.toString()).getQueueUrl();
       
       SqsSubscriber subscriber = new SqsSubscriber(this, sqsClient_, queueUrl, subscriptionName.toString(), getTraceFactory(), subscription.getConsumer(),
-          getCounter(), createBusyCounter(subscriptionName), nameFactory_.getPodName());
+          getCounter(), createBusyCounter(subscriptionName), null);
 
       subscribers_.add(subscriber); 
     }

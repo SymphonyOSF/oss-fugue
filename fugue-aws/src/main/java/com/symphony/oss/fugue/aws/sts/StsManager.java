@@ -23,12 +23,13 @@
 
 package com.symphony.oss.fugue.aws.sts;
 
+import java.util.List;
+
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicSessionCredentials;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.auth.policy.Policy;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenService;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder;
 import com.amazonaws.services.securitytoken.model.AssumeRoleRequest;
@@ -49,6 +50,8 @@ public class StsManager
   private final AWSSecurityTokenService stsClient_;
   private final String                  accountId_;
   private final GetCallerIdentityResult identityResult_;
+  
+  private static final int EXPIRY_TIME =  60 * 15;
 
   /**
    * Constructor.
@@ -101,6 +104,35 @@ public class StsManager
       throw new IllegalStateException("Unable to assume role " + assumeRole, e);
     }
   }
+  
+  /**
+   * Assume the given role.
+   * 
+   * @param assumeRole  A role to be assumed.
+   * 
+   * @return A credentials provider containing the assumed credentials.
+   */
+  public Credentials assumeRole(String assumeRole, List<String> queues)
+  {  
+    try
+    {
+       AssumeRoleRequest request = new AssumeRoleRequest()
+        .withRoleArn(roleArn(assumeRole))
+        .withRoleSessionName(assumeRole)
+        .withDurationSeconds(EXPIRY_TIME)
+        .withPolicy(createPolicy(queues));
+      
+      AssumeRoleResult roleResult = stsClient_.assumeRole(request);
+          
+      Credentials creds = roleResult.getCredentials();
+      
+       return creds;
+    }
+    catch(RuntimeException e)
+    {
+      throw new IllegalStateException("Unable to assume role " + assumeRole, e);
+    }
+  }
 
   private String roleArn(String roleName)
   {
@@ -122,4 +154,41 @@ public class StsManager
   {
     return accountId_;
   }
+  
+  private String createPolicy(List<String> queues) {
+    
+    StringBuilder sb = new StringBuilder("\"Resource\": [");
+    
+    int N = queues.size();
+
+    for(int i = 0; i <  queues.size() ; i++) 
+      sb.append("\"" +"arn:aws:sqs:*:*:" + queues.get(i) + "\"" + (i < N - 1 ? "," : "")+ "\n");
+    
+    if(queues.size() > 1)
+      sb.setLength(sb.length() - 1);
+    sb.append("]");
+    
+    String jsonString = "{\n" + 
+        "    \"Version\": \"2012-10-17\",\n" + 
+        "    \"Statement\": [\n" + 
+        "        {\n" + 
+        "            \"Sid\": \"SqsRead\",\n" + 
+        "            \"Effect\": \"Allow\",\n" + 
+        "            \"Action\": [\n" + 
+        "                \"sqs:DeleteMessage\",\n" + 
+        "                \"sqs:GetQueueUrl\",\n" + 
+        "                \"sqs:ChangeMessageVisibility\",\n" + 
+        "                \"sqs:ReceiveMessage\",\n" + 
+        "                \"sqs:GetQueueAttributes\"\n" + 
+        "            ],\n" + 
+                      sb.toString() +
+        "        }\n" + 
+        "    ]\n" + 
+        "}\n" + 
+        "";
+        
+    return Policy.fromJson(jsonString).toJson();
+    
+  }
+  
 }

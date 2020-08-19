@@ -56,6 +56,8 @@ public class SqsQueueReceiver implements IQueueReceiver
 
   private final AmazonSQS     sqsClient_;
   private final String        queueUrl_;
+  
+  private    static final int                   MAX_SQS_MESSAGES  = 10;  
 
   /**
    * Constructor.
@@ -77,6 +79,8 @@ public class SqsQueueReceiver implements IQueueReceiver
   @Override
   public @Nonnull Collection<IQueueMessage> receiveMessages(int maxMessages, int waitTimeSeconds, Set<? extends IQueueMessageDelete> deleteMessages, Set<? extends IQueueMessageExtend> extendMessages)
   {
+    maxMessages = Math.min(maxMessages, MAX_SQS_MESSAGES);
+    
     List<IQueueMessage> messages = new ArrayList<>(maxMessages);
     
     for(IQueueMessageDelete delete : deleteMessages)

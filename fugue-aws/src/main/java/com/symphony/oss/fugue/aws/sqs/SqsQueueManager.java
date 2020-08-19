@@ -395,4 +395,16 @@ public class SqsQueueManager implements IQueueManager
       log_.info("Queue " + queueName + " does not exist.");
     }
   }
+
+  @Override
+  public long getTTLLowerBound()
+  {
+    return 1000 * 60;
+  }
+
+  @Override
+  public long getTTLUpperBound()
+  {
+    return 1000 * 60 * 60 * 24 * (7 - 2 /*CLEANUP DAYS */);
+  }
 }
