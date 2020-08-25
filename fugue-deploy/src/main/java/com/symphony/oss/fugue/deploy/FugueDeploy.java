@@ -641,7 +641,7 @@ public abstract class FugueDeploy extends CommandLineHandler
     
     // deploy Multi tenant config
     multiTenantContext_.processConfigAndPolicies();
-       
+    
     // multi tenant init containers
     multiTenantContext_.deployInitContainers();
     
