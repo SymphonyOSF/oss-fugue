@@ -149,6 +149,8 @@ public abstract class FugueDeploy extends CommandLineHandler
   private static final String     IMAGE               = "image";
 
   private static final String     DNS_SUFFIX          = "dnsSuffix";
+  private static final String     RATE                = "gatewayApiRate";
+  private static final String     BURST               = "gatewayApiBurst";
   private static final String     PUBLIC_DNS_SUFFIX   = "publicDnsSuffix";
   private static final String     CONFIG_FILTER       = "configFilter";
 
@@ -189,6 +191,8 @@ public abstract class FugueDeploy extends CommandLineHandler
   
   protected abstract void validateAccount(IJsonObject<?> config);
   protected DomSerializer domDerializer_ = DomSerializer.newBuilder().withCompactMode(true).build();
+  protected Double          gatewayApiRate_;
+  protected Integer         gatewayApiBurst_;
   
   /**
    * Constructor.
@@ -441,6 +445,8 @@ public abstract class FugueDeploy extends CommandLineHandler
     validateAccount(multiTenantConfig);
     
     dnsSuffix_      = multiTenantConfig.getRequiredString(DNS_SUFFIX);
+    gatewayApiRate_ = multiTenantConfig.getRequiredDouble(RATE);
+    gatewayApiBurst_= multiTenantConfig.getRequiredInteger(BURST);
     publicDnsSuffix_= multiTenantConfig.getRequiredString(PUBLIC_DNS_SUFFIX);
     
     
@@ -635,6 +641,7 @@ public abstract class FugueDeploy extends CommandLineHandler
     
     // deploy Multi tenant config
     multiTenantContext_.processConfigAndPolicies();
+    
     
     // multi tenant init containers
     multiTenantContext_.deployInitContainers();

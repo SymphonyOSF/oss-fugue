@@ -61,6 +61,15 @@ public interface IQueueManager
    * @return true if the queue exists.
    */
   boolean doesQueueExist(String queueName);
+  
+  /**
+   * Fetches the queue URL from the AWS Client
+   * 
+   * @param queueName The name of the queue.
+   * 
+   * @return the queue URL.
+   */
+  String getQueueUrl(String queueName);
 
   /**
    * Return a sender for the given queue.

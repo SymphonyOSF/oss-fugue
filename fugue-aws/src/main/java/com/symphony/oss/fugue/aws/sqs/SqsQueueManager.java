@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
@@ -100,7 +101,9 @@ public class SqsQueueManager implements IQueueManager
     accountId_  = builder.accountId_;
     tags_       = ImmutableMap.copyOf(builder.tags_);
     
-    sqsClient_ = builder.sqsBuilder_.withRegion(region_).build();
+    sqsClient_ = (AmazonSQS) builder.sqsBuilder_
+        .withRegion(region_)
+        .build();
   }
   
   @Override
@@ -158,7 +161,7 @@ public class SqsQueueManager implements IQueueManager
    */
   public static class Builder extends BaseAbstractBuilder<Builder, SqsQueueManager>
   {
-    private AmazonSQSClientBuilder sqsBuilder_;
+    private AwsClientBuilder       sqsBuilder_;
     private String                 region_;
     private String                 accountId_;
     private Map<String, String>    tags_ = new HashMap<>();
@@ -167,15 +170,24 @@ public class SqsQueueManager implements IQueueManager
     /**
      * Constructor.
      */
-    public Builder()
+    public Builder(boolean gateway)
     {
       super(Builder.class);
-      
-      sqsBuilder_ = AmazonSQSClientBuilder
-          .standard()
-          .withClientConfiguration(new ClientConfiguration()
-              .withMaxConnections(200)
-              );
+
+      if(!gateway) 
+      {
+        sqsBuilder_ = AmazonSQSClientBuilder
+            .standard()
+            .withClientConfiguration(new ClientConfiguration()
+                .withMaxConnections(200)
+                );
+      } else 
+      {
+        sqsBuilder_ = GatewayAmazonSQSClientBuilder.standard();
+        sqsBuilder_.withClientConfiguration(new ClientConfiguration()
+                .withMaxConnections(200)
+                );
+      }
     }
     
 //    @Override
@@ -285,6 +297,19 @@ public class SqsQueueManager implements IQueueManager
     catch(QueueDoesNotExistException e)
     {
       return false;
+    }
+  }
+  
+  @Override
+  public String getQueueUrl(String queueName)
+  {
+    try
+    {
+      return sqsClient_.getQueueUrl(queueName.toString()).getQueueUrl();
+    }
+    catch(QueueDoesNotExistException e)
+    {
+      return null;
     }
   }
   

@@ -23,6 +23,8 @@
 
 package com.symphony.oss.fugue.aws.sqs;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -55,7 +57,7 @@ public class SqsQueueReceiver implements IQueueReceiver
   private static final Logger log_ = LoggerFactory.getLogger(SqsQueueReceiver.class);
 
   private final AmazonSQS     sqsClient_;
-  private final String        queueUrl_;
+  private String        queueUrl_;
   
   private    static final int                   MAX_SQS_MESSAGES  = 10;  
 
@@ -71,7 +73,14 @@ public class SqsQueueReceiver implements IQueueReceiver
   {
     sqsClient_     = sqsClient;
     
-    queueUrl_ = sqsClient_.getQueueUrl(queueName).getQueueUrl();
+    try
+    {
+      queueUrl_ = new URL(queueName).toString();
+    }
+    catch (MalformedURLException e)
+    {
+      queueUrl_ = sqsClient_.getQueueUrl(queueName).getQueueUrl();
+    }
 
     log_.info("Queue " + queueName + " exists as " + queueUrl_);
   }

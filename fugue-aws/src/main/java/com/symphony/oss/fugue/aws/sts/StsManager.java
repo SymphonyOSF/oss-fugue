@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright 2018 Symphony Communication Services, LLC.
+  * Copyright 2018 Symphony Communication Services, LLC.
  *
  * Licensed to The Symphony Software Foundation (SSF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -182,10 +182,22 @@ public class StsManager
         "                \"sqs:GetQueueAttributes\"\n" + 
         "            ],\n" + 
                       sb.toString() +
-        "        }\n" + 
+        "        }\n,"
+        + " {\n" + 
+        "      \"Effect\": \"Allow\",\n" + 
+        "      \"Action\": [\n" + 
+        "        \"apigateway:POST\"\n," + 
+        "        \"apigateway:GET\"\n" + 
+        "      ],\n" + 
+        "      \"Resource\": [\n" + 
+       // "        \"arn:aws:execute-api:us-east-1:189141687483:9ch7156wyd/*/*/object/v1/feeds/fetch/aws/us-east-1/*\", \"*\" , \"arn:aws:apigateway:us-east-1::/master/*\"" + 
+        "        \"arn:aws:execute-api:us-east-1:*:*/*/*/object/v1/feeds/fetch/aws/us-east-1/*\"" +  
+       "      ]\n" + 
+        "    }" + 
         "    ]\n" + 
         "}\n" + 
         "";
+    
         
     return Policy.fromJson(jsonString).toJson();
     
