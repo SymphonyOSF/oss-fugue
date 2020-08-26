@@ -180,12 +180,12 @@ public class SqsSubscriberManager extends AbstractPullSubscriberManager<String, 
   {
     for(Name subscriptionName : subscription.getSubscriptionNames())
     {
-      log_.info("Subscribing to " + subscriptionName + "..."); 
+      log_.info("Subscribing to " + subscriptionName + "...");
       
       String queueUrl = sqsClient_.getQueueUrl(subscriptionName.toString()).getQueueUrl();
       
       SqsSubscriber subscriber = new SqsSubscriber(this, sqsClient_, queueUrl, subscriptionName.toString(), getTraceFactory(), subscription.getConsumer(),
-          getCounter(), createBusyCounter(subscriptionName), null);
+          getCounter(), createBusyCounter(subscriptionName), nameFactory_.getPodName());
 
       subscribers_.add(subscriber); 
     }

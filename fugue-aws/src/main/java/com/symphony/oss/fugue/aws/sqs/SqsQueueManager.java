@@ -69,8 +69,9 @@ public class SqsQueueManager implements IQueueManager
   private final String                       accountId_;
   private final ImmutableMap<String, String> tags_;
 
-  private final AmazonSQS                    sqsClient_;
+  private final GatewayAmazonSQSClient                    sqsClient_;
   //private Map<String, SqsQueueSender>          senderMap_ = new HashMap<>();
+  private boolean gateway_;
   
   private final LoadingCache<String, SqsQueueSender>          senderCache_ = CacheBuilder.newBuilder()
       .maximumSize(250)
@@ -80,7 +81,7 @@ public class SqsQueueManager implements IQueueManager
             @Override
             public SqsQueueSender load(String queueName)
             {
-              return new SqsQueueSender(sqsClient_, queueName);
+              return new SqsQueueSender(sqsClient_, gateway_, queueName);
             }
           });
   private final LoadingCache<String, SqsQueueReceiver>          receiverCache_ = CacheBuilder.newBuilder()
@@ -91,7 +92,7 @@ public class SqsQueueManager implements IQueueManager
             @Override
             public SqsQueueReceiver load(String queueName)
             {
-              return new SqsQueueReceiver(sqsClient_, queueName);
+              return new SqsQueueReceiver(sqsClient_, gateway_, queueName);
             }
           });
 
@@ -101,9 +102,9 @@ public class SqsQueueManager implements IQueueManager
     accountId_  = builder.accountId_;
     tags_       = ImmutableMap.copyOf(builder.tags_);
     
-    sqsClient_ = (AmazonSQS) builder.sqsBuilder_
-        .withRegion(region_)
-        .build();
+    sqsClient_ = (GatewayAmazonSQSClient) builder.sqsBuilder_.build();
+    
+    gateway_ = builder.gateway_;
   }
   
   @Override
@@ -161,33 +162,26 @@ public class SqsQueueManager implements IQueueManager
    */
   public static class Builder extends BaseAbstractBuilder<Builder, SqsQueueManager>
   {
-    private AwsClientBuilder       sqsBuilder_;
+    private GatewayAmazonSQSClientBuilder       sqsBuilder_;
     private String                 region_;
     private String                 accountId_;
     private Map<String, String>    tags_ = new HashMap<>();
     //  private String configPath_ = "org/symphonyoss/s2/fugue/aws/sqs";
+    private String endPoint_;
+    private boolean gateway_;
 
     /**
      * Constructor.
      */
-    public Builder(boolean gateway)
+    public Builder()
     {
       super(Builder.class);
 
-      if(!gateway) 
-      {
-        sqsBuilder_ = AmazonSQSClientBuilder
-            .standard()
-            .withClientConfiguration(new ClientConfiguration()
+      sqsBuilder_ = GatewayAmazonSQSClientBuilder.standard();
+      sqsBuilder_.withClientConfiguration(new ClientConfiguration()
                 .withMaxConnections(200)
                 );
-      } else 
-      {
-        sqsBuilder_ = GatewayAmazonSQSClientBuilder.standard();
-        sqsBuilder_.withClientConfiguration(new ClientConfiguration()
-                .withMaxConnections(200)
-                );
-      }
+      
     }
     
 //    @Override
@@ -265,6 +259,24 @@ public class SqsQueueManager implements IQueueManager
     public Builder withTags(Map<String, String> tags)
     {
       tags_.putAll(tags);
+      
+      return self();
+    }
+    
+    /**
+     * Set the API endpoint.
+     * 
+     * @param endpoint The AWS gateway endpoint for SQS.
+     * 
+     * @return this (fluent method)
+     */
+    public Builder withEndpoint(String endpoint)
+    {
+      endPoint_ = endpoint;
+      
+      sqsBuilder_.withEndpoint(endPoint_);
+      
+      gateway_ = true;
       
       return self();
     }

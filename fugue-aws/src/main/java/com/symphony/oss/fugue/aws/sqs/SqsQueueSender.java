@@ -23,8 +23,6 @@
 
 package com.symphony.oss.fugue.aws.sqs;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -61,18 +59,11 @@ public class SqsQueueSender implements IQueueSender
    * 
    * @throws QueueDoesNotExistException if the queue does not exist.
    */
-  SqsQueueSender(AmazonSQS sqsClient, String queueName)
+  SqsQueueSender(AmazonSQS sqsClient, boolean gateway, String queueName)
   {
     sqsClient_     = sqsClient;
-    
-    try
-    {
-      queueUrl_ = new URL(queueName).toString();
-    }
-    catch (MalformedURLException e)
-    {
-      queueUrl_ = sqsClient_.getQueueUrl(queueName).getQueueUrl();
-    }
+      
+    queueUrl_ = gateway ?  queueName : sqsClient_.getQueueUrl(queueName).getQueueUrl();
 
     log_.info("Queue " + queueName + " exists as " + queueUrl_);
   }
