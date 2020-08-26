@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
@@ -68,8 +69,9 @@ public class SqsQueueManager implements IQueueManager
   private final String                       accountId_;
   private final ImmutableMap<String, String> tags_;
 
-  private final AmazonSQS                    sqsClient_;
+  private final GatewayAmazonSQSClient                    sqsClient_;
   //private Map<String, SqsQueueSender>          senderMap_ = new HashMap<>();
+  private boolean gateway_;
   
   private final LoadingCache<String, SqsQueueSender>          senderCache_ = CacheBuilder.newBuilder()
       .maximumSize(250)
@@ -79,7 +81,7 @@ public class SqsQueueManager implements IQueueManager
             @Override
             public SqsQueueSender load(String queueName)
             {
-              return new SqsQueueSender(sqsClient_, queueName);
+              return new SqsQueueSender(sqsClient_, gateway_, queueName);
             }
           });
   private final LoadingCache<String, SqsQueueReceiver>          receiverCache_ = CacheBuilder.newBuilder()
@@ -90,7 +92,7 @@ public class SqsQueueManager implements IQueueManager
             @Override
             public SqsQueueReceiver load(String queueName)
             {
-              return new SqsQueueReceiver(sqsClient_, queueName);
+              return new SqsQueueReceiver(sqsClient_, gateway_, queueName);
             }
           });
 
@@ -100,7 +102,9 @@ public class SqsQueueManager implements IQueueManager
     accountId_  = builder.accountId_;
     tags_       = ImmutableMap.copyOf(builder.tags_);
     
-    sqsClient_ = builder.sqsBuilder_.withRegion(region_).build();
+    sqsClient_ = (GatewayAmazonSQSClient) builder.sqsBuilder_.build();
+    
+    gateway_ = builder.gateway_;
   }
   
   @Override
@@ -158,11 +162,13 @@ public class SqsQueueManager implements IQueueManager
    */
   public static class Builder extends BaseAbstractBuilder<Builder, SqsQueueManager>
   {
-    private AmazonSQSClientBuilder sqsBuilder_;
+    private GatewayAmazonSQSClientBuilder       sqsBuilder_;
     private String                 region_;
     private String                 accountId_;
     private Map<String, String>    tags_ = new HashMap<>();
     //  private String configPath_ = "org/symphonyoss/s2/fugue/aws/sqs";
+    private String endPoint_;
+    private boolean gateway_;
 
     /**
      * Constructor.
@@ -170,12 +176,12 @@ public class SqsQueueManager implements IQueueManager
     public Builder()
     {
       super(Builder.class);
+
+      sqsBuilder_ = GatewayAmazonSQSClientBuilder.standard();
+      sqsBuilder_.withClientConfiguration(new ClientConfiguration()
+                .withMaxConnections(200)
+                );
       
-      sqsBuilder_ = AmazonSQSClientBuilder
-          .standard()
-          .withClientConfiguration(new ClientConfiguration()
-              .withMaxConnections(200)
-              );
     }
     
 //    @Override
@@ -256,6 +262,24 @@ public class SqsQueueManager implements IQueueManager
       
       return self();
     }
+    
+    /**
+     * Set the API endpoint.
+     * 
+     * @param endpoint The AWS gateway endpoint for SQS.
+     * 
+     * @return this (fluent method)
+     */
+    public Builder withEndpoint(String endpoint)
+    {
+      endPoint_ = endpoint;
+      
+      sqsBuilder_.withEndpoint(endPoint_);
+      
+      gateway_ = true;
+      
+      return self();
+    }
 
     @Override
     public void validate(FaultAccumulator faultAccumulator)
@@ -285,6 +309,19 @@ public class SqsQueueManager implements IQueueManager
     catch(QueueDoesNotExistException e)
     {
       return false;
+    }
+  }
+  
+  @Override
+  public String getQueueUrl(String queueName)
+  {
+    try
+    {
+      return sqsClient_.getQueueUrl(queueName.toString()).getQueueUrl();
+    }
+    catch(QueueDoesNotExistException e)
+    {
+      return null;
     }
   }
   
@@ -394,5 +431,17 @@ public class SqsQueueManager implements IQueueManager
     {
       log_.info("Queue " + queueName + " does not exist.");
     }
+  }
+
+  @Override
+  public long getTTLLowerBound()
+  {
+    return 1000 * 60;
+  }
+
+  @Override
+  public long getTTLUpperBound()
+  {
+    return 1000 * 60 * 60 * 24 * (7 - 2 /*CLEANUP DAYS */);
   }
 }

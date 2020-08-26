@@ -55,7 +55,9 @@ public class SqsQueueReceiver implements IQueueReceiver
   private static final Logger log_ = LoggerFactory.getLogger(SqsQueueReceiver.class);
 
   private final AmazonSQS     sqsClient_;
-  private final String        queueUrl_;
+  private String        queueUrl_;
+  
+  private    static final int                   MAX_SQS_MESSAGES  = 10;  
 
   /**
    * Constructor.
@@ -65,11 +67,11 @@ public class SqsQueueReceiver implements IQueueReceiver
    * 
    * @throws QueueDoesNotExistException if the queue does not exist.
    */
-  SqsQueueReceiver(AmazonSQS sqsClient, String queueName)
+  SqsQueueReceiver(AmazonSQS sqsClient, boolean gateway, String queueName)
   {
     sqsClient_     = sqsClient;
     
-    queueUrl_ = sqsClient_.getQueueUrl(queueName).getQueueUrl();
+    queueUrl_ = gateway ?  queueName : sqsClient_.getQueueUrl(queueName).getQueueUrl();
 
     log_.info("Queue " + queueName + " exists as " + queueUrl_);
   }
@@ -77,6 +79,8 @@ public class SqsQueueReceiver implements IQueueReceiver
   @Override
   public @Nonnull Collection<IQueueMessage> receiveMessages(int maxMessages, int waitTimeSeconds, Set<? extends IQueueMessageDelete> deleteMessages, Set<? extends IQueueMessageExtend> extendMessages)
   {
+    maxMessages = Math.min(maxMessages, MAX_SQS_MESSAGES);
+    
     List<IQueueMessage> messages = new ArrayList<>(maxMessages);
     
     for(IQueueMessageDelete delete : deleteMessages)

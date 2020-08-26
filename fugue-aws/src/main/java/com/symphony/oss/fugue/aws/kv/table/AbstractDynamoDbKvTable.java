@@ -145,7 +145,6 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
   protected final String              objectTableName_;
   protected final int                 payloadLimit_;
   protected final boolean             validate_;
-  protected final boolean             enableSecondaryStorage_;
   protected final StreamSpecification streamSpecification_;
   
   protected AbstractDynamoDbKvTable(AbstractBuilder<?,?> builder)
@@ -153,9 +152,8 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
     super(builder);
     
     region_                 = builder.region_;
-    payloadLimit_           = builder.payloadLimit_;
+    payloadLimit_           = builder.payloadLimit_ != null ? builder.payloadLimit_ : MAX_RECORD_SIZE ;
     validate_               = builder.validate_;
-    enableSecondaryStorage_ = builder.enableSecondaryStorage_;
     streamSpecification_    = builder.streamSpecification_;
   
     log_.info("Starting storage...");
@@ -2043,7 +2041,7 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
     protected final AmazonDynamoDBClientBuilder amazonDynamoDBClientBuilder_;
 
     protected String              region_;
-    protected int                 payloadLimit_           = MAX_RECORD_SIZE;
+    protected Integer             payloadLimit_           = MAX_RECORD_SIZE;
     protected boolean             validate_               = true;
     protected boolean             enableSecondaryStorage_ = false;
 
@@ -2092,10 +2090,10 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
       return self();
     }
 
-    public T withPayloadLimit(int payloadLimit)
+    public T withPayloadLimit(Integer payloadLimit)
     {
-      payloadLimit_ = Math.min(payloadLimit, MAX_RECORD_SIZE);
-      
+      payloadLimit_ = payloadLimit == null ? MAX_RECORD_SIZE : Math.min(payloadLimit, MAX_RECORD_SIZE);
+
       return self();
     }
 

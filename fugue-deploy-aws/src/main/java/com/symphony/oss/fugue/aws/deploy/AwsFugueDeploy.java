@@ -2299,6 +2299,23 @@ public abstract class AwsFugueDeploy extends FugueDeploy
           log_.info("Updated stage " + stage);
         }
       }
+      
+      apiClient_.updateStage(new UpdateStageRequest()
+          .withRestApiId(apiGatewayId_)
+          .withStageName(getStageName())
+          .withPatchOperations(      
+              new PatchOperation()
+              .withOp(Op.Replace)
+              .withPath("/*/*/throttling/burstLimit")
+              .withValue(gatewayApiBurst_+"")
+              ,
+              new PatchOperation()
+              .withOp(Op.Replace)
+              .withPath("/*/*/throttling/rateLimit")
+              .withValue(gatewayApiRate_+"")
+              )
+      );
+      
       createApiGatewayBasePath();
     }
 

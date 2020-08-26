@@ -49,7 +49,7 @@ public class SqsQueueSender implements IQueueSender
   private static final Logger log_ = LoggerFactory.getLogger(SqsQueueSender.class);
 
   private final AmazonSQS     sqsClient_;
-  private final String        queueUrl_;
+  private String        queueUrl_;
 
   /**
    * Constructor.
@@ -59,11 +59,11 @@ public class SqsQueueSender implements IQueueSender
    * 
    * @throws QueueDoesNotExistException if the queue does not exist.
    */
-  SqsQueueSender(AmazonSQS sqsClient, String queueName)
+  SqsQueueSender(AmazonSQS sqsClient, boolean gateway, String queueName)
   {
     sqsClient_     = sqsClient;
-    
-    queueUrl_ = sqsClient_.getQueueUrl(queueName).getQueueUrl();
+      
+    queueUrl_ = gateway ?  queueName : sqsClient_.getQueueUrl(queueName).getQueueUrl();
 
     log_.info("Queue " + queueName + " exists as " + queueUrl_);
   }

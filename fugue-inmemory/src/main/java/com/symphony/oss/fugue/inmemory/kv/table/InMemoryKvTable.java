@@ -298,6 +298,24 @@ public class InMemoryKvTable implements IKvTable
 			return MAX_MESSAGE_SIZE;
 		}
 
+    @Override
+    public long getTTLLowerBound()
+    {
+      return 1000 * 60;
+    }
+
+    @Override
+    public long getTTLUpperBound()
+    {
+      return 1000 * 60 * 60 * 24 * (7 - 2 /*CLEANUP DAYS */);
+    }
+
+    @Override
+    public String getQueueUrl(String queueName)
+    {
+      return queueName; //PLACEHOLDER
+    }
+
 	}
 
 @Override
