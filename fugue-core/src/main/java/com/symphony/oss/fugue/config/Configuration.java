@@ -33,6 +33,7 @@ import javax.annotation.Nonnull;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.symphony.oss.commons.fault.CodingFault;
 
 /**
@@ -50,6 +51,17 @@ public class Configuration implements IConfiguration
   protected Configuration(JsonNode tree)
   {
     tree_ = tree;
+  }
+  
+  protected Configuration(HashMap<String, Object> map)
+  {
+    
+    ObjectNode node = new ObjectMapper().createObjectNode();
+    
+    for(Map.Entry<String, Object> e : map.entrySet()) 
+      node = node.put(e.getKey(), e.getValue().toString());
+    
+    tree_ = node;
   }
 
   
