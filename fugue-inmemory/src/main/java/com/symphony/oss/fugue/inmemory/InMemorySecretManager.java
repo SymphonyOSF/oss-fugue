@@ -122,5 +122,4 @@ public class InMemorySecretManager implements ISecretManager
       throw new IllegalArgumentException("Invalid JSON", e);
     }
   }
-
 }
