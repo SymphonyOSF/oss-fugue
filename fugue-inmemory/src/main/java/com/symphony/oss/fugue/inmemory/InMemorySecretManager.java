@@ -91,6 +91,17 @@ public class InMemorySecretManager implements ISecretManager
   }
   
   @Override
+  public String getSecretAsString(CredentialName name) throws SecretNotFoundException
+  {
+    IImmutableJsonDomNode result = secretMap_.get(name);
+    
+    if(result == null)
+      throw new SecretNotFoundException("Unable to find secret " + name);
+    
+    return result.toString();
+  }
+  
+  @Override
   public void putSecret(CredentialName name, IImmutableJsonDomNode secret)
   {
     secretMap_.put(name, secret);
@@ -111,4 +122,5 @@ public class InMemorySecretManager implements ISecretManager
       throw new IllegalArgumentException("Invalid JSON", e);
     }
   }
+
 }

@@ -161,6 +161,41 @@ public class AwsSecretManager implements ISecretManager
 }
   
   @Override
+  public String getSecretAsString(CredentialName name) throws SecretNotFoundException
+  {
+    try
+    {
+      log_.info("FETCHING SECRET "+name.toString());
+      GetSecretValueRequest getSecretValueRequest = new GetSecretValueRequest()
+          .withSecretId(name.toString());
+  
+      GetSecretValueResult getSecretValueResponse = secretClient_.getSecretValue(getSecretValueRequest);
+      String secret = getSecretValueResponse.getSecretString();
+        
+      if(getSecretValueResponse.getSecretString() == null) {
+        log_.info("FETCHING SECRET FAILED NOT FOUND "+name.toString());
+        throw new IllegalStateException("Returned value is not a string");         
+      }
+      
+      log_.info("FETCHING SUCCESSFUL "+name.toString());
+      return secret;
+    }
+    catch (InvalidParameterException e)
+    {
+      throw new IllegalArgumentException(e);
+    }
+    catch (InvalidRequestException e)
+    {
+      throw new CodingFault(e);
+    }
+    catch(ResourceNotFoundException e)
+    {
+      log_.info("FETCHING SECRET FAILED NOT FOUND "+name.toString());
+      throw new SecretNotFoundException("Unable to find secret " + name, e);
+    }
+  }
+  
+  @Override
   public void putSecret(CredentialName name, IImmutableJsonDomNode secret)
   {
     putSecret(name, secret.toString());

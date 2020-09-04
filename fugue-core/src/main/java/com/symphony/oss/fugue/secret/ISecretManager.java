@@ -30,6 +30,8 @@ public interface ISecretManager
 {
 
   IImmutableJsonDomNode getSecret(CredentialName secretName) throws SecretNotFoundException;
+  
+  String getSecretAsString(CredentialName secretName) throws SecretNotFoundException;
 
   void putSecret(CredentialName name, IImmutableJsonDomNode secret);
   
