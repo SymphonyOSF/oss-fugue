@@ -129,34 +129,15 @@ public class AwsSecretManager implements ISecretManager
   @Override
   public IImmutableJsonDomNode getSecret(CredentialName name) throws SecretNotFoundException
   {
-    GetSecretValueRequest getSecretValueRequest = new GetSecretValueRequest()
-        .withSecretId(name.toString());
-    
     try
     {
-      GetSecretValueResult getSecretValueResponse = secretClient_.getSecretValue(getSecretValueRequest);
-      String secret = getSecretValueResponse.getSecretString();
-      
-      if(getSecretValueResponse.getSecretString() == null) 
-        throw new IllegalStateException("Returned value is not a string");
+      String secret = getSecretAsString(name);
           
       return JacksonAdaptor.adapt(MAPPER.readTree(secret)).immutify();
-    }
-    catch (InvalidParameterException e)
-    {
-      throw new IllegalArgumentException(e);
-    }
-    catch (InvalidRequestException e)
-    {
-      throw new CodingFault(e);
     }
     catch (IOException e)
     {
       throw new IllegalStateException(e);
-    }
-    catch(ResourceNotFoundException e)
-    {
-      throw new SecretNotFoundException("Unable to find secret " + name, e);
     }
 }
   
@@ -165,19 +146,15 @@ public class AwsSecretManager implements ISecretManager
   {
     try
     {
-      log_.info("FETCHING SECRET "+name.toString());
       GetSecretValueRequest getSecretValueRequest = new GetSecretValueRequest()
           .withSecretId(name.toString());
   
       GetSecretValueResult getSecretValueResponse = secretClient_.getSecretValue(getSecretValueRequest);
       String secret = getSecretValueResponse.getSecretString();
         
-      if(getSecretValueResponse.getSecretString() == null) {
-        log_.info("FETCHING SECRET FAILED NOT FOUND "+name.toString());
-        throw new IllegalStateException("Returned value is not a string");         
-      }
-      
-      log_.info("FETCHING SUCCESSFUL "+name.toString());
+      if(getSecretValueResponse.getSecretString() == null) 
+        throw new IllegalStateException("Returned value is not a string");              
+
       return secret;
     }
     catch (InvalidParameterException e)
@@ -190,7 +167,6 @@ public class AwsSecretManager implements ISecretManager
     }
     catch(ResourceNotFoundException e)
     {
-      log_.info("FETCHING SECRET FAILED NOT FOUND "+name.toString());
       throw new SecretNotFoundException("Unable to find secret " + name, e);
     }
   }
@@ -235,4 +211,5 @@ public class AwsSecretManager implements ISecretManager
       throw new CodingFault(e);
     }
   }
+
 }
