@@ -424,6 +424,9 @@ public void start()
           if(!kvCondition.getValue().equals(value.toString()))
             return;
           break;
+        case NOT_EQUALS:
+          if(kvCondition.getValue().compareTo(value.toString()) == 0)
+            return;
           
         case GREATER_THAN:
           if(kvCondition.getValue().compareTo(value.toString()) >= 0)
@@ -435,6 +438,36 @@ public void start()
             return;
           break;
       }
+    }
+    
+    partition.put(sortKey, kvItem);
+  }
+  
+  @Override
+  public synchronized void storeEntitlementMapping(IKvItem kvItem, List<KvCondition> kvConditions, ITraceContext trace)
+  {
+    if(kvConditions.size() != 2)
+      throw new IllegalArgumentException("Wrong Number of KvConditions, expected 2, got: " + kvConditions.size());
+    
+    String partitionKey = getPartitionKey(kvItem);
+    String sortKey = kvItem.getSortKey().asString();
+    
+    Map<String, IKvItem> partition = getPartition(partitionKey);
+    IKvItem existingItem = partition.get(sortKey);
+    
+    KvCondition effective = kvConditions.get(0);
+    KvCondition entAction = kvConditions.get(1);
+    
+    Object existing_effective_value = existingItem.getAdditionalAttributes().get(effective.getName());
+    Object existing_entAction_value = existingItem.getAdditionalAttributes().get(entAction.getName());
+    
+    if (existing_effective_value != null)
+    {
+      if (existing_effective_value.toString().compareTo(effective.getValue()) > 0)
+        return;
+      if (entAction.toString().compareTo(existing_entAction_value.toString()) == 0)
+        if (entAction.getValue() == "DENY")
+          return;
     }
     
     partition.put(sortKey, kvItem);
