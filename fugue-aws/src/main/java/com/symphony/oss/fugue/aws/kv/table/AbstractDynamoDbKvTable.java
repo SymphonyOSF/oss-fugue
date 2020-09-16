@@ -455,8 +455,6 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
     
     UpdateOrPut updateOrPut = new UpdateOrPut(kvItem, partitionKey, sortKey, payloadLimit_);
     
-    ;
-    
     if(kvItem.isSaveToSecondaryStorage())
     {
       if(storeToSecondaryStorage(kvItem, updateOrPut.payloadNotStored_, trace))
