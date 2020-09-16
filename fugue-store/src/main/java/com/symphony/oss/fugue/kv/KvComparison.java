@@ -25,7 +25,7 @@ package com.symphony.oss.fugue.kv;
 
 public enum KvComparison
 {
-  EQUALS("="), GREATER_THAN(">"), LESS_THAN("<");
+  EQUALS("="), NOT_EQUALS("<>"),  GREATER_THAN(">"), LESS_THAN("<") ;
   
   private final String symbol_;
 
