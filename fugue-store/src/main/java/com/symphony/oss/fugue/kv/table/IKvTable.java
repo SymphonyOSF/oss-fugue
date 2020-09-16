@@ -24,6 +24,7 @@
 package com.symphony.oss.fugue.kv.table;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -63,6 +64,15 @@ public interface IKvTable extends IFugueComponent
    * @param trace       Trace context.
    */
   void store(IKvItem kvItem, KvCondition kvCondition, ITraceContext trace);
+  
+  /**
+   * Store the given item, provided the given list of conditions are met.
+   * 
+   * @param kvItem       Item to be stored.
+   * @param kvConditions List of Conditions.
+   * @param trace        Trace context.
+   */
+  void storeEntitlementMapping(IKvItem kvItem, List<KvCondition> kvConditions, ITraceContext trace);
   
   IKvTableTransaction createTransaction();
 

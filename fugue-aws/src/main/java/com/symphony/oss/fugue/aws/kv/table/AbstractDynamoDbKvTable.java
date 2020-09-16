@@ -439,6 +439,76 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
       }
     }
   }
+  
+  @Override
+  public void storeEntitlementMapping(IKvItem kvItem, List<KvCondition> kvConditions, ITraceContext trace)
+  {
+    if(kvConditions.size() != 2)
+      throw new IllegalArgumentException("Wrong Number of KvConditions, expected 2, got: " + kvConditions.size());
+    
+    Hash        absoluteHash = kvItem.getAbsoluteHash();
+    List<TransactWriteItem> actions = new ArrayList<>(1);
+    Hash secondaryStoredHash = null;
+    
+    String partitionKey = getPartitionKey(kvItem);
+    String sortKey = kvItem.getSortKey().asString();
+    
+    UpdateOrPut updateOrPut = new UpdateOrPut(kvItem, partitionKey, sortKey, payloadLimit_);
+    
+    if(kvItem.isSaveToSecondaryStorage())
+    {
+      if(storeToSecondaryStorage(kvItem, updateOrPut.payloadNotStored_, trace))
+        secondaryStoredHash = kvItem.getAbsoluteHash();
+    }
+    
+    KvCondition effective = kvConditions.get(0);
+    KvCondition entAction = kvConditions.get(1);
+    
+    String expression = "attribute_not_exists("+effective.getName()+") OR "+effective.getName()+" < :a"
+                        +" and "
+                        +"( "
+                        +" ("
+                        +"  attribute_not_exists("+entAction.getName()+") "
+                        +"  AND "
+                        +"  :b = ALLOW"
+                        +")"
+                        +" or "
+                        +"("+entAction.getName()+" <> :b)"
+                        +")";
+    
+    HashMap<String, AttributeValue> values = new HashMap<>();
+    values.put(":a", new AttributeValue(effective.getValue()));
+    values.put(":b", new AttributeValue(entAction.getValue()));
+    
+    Put put = updateOrPut
+        .createPut()
+        .withConditionExpression(expression)
+        .withExpressionAttributeValues(values);
+    
+    actions.add(new TransactWriteItem().withPut(put));
+    
+    try
+    {
+      trace.trace("ABOUT_TO_STORE_CONDITIONAL", kvItem);
+      write(actions, absoluteHash.toStringBase64(), "Conditions not met.", trace);
+      trace.trace("STORED_CONDITIONAL", kvItem);
+    }
+    catch (NoSuchObjectException e)
+    {
+      trace.trace("FAILED_TO_STORE_CONDITIONAL", kvItem);
+      if(secondaryStoredHash != null)
+      {
+        try
+        {
+          deleteFromSecondaryStorage(secondaryStoredHash, trace);
+        }
+        catch(RuntimeException e2)
+        {
+          log_.error("Failed to delete secondary copy of " + secondaryStoredHash, e2);
+        }
+      }
+    }
+  }
 
   class Condition
   {
