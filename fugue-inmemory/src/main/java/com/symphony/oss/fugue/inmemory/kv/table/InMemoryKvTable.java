@@ -458,17 +458,17 @@ public void start()
     KvCondition effective = kvConditions.get(0);
     KvCondition entAction = kvConditions.get(1);
     
-    Object existing_effective_value = existingItem.getAdditionalAttributes().get(effective.getName());
-    Object existing_entAction_value = existingItem.getAdditionalAttributes().get(entAction.getName());
-    
-    if (existing_effective_value != null)
+    if(existingItem != null) 
     {
-      if (existing_effective_value.toString().compareTo(effective.getValue()) > 0)
-        return;
-      if (entAction.toString().compareTo(existing_entAction_value.toString()) == 0)
-        if (entAction.getValue() == "DENY")
+      Object existing_effective_value = existingItem.getAdditionalAttributes().get(effective.getName());
+      Object existing_entAction_value = existingItem.getAdditionalAttributes().get(entAction.getName());
+      
+        if (existing_effective_value.toString().compareTo(effective.getValue()) > 0)
           return;
-    }
+        if (entAction.toString().compareTo(existing_entAction_value.toString()) == 0)
+          if (entAction.getValue() == "DENY")
+            return;
+      }
     
     partition.put(sortKey, kvItem);
   }
