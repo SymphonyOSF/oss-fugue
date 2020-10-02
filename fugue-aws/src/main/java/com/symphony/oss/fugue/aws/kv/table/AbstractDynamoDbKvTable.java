@@ -441,7 +441,7 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
   }
   
   @Override
-  public void storeEntitlementMapping(IKvItem kvItem, List<KvCondition> kvConditions, ITraceContext trace)
+  public void storeEntitlementMapping(IKvItem kvItem, List<KvCondition> kvConditions, String action, ITraceContext trace)
   {
     if(kvConditions.size() != 2)
       throw new IllegalArgumentException("Wrong Number of KvConditions, expected 2, got: " + kvConditions.size());
@@ -470,7 +470,7 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
                         +" ("
                         +"  attribute_not_exists("+entAction.getName()+") "
                         +"  AND "
-                        +"  :b = ALLOW"
+                        +"  :b = "+action
                         +")"
                         +" or "
                         +"("+entAction.getName()+" <> :b)"
