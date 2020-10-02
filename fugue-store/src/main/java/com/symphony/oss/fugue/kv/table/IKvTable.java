@@ -69,10 +69,12 @@ public interface IKvTable extends IFugueComponent
    * Store the given item, provided the given list of conditions are met.
    * 
    * @param kvItem       Item to be stored.
-   * @param kvConditions List of Conditions.
+   * @param effective    The effective condition
+   * @param entAction    The entitlement action condition
+   * @param action       The allow action 
    * @param trace        Trace context.
    */
-  void storeEntitlementMapping(IKvItem kvItem, List<KvCondition> kvConditions, ITraceContext trace);
+  void storeEntitlementMapping(IKvItem kvItem, KvCondition effective, KvCondition entAction, String action, ITraceContext trace);
   
   IKvTableTransaction createTransaction();
 
