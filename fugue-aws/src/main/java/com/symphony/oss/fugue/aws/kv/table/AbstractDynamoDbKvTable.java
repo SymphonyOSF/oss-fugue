@@ -441,11 +441,8 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
   }
   
   @Override
-  public void storeEntitlementMapping(IKvItem kvItem, List<KvCondition> kvConditions, String action, ITraceContext trace)
-  {
-    if(kvConditions.size() != 2)
-      throw new IllegalArgumentException("Wrong Number of KvConditions, expected 2, got: " + kvConditions.size());
-    
+  public void storeEntitlementMapping(IKvItem kvItem, KvCondition effective, KvCondition entAction, String action, ITraceContext trace)
+  {  
     Hash        absoluteHash = kvItem.getAbsoluteHash();
     List<TransactWriteItem> actions = new ArrayList<>(1);
     Hash secondaryStoredHash = null;
@@ -460,9 +457,6 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
       if(storeToSecondaryStorage(kvItem, updateOrPut.payloadNotStored_, trace))
         secondaryStoredHash = kvItem.getAbsoluteHash();
     }
-    
-    KvCondition effective = kvConditions.get(0);
-    KvCondition entAction = kvConditions.get(1);
     
     String expression = "attribute_not_exists("+effective.getName()+") OR "+effective.getName()+" < :a"
                         +" and "

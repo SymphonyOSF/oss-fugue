@@ -444,19 +444,13 @@ public void start()
   }
   
   @Override
-  public synchronized void storeEntitlementMapping(IKvItem kvItem, List<KvCondition> kvConditions, String action, ITraceContext trace)
+  public synchronized void storeEntitlementMapping(IKvItem kvItem, KvCondition effective, KvCondition entAction, String action, ITraceContext trace)
   {
-    if(kvConditions.size() != 2)
-      throw new IllegalArgumentException("Wrong Number of KvConditions, expected 2, got: " + kvConditions.size());
-    
     String partitionKey = getPartitionKey(kvItem);
     String sortKey = kvItem.getSortKey().asString();
     
     Map<String, IKvItem> partition = getPartition(partitionKey);
     IKvItem existingItem = partition.get(sortKey);
-    
-    KvCondition effective = kvConditions.get(0);
-    KvCondition entAction = kvConditions.get(1);
     
     if(existingItem != null) 
     {
