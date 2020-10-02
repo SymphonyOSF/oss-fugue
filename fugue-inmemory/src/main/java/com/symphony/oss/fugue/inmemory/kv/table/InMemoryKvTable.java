@@ -466,7 +466,7 @@ public void start()
         if (existing_effective_value.toString().compareTo(effective.getValue()) > 0)
           return;
         if (entAction.toString().compareTo(existing_entAction_value.toString()) == 0)
-          if (entAction.getValue() == "DENY")
+          if (entAction.getValue().equals("DENY"))
             return;
       }
     
