@@ -444,31 +444,25 @@ public void start()
   }
   
   @Override
-  public synchronized void storeEntitlementMapping(IKvItem kvItem, List<KvCondition> kvConditions, ITraceContext trace)
+  public synchronized void storeEntitlementMapping(IKvItem kvItem, KvCondition effective, KvCondition entAction, String action, ITraceContext trace)
   {
-    if(kvConditions.size() != 2)
-      throw new IllegalArgumentException("Wrong Number of KvConditions, expected 2, got: " + kvConditions.size());
-    
     String partitionKey = getPartitionKey(kvItem);
     String sortKey = kvItem.getSortKey().asString();
     
     Map<String, IKvItem> partition = getPartition(partitionKey);
     IKvItem existingItem = partition.get(sortKey);
     
-    KvCondition effective = kvConditions.get(0);
-    KvCondition entAction = kvConditions.get(1);
-    
-    Object existing_effective_value = existingItem.getAdditionalAttributes().get(effective.getName());
-    Object existing_entAction_value = existingItem.getAdditionalAttributes().get(entAction.getName());
-    
-    if (existing_effective_value != null)
+    if(existingItem != null) 
     {
-      if (existing_effective_value.toString().compareTo(effective.getValue()) > 0)
-        return;
-      if (entAction.toString().compareTo(existing_entAction_value.toString()) == 0)
-        if (entAction.getValue() == "DENY")
+      Object existing_effective_value = existingItem.getAdditionalAttributes().get(effective.getName());
+      Object existing_entAction_value = existingItem.getAdditionalAttributes().get(entAction.getName());
+      
+        if (existing_effective_value.toString().compareTo(effective.getValue()) > 0)
           return;
-    }
+        if (entAction.toString().compareTo(existing_entAction_value.toString()) == 0)
+          if (!entAction.getValue().equals(action))
+            return;
+      }
     
     partition.put(sortKey, kvItem);
   }
