@@ -23,6 +23,7 @@
 
 package com.symphony.oss.fugue.aws.sqs;
 
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -99,6 +100,23 @@ public class SqsQueueManager implements IQueueManager
     accountId_  = builder.accountId_;
     tags_       = ImmutableMap.copyOf(builder.tags_);
     
+    ClientConfiguration configuration = new ClientConfiguration()
+    .withMaxConnections(200);
+
+    if(builder.proxyUrl_ !=null) 
+    {
+      configuration.setProxyHost(builder.proxyUrl_.getHost());
+      configuration.setProxyPort(builder.proxyUrl_.getPort());
+    }
+    
+    if(builder.proxyUsername_ != null) 
+      configuration.setProxyUsername(builder.proxyUsername_);
+    
+    if(builder.proxyPassword_ != null)
+      configuration.setProxyPassword(builder.proxyPassword_);
+
+    builder.sqsBuilder_.withClientConfiguration(configuration);
+    
     sqsClient_ = (GatewayAmazonSQSClient) builder.sqsBuilder_.build();
     
     gateway_ = builder.gateway_;
@@ -166,6 +184,9 @@ public class SqsQueueManager implements IQueueManager
     //  private String configPath_ = "org/symphonyoss/s2/fugue/aws/sqs";
     private String endPoint_;
     private boolean gateway_;
+    private String                        proxyUsername_;
+    private URL                           proxyUrl_;
+    private String                        proxyPassword_;
 
     /**
      * Constructor.
@@ -173,11 +194,9 @@ public class SqsQueueManager implements IQueueManager
     public Builder()
     {
       super(Builder.class);
-
-      sqsBuilder_ = GatewayAmazonSQSClientBuilder.standard();
-      sqsBuilder_.withClientConfiguration(new ClientConfiguration()
-                .withMaxConnections(200)
-                );
+      
+      sqsBuilder_ = GatewayAmazonSQSClientBuilder
+          .standard();
       
     }
     
@@ -274,6 +293,48 @@ public class SqsQueueManager implements IQueueManager
       sqsBuilder_.withEndpoint(endPoint_);
       
       gateway_ = true;
+      
+      return self();
+    }
+    
+    /**
+     * Set the API proxy URL.
+     * 
+     * @param proxyUrl The client proxy Url.
+     * 
+     * @return this (fluent method)
+     */
+    public Builder withProxyUrl(URL proxyUrl)
+    {
+      proxyUrl_ = proxyUrl; 
+      
+      return self();
+    }
+
+    /**
+     * Set the API proxy URL.
+     * 
+     * @param proxyUsername The client proxy Username.
+     * 
+     * @return this (fluent method)
+     */
+    public Builder withProxyUsername(String proxyUsername)
+    {
+      proxyUsername_ = proxyUsername;  
+      
+      return self();
+    }
+    
+    /**
+     * Set the API proxy password.
+     * 
+     * @param proxyPassword The client proxy Password.
+     * 
+     * @return this (fluent method)
+     */
+    public Builder withProxyPassword(String proxyPassword)
+    {
+      proxyPassword_ = proxyPassword;   
       
       return self();
     }
