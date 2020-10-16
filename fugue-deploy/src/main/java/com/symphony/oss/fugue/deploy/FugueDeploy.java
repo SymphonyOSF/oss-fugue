@@ -586,7 +586,7 @@ public abstract class FugueDeploy extends CommandLineHandler
           
           Map<ContainerType, Map<String, JsonObject<?>>>  containerMap;
           Collection<String> paths = 
-              containerType==ContainerType.LAMBDA ?     // FIXME: remove when we move service endpoints to ApiGateway
+              containerType==ContainerType.LAMBDA || containerType==ContainerType.LAMBDA_INIT ?     // FIXME: remove when we move service endpoints to ApiGateway
               container.getListOf(String.class, PATHS)
               : new ArrayList<>();
           
@@ -1108,6 +1108,8 @@ public abstract class FugueDeploy extends CommandLineHandler
     
     protected abstract void deployScheduledTaskContainer(String name, int port, Collection<String> paths, String schedule, Name roleName, String imageName, int jvmHeap, int memory, boolean deleted);
 
+    protected abstract void deployScheduledLambdaEvent(String name, int port, Collection<String> paths, String schedule, Name roleName, String imageName, int jvmHeap, int memory, boolean deleted);
+
     protected abstract void deployLambdaContainer(String name, String imageName, String roleId, String handler, int memorySize, int timeout, 
         int provisionedConcurrentExecutions, Map<String, String> variables, Collection<String> paths);
     protected abstract void postDeployLambdaContainer(String name, Collection<String> paths, Collection<Subscription> subscriptions);
@@ -1512,6 +1514,7 @@ public abstract class FugueDeploy extends CommandLineHandler
         deployDockerContainers(batch, ContainerType.SERVICE,    false);
         deployDockerContainers(batch, ContainerType.SCHEDULED,  true);
         deployLambdaContainers(batch, ContainerType.LAMBDA);
+        deployLambdaContainers(batch, ContainerType.LAMBDA_INIT);
         
         
         if(action_.isUndeploy_)
@@ -1593,6 +1596,7 @@ public abstract class FugueDeploy extends CommandLineHandler
       if(!getContainerMap().isEmpty())
       {
         postDeployLambdaContainers(ContainerType.LAMBDA);
+        postDeployLambdaContainers(ContainerType.LAMBDA_INIT);
         postDeployExternalLambdaContainers(ContainerType.EXTERNAL_LAMBDA);
         postDeployExternalHttpContainers(ContainerType.EXTERNAL_HTTP);
       }
