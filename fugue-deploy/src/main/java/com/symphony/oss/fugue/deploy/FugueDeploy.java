@@ -1108,6 +1108,8 @@ public abstract class FugueDeploy extends CommandLineHandler
     
     protected abstract void deployScheduledTaskContainer(String name, int port, Collection<String> paths, String schedule, Name roleName, String imageName, int jvmHeap, int memory, boolean deleted);
 
+    protected abstract void deployScheduledLambdaEvent(String name, int port, Collection<String> paths, String schedule, Name roleName, String imageName, int jvmHeap, int memory, boolean deleted);
+
     protected abstract void deployLambdaContainer(String name, String imageName, String roleId, String handler, int memorySize, int timeout, 
         int provisionedConcurrentExecutions, Map<String, String> variables, Collection<String> paths);
     protected abstract void postDeployLambdaContainer(String name, Collection<String> paths, Collection<Subscription> subscriptions);

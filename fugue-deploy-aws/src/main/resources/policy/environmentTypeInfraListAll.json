@@ -127,6 +127,7 @@
                 "elasticloadbalancing:DescribeTargetGroupAttributes",
                 "iam:ListGroupsForUser",
                 "lambda:ListEventSourceMappings",
+                "lambda:ListProvisionedConcurrencyConfigs",
                 "ecr:DescribeImages",
                 "elasticloadbalancing:DescribeRules",
                 "ec2:DescribeVpcEndpoints",
