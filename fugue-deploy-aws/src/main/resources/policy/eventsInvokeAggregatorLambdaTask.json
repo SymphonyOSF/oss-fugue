@@ -1,0 +1,14 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+
+         {
+        "Sid": "Lambda",
+        "Effect": "Allow",
+        "Action": [
+            "lambda:InvokeFunction"
+        ],
+        "Resource": "arn:aws:lambda:*:${awsAccountId}:function:sym-s2-${environmentType}-${environmentId}-${serviceId}-billing-aggregator"
+    }
+   ]
+}

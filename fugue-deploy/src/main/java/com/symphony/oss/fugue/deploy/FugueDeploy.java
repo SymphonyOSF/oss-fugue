@@ -153,9 +153,13 @@ public abstract class FugueDeploy extends CommandLineHandler
   private static final String     BURST               = "gatewayApiBurst";
   private static final String     PUBLIC_DNS_SUFFIX   = "publicDnsSuffix";
   private static final String     CONFIG_FILTER       = "configFilter";
+  
+  private static final String     ARTIFACTORY_USER    = "artifactoryUser";
+  private static final String     ARTIFACTORY_PWD     = "artifactoryPassword";
 
   private final String            cloudServiceProvider_;
   private final ConfigProvider    provider_;
+  private final ArtifactoryHelper artifactoryHelper_;
   private final ConfigHelper[]    helpers_;
 
   private String                  track_;
@@ -167,6 +171,8 @@ public abstract class FugueDeploy extends CommandLineHandler
   private String                  podName_;
   private String                  instances_;
   private String                  buildId_;
+  private String                  artifactoryUsername_;
+  private String                  artifactoryPassword_;
 
   private boolean                 primaryEnvironment_ = false;
   private boolean                 primaryRegion_      = false;
@@ -201,10 +207,11 @@ public abstract class FugueDeploy extends CommandLineHandler
    * @param provider              A config provider.
    * @param helpers               Zero or more config helpers.
    */
-  public FugueDeploy(String cloudServiceProvider, ConfigProvider provider, ConfigHelper ...helpers)
+  public FugueDeploy(String cloudServiceProvider, ConfigProvider provider, ArtifactoryHelper artifactoryHelper, ConfigHelper ...helpers)
   {
     cloudServiceProvider_ = cloudServiceProvider;
     provider_ = provider;
+    artifactoryHelper_ = artifactoryHelper;
     helpers_ = helpers == null ? new ConfigHelper[0] : helpers;
     
     withFlag(null,  TRACK,                "FUGUE_TRACK",                String.class,   false, false,   (v) -> track_               = v);
@@ -220,8 +227,12 @@ public abstract class FugueDeploy extends CommandLineHandler
     withFlag('d',   "dryRun",             "FUGUE_DRY_RUN",              Boolean.class,  false, false,   (v) -> dryRun_              = v);
     withFlag('i',   "instances",          "FUGUE_INSTANCES",            String.class,   false, false,   (v) -> instances_           = v);
     withFlag('b',   BUILD_ID,             "FUGUE_BUILD_ID",             String.class,   false, false,   (v) -> buildId_             = v);
+    withFlag('A',   ARTIFACTORY_USER,     "ARTIFACTORY_USER",           String.class,   false, false,   (v) -> artifactoryUsername_ = v);
+    withFlag('P',   ARTIFACTORY_PWD,      "ARTIFACTORY_PWD",            String.class,   false, false,   (v) -> artifactoryPassword_ = v);
     
     provider_.init(this);
+    
+    artifactoryHelper.init(this);
     
     for(ConfigHelper helper : helpers_)
       helper.init(this);
@@ -1094,6 +1105,8 @@ public abstract class FugueDeploy extends CommandLineHandler
 
     protected abstract void saveConfig();
     
+    protected abstract void saveJarFile(String filename);
+    
     protected abstract void deleteConfig();
     
     protected abstract void deleteRole(String roleName);
@@ -1107,8 +1120,6 @@ public abstract class FugueDeploy extends CommandLineHandler
     protected abstract void deployServiceContainer(String name, int port, Collection<String> paths, String healthCheckPath, int instances, Name roleName, String imageName, int jvmHeap, int memory, boolean deleted);
     
     protected abstract void deployScheduledTaskContainer(String name, int port, Collection<String> paths, String schedule, Name roleName, String imageName, int jvmHeap, int memory, boolean deleted);
-
-    protected abstract void deployScheduledLambdaEvent(String name, int port, Collection<String> paths, String schedule, Name roleName, String imageName, int jvmHeap, int memory, boolean deleted);
 
     protected abstract void deployLambdaContainer(String name, String imageName, String roleId, String handler, int memorySize, int timeout, 
         int provisionedConcurrentExecutions, Map<String, String> variables, Collection<String> paths);
@@ -1575,6 +1586,12 @@ public abstract class FugueDeploy extends CommandLineHandler
               
               provisionedCapacity = Integer.parseInt(s);
             }
+           
+            artifactoryHelper_.setCredentials(artifactoryUsername_, artifactoryPassword_);
+            
+            String artifact = artifactoryHelper_.fetchArtifact(name, buildId_);
+            
+            saveJarFile(artifact);
             
             deployLambdaContainer(name,
                 container.getString(IMAGE, name),

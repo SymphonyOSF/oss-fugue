@@ -23,7 +23,10 @@
 
 package com.symphony.oss.fugue.aws.deploy;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -264,6 +267,7 @@ import com.symphony.oss.commons.type.provider.IStringProvider;
 import com.symphony.oss.fugue.Fugue;
 import com.symphony.oss.fugue.aws.config.S3Helper;
 import com.symphony.oss.fugue.aws.secret.AwsSecretManager;
+import com.symphony.oss.fugue.deploy.ArtifactoryHelper;
 import com.symphony.oss.fugue.deploy.ConfigHelper;
 import com.symphony.oss.fugue.deploy.ConfigProvider;
 import com.symphony.oss.fugue.deploy.FugueDeploy;
@@ -310,6 +314,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
   private static final String AWS_ACCOUNT_ID    = "awsAccountId";
 
   private static final String APPLICATION_JSON = "application/json";
+  private static final String APPLICATION_JAR = "application/java-archive";
   
   private static final String TRUST_ECS_DOCUMENT = "{\n" + 
       "  \"Version\": \"2012-10-17\",\n" + 
@@ -318,7 +323,8 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       "      \"Sid\": \"\",\n" + 
       "      \"Effect\": \"Allow\",\n" + 
       "      \"Principal\": {\n" + 
-      "        \"Service\": \"ecs-tasks.amazonaws.com\"\n" + 
+      "        \"Service\": [\"ecs-tasks.amazonaws.com\",\n" +
+      "                      \"lambda.amazonaws.com\"] " +
       "      },\n" + 
       "      \"Action\": \"sts:AssumeRole\"\n" + 
       "    }\n" + 
@@ -332,7 +338,8 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       "      \"Sid\": \"\",\n" + 
       "      \"Effect\": \"Allow\",\n" + 
       "      \"Principal\": {\n" + 
-      "        \"Service\": \"events.amazonaws.com\"\n" + 
+      "        \"Service\": [\"ecs-tasks.amazonaws.com\",\n" +
+      "                      \"lambda.amazonaws.com\"] " +
       "      },\n" + 
       "      \"Action\": \"sts:AssumeRole\"\n" + 
       "    }\n" + 
@@ -389,9 +396,9 @@ public abstract class AwsFugueDeploy extends FugueDeploy
    * @param provider              A config provider.
    * @param helpers               Zero or more config helpers.
    */
-  public AwsFugueDeploy(ConfigProvider provider, ConfigHelper... helpers)
+  public AwsFugueDeploy(ConfigProvider provider, ArtifactoryHelper artifactoryHelper, ConfigHelper... helpers)
   {
-    super(AMAZON, provider, helpers);
+    super(AMAZON, provider, artifactoryHelper, helpers);
   }
 
   @Override
@@ -1489,6 +1496,73 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       
       s3Client.putObject(request);
     }
+    
+    @Override
+    protected void saveJarFile(String filename)
+    {
+      String              bucketName  = environmentTypeConfigBuckets_.get(getAwsRegion());
+      String  key           = LAMBDA + "/" + getNameFactory().getServiceId() + "/" + filename;
+
+      File file = new File(filename); 
+      
+      InputStream is = null;
+      PutObjectRequest request = null;
+      try
+      {
+        is = new FileInputStream(file);
+        
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentType(APPLICATION_JAR);
+//        metadata.setContentLength(is.available());
+//        System.out.println(is.available());
+        request = new PutObjectRequest(bucketName, key, is, metadata);
+      }
+      catch (IOException e1)
+      {
+        abort("Cannot read file " + filename, e1);
+      }
+      
+      log_.info("Saving file to region: " + getAwsRegion() + " bucket: " + bucketName + " key: " + key);
+      
+      AmazonS3 s3Client = AmazonS3ClientBuilder.standard()
+          .withRegion(getAwsRegion())
+          .build();
+    
+      try
+      {
+        ObjectMetadata      metaData  = s3Client.getObjectMetadata(bucketName, key);
+        
+        if(APPLICATION_JSON.equals(metaData.getContentType()) && metaData.getContentLength() == is.available())
+        {
+          S3Object existingContent = s3Client.getObject(bucketName, key);
+          int i;
+          
+          for(i=0 ; i<metaData.getContentLength() ; i++)
+            if(existingContent.getObjectContent().read() != is.available())
+              break;
+          
+          if(i == metaData.getContentLength())
+          {
+            log_.info(filename + "has not changed, no need to overwrite.");
+            return;
+          }
+        }
+        // else its not the right content so overwrite it.
+      }
+      catch(AmazonS3Exception e)
+      {
+        // Nothing here we will overwrite the object below...
+      }
+      catch (IOException e)
+      {
+        abort("Unexpected S3 error reading current value of config object " + bucketName + "/" + key, e);
+      }
+      
+      s3Client.putObject(request);
+      
+ //     file.delete();
+    }
+
 
     @Override
     protected void deleteConfig()
@@ -1753,7 +1827,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       Name    roleName      = getNameFactory().getLogicalServiceItemName(roleId).append(ROLE);
       String  bucketName    = environmentTypeConfigBuckets_.get(getAwsRegion());
       String  key           = LAMBDA + "/" + getNameFactory().getServiceId() + "/" +
-                              imageName + "-" + getBuildId() + DOT_JAR;
+                              imageName + "-" + getBuildId().replace("SNAPSHOT-", "") + DOT_JAR;
 
       if(action_.isDeploy_)
       {
