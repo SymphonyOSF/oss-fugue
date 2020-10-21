@@ -1560,7 +1560,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       
       s3Client.putObject(request);
       
- //     file.delete();
+      file.delete();
     }
 
 
