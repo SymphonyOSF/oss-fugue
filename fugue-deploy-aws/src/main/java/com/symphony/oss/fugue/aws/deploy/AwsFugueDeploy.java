@@ -1844,7 +1844,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       Name    roleName      = getNameFactory().getLogicalServiceItemName(roleId).append(ROLE);
       String  bucketName    = environmentTypeConfigBuckets_.get(getAwsRegion());
       String  key           = LAMBDA + "/" + getNameFactory().getServiceId() + "/" +
-                              imageName + "-" + getBuildId().replace("SNAPSHOT-", "") + DOT_JAR;
+                              imageName + "-" + getBuildId() + DOT_JAR;
 
       if(action_.isDeploy_)
       {
@@ -1927,6 +1927,9 @@ public abstract class AwsFugueDeploy extends FugueDeploy
           
           codeSha256 = createFunctionResult.getCodeSha256();
           revisionId = createFunctionResult.getRevisionId();
+        } catch(RuntimeException ee) {
+          ee.printStackTrace();
+          throw ee;
         }
 
         log_.info("Function " + functionName + " is now revisionId " + revisionId);

@@ -46,6 +46,7 @@ public class ArtifactoryHelper
   private FugueDeploy fugueDeploy_;
   
   private static final String DOT_JAR   = ".jar";
+  protected static final String SNAPSHOT  = "-SNAPSHOT";  
 
   /**
    * Init method, allows program parameters to be added.
@@ -92,6 +93,6 @@ public class ArtifactoryHelper
 
   public static String getFilename(String name, String buildId)
   {
-    return  name + "-" + buildId + DOT_JAR;
+    return  name + "-" + buildId.replace(SNAPSHOT, "") + DOT_JAR;
   }
 }

@@ -160,12 +160,15 @@
             "Effect": "Allow",
             "Action": [
                 "lambda:*",
-                "s3:GetObject"
-            ],
+                "s3:GetObject",
+                "s3:PutObject"
+           ],
             "Resource": [
               "arn:aws:lambda:*:${awsAccountId}:function:sym-s2-${environmentType}-${environmentId}-*",
               "arn:aws:s3:::sym-s2-fugue-${environmentType}-*-config/lambda/*",
-              "arn:aws:lambda:*:*:event-source-mapping:*"
+              "arn:aws:lambda:*:*:event-source-mapping:*",
+              "arn:aws:lambda:*:*:sym-s2-${environmentId}-fugue-deploy-config-lambda"
+
             ]
         },
         {

@@ -58,7 +58,7 @@ public class UploadOutputStream extends OutputStream
          numUploadThreads,
          queueCapacity,
          partSize);
-    
+
     out_ = manager_.getMultiPartOutputStreams().get(0);
     
     
