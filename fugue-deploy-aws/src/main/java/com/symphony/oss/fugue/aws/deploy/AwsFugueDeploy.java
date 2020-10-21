@@ -1577,7 +1577,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       AmazonS3 s3Client = AmazonS3ClientBuilder.standard()
           .withRegion(getAwsRegion())
           .build();
-      return new UploadOutputStream(bucketName, key, s3Client, 5, 100, 1024);
+      return new UploadOutputStream(bucketName, key, s3Client, 5, 100, 5);
     }
 
 
