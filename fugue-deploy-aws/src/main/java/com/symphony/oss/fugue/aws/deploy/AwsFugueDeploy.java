@@ -1513,7 +1513,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
         
         ObjectMetadata metadata = new ObjectMetadata();
         metadata.setContentType(APPLICATION_JAR);
-//        metadata.setContentLength(is.available());
+        metadata.setContentLength(is.available());
 //        System.out.println(is.available());
         request = new PutObjectRequest(bucketName, key, is, metadata);
       }
@@ -1548,6 +1548,9 @@ public abstract class AwsFugueDeploy extends FugueDeploy
           }
         }
         // else its not the right content so overwrite it.
+        s3Client.putObject(request);
+        
+        file.delete();
       }
       catch(AmazonS3Exception e)
       {
@@ -1557,10 +1560,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       {
         abort("Unexpected S3 error reading current value of config object " + bucketName + "/" + key, e);
       }
-      
-      s3Client.putObject(request);
-      
-      file.delete();
+
     }
 
 
