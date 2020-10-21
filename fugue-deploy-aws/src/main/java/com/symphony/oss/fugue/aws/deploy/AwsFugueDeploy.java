@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.StringReader;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -1565,6 +1566,18 @@ public abstract class AwsFugueDeploy extends FugueDeploy
         abort("Unexpected S3 error reading current value of config object " + bucketName + "/" + key, e);
       }
 
+    }
+    
+    @Override 
+    protected OutputStream getStorageOutputStream(String filename) 
+    {
+      String              bucketName  = environmentTypeConfigBuckets_.get(getAwsRegion());
+      String  key           = LAMBDA + "/" + getNameFactory().getServiceId() + "/" + filename;
+      
+      AmazonS3 s3Client = AmazonS3ClientBuilder.standard()
+          .withRegion(getAwsRegion())
+          .build();
+      return new UploadOutputStream(bucketName, key, s3Client, 5, 100, 1024);
     }
 
 

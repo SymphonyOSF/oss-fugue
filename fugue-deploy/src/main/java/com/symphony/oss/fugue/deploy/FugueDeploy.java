@@ -28,6 +28,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -1110,6 +1111,8 @@ public abstract class FugueDeploy extends CommandLineHandler
     
     protected abstract void saveJarFile(String filepath);
     
+    protected abstract OutputStream getStorageOutputStream(String filename);
+    
     protected abstract void deleteConfig();
     
     protected abstract void deleteRole(String roleName);
@@ -1592,9 +1595,11 @@ public abstract class FugueDeploy extends CommandLineHandler
            
             artifactoryHelper_.setCredentials(artifactoryUsername_, artifactoryPassword_);
             
-            String artifactPath = artifactoryHelper_.fetchArtifact(awsDirectory_, name, buildId_);
+            OutputStream out = getStorageOutputStream(ArtifactoryHelper.getFilename(name, buildId_));
             
-            saveJarFile(artifactPath);
+            artifactoryHelper_.fetchArtifact(awsDirectory_, name, buildId_, out);
+            
+       //     saveJarFile(artifactPath);
             
             deployLambdaContainer(name,
                 container.getString(IMAGE, name),

@@ -23,6 +23,7 @@
 
 package com.symphony.oss.fugue.deploy;
 
+import java.io.OutputStream;
 import java.util.Map;
 import java.util.Set;
 
@@ -43,6 +44,8 @@ public class ArtifactoryHelper
   protected String password_;
   
   private FugueDeploy fugueDeploy_;
+  
+  private static final String DOT_JAR   = ".jar";
 
   /**
    * Init method, allows program parameters to be added.
@@ -75,7 +78,7 @@ public class ArtifactoryHelper
     return fugueDeploy_.getEnvironmentType();
   }
 
-  public String fetchArtifact(String path, String name, String buildId)
+  public String fetchArtifact(String path, String name, String buildId, OutputStream out)
   {
     return null;
     
@@ -86,5 +89,11 @@ public class ArtifactoryHelper
   {
     username_ = username;
     password_ = password;    
+  }
+
+
+  public static String getFilename(String name, String buildId)
+  {
+    return  name + "-" + buildId + DOT_JAR;
   }
 }
