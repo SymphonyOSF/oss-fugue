@@ -1498,12 +1498,16 @@ public abstract class AwsFugueDeploy extends FugueDeploy
     }
     
     @Override
-    protected void saveJarFile(String filename)
+    protected void saveJarFile(String filepath)
     {
+
+      File file = new File(filepath); 
+      String filename = file.getName();
+
       String              bucketName  = environmentTypeConfigBuckets_.get(getAwsRegion());
       String  key           = LAMBDA + "/" + getNameFactory().getServiceId() + "/" + filename;
 
-      File file = new File(filename); 
+
       
       InputStream is = null;
       PutObjectRequest request = null;
