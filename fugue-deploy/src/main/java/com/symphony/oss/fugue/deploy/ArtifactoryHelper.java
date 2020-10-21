@@ -75,7 +75,7 @@ public class ArtifactoryHelper
     return fugueDeploy_.getEnvironmentType();
   }
 
-  public String fetchArtifact(String name, String buildId)
+  public String fetchArtifact(String path, String name, String buildId)
   {
     return null;
     

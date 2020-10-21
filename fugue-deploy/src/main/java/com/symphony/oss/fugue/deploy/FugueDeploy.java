@@ -156,6 +156,7 @@ public abstract class FugueDeploy extends CommandLineHandler
   
   private static final String     ARTIFACTORY_USER    = "artifactoryUser";
   private static final String     ARTIFACTORY_PWD     = "artifactoryPassword";
+  private static final String     AWS_DIR             = "awsDirectory";
 
   private final String            cloudServiceProvider_;
   private final ConfigProvider    provider_;
@@ -173,6 +174,7 @@ public abstract class FugueDeploy extends CommandLineHandler
   private String                  buildId_;
   private String                  artifactoryUsername_;
   private String                  artifactoryPassword_;
+  private String                  awsDirectory_;
 
   private boolean                 primaryEnvironment_ = false;
   private boolean                 primaryRegion_      = false;
@@ -229,6 +231,7 @@ public abstract class FugueDeploy extends CommandLineHandler
     withFlag('b',   BUILD_ID,             "FUGUE_BUILD_ID",             String.class,   false, false,   (v) -> buildId_             = v);
     withFlag('A',   ARTIFACTORY_USER,     "ARTIFACTORY_USER",           String.class,   false, false,   (v) -> artifactoryUsername_ = v);
     withFlag('P',   ARTIFACTORY_PWD,      "ARTIFACTORY_PWD",            String.class,   false, false,   (v) -> artifactoryPassword_ = v);
+    withFlag('D',   AWS_DIR,              "AWS_DIR",                    String.class,   false, false,   (v) -> awsDirectory_        = v);
     
     provider_.init(this);
     
@@ -1105,7 +1108,7 @@ public abstract class FugueDeploy extends CommandLineHandler
 
     protected abstract void saveConfig();
     
-    protected abstract void saveJarFile(String filename);
+    protected abstract void saveJarFile(String filepath);
     
     protected abstract void deleteConfig();
     
@@ -1589,9 +1592,9 @@ public abstract class FugueDeploy extends CommandLineHandler
            
             artifactoryHelper_.setCredentials(artifactoryUsername_, artifactoryPassword_);
             
-            String artifact = artifactoryHelper_.fetchArtifact(name, buildId_);
+            String artifactPath = artifactoryHelper_.fetchArtifact(awsDirectory_, name, buildId_);
             
-            saveJarFile(artifact);
+            saveJarFile(artifactPath);
             
             deployLambdaContainer(name,
                 container.getString(IMAGE, name),
