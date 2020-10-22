@@ -93,6 +93,6 @@ public class ArtifactoryHelper
 
   public static String getFilename(String name, String buildId)
   {
-    return  name + "-" + buildId.replace(SNAPSHOT, "") + DOT_JAR;
+    return  name + "-" + buildId + DOT_JAR;
   }
 }

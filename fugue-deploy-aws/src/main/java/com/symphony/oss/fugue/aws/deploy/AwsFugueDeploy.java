@@ -1846,8 +1846,6 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       String  key           = LAMBDA + "/" + getNameFactory().getServiceId() + "/" +
                               imageName + "-" + getBuildId() + DOT_JAR;
       
-      key = key.replace("-SNAPSHOT", "");
-
       if(action_.isDeploy_)
       {
         boolean checkProvisionedCapacity = true;
