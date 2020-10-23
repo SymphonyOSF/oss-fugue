@@ -1526,7 +1526,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       String              bucketName  = environmentTypeConfigBuckets_.get(getAwsRegion());
       String              key         = CONFIG + "/" + name + DOT_JSON;
       
-      
+
       log_.info("Deleting config from region: " + getAwsRegion() + " bucket: " + bucketName + " key: " + key);
       
       AmazonS3 s3Client = AmazonS3ClientBuilder.standard()
@@ -1866,6 +1866,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
           codeSha256 = createFunctionResult.getCodeSha256();
           revisionId = createFunctionResult.getRevisionId();
         }
+
         log_.info("Function " + functionName + " is now revisionId " + revisionId);
         
         

@@ -157,7 +157,6 @@ public abstract class FugueDeploy extends CommandLineHandler
   
   private static final String     ARTIFACTORY_USER    = "artifactoryUser";
   private static final String     ARTIFACTORY_PWD     = "artifactoryPassword";
-  private static final String     AWS_DIR             = "awsDirectory";
 
   private final String            cloudServiceProvider_;
   private final ConfigProvider    provider_;
