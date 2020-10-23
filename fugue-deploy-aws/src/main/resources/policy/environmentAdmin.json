@@ -159,16 +159,36 @@
             "Sid": "Lambda",
             "Effect": "Allow",
             "Action": [
-                "lambda:*",
-                "s3:GetObject",
-                "s3:PutObject"
-           ],
+                "lambda:*"
+          ],
             "Resource": [
               "arn:aws:lambda:*:${awsAccountId}:function:sym-s2-${environmentType}-${environmentId}-*",
-              "arn:aws:s3:::sym-s2-fugue-${environmentType}-*-config/lambda/*",
               "arn:aws:lambda:*:*:event-source-mapping:*",
               "arn:aws:lambda:*:*:sym-s2-${environmentId}-fugue-deploy-config-lambda"
 
+            ]
+        },
+        {
+            "Sid": "s3",
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetObject",
+                "s3:PutObject",
+                "s3:DeleteObject",
+                "s3:ListBucket"
+           ],
+            "Resource": [
+              "arn:aws:s3:::sym-s2-fugue-${environmentType}-*-config/lambda/*"
+            ]
+        },
+        {
+            "Sid": "s3list",
+            "Effect": "Allow",
+            "Action": [
+                "s3:ListBucket"
+           ],
+            "Resource": [
+              "arn:aws:s3:::sym-s2-fugue-${environmentType}-*-config"
             ]
         },
         {

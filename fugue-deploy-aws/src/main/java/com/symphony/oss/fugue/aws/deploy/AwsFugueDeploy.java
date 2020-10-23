@@ -23,16 +23,14 @@
 
 package com.symphony.oss.fugue.aws.deploy;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringReader;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -41,8 +39,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
@@ -200,6 +200,8 @@ import com.amazonaws.services.lambda.model.GetFunctionRequest;
 import com.amazonaws.services.lambda.model.GetFunctionResult;
 import com.amazonaws.services.lambda.model.GetProvisionedConcurrencyConfigRequest;
 import com.amazonaws.services.lambda.model.GetProvisionedConcurrencyConfigResult;
+import com.amazonaws.services.lambda.model.InvokeRequest;
+import com.amazonaws.services.lambda.model.InvokeResult;
 import com.amazonaws.services.lambda.model.ListVersionsByFunctionRequest;
 import com.amazonaws.services.lambda.model.ListVersionsByFunctionResult;
 import com.amazonaws.services.lambda.model.ProvisionedConcurrencyConfigNotFoundException;
@@ -246,9 +248,13 @@ import com.amazonaws.services.route53.model.ResourceRecordSet;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.amazonaws.services.s3.model.DeleteObjectsRequest;
+import com.amazonaws.services.s3.model.DeleteObjectsResult;
+import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenService;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder;
 import com.amazonaws.services.securitytoken.model.GetCallerIdentityRequest;
@@ -316,6 +322,8 @@ public abstract class AwsFugueDeploy extends FugueDeploy
 
   private static final String APPLICATION_JSON = "application/json";
   private static final String APPLICATION_JAR = "application/java-archive";
+  
+  private static final int LAMBDA_STORAGE_BACKUP = 3;
   
   private static final String TRUST_ECS_DOCUMENT = "{\n" + 
       "  \"Version\": \"2012-10-17\",\n" + 
@@ -1498,76 +1506,6 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       s3Client.putObject(request);
     }
     
-    @Override
-    protected void saveJarFile(String filepath)
-    {
-
-      File file = new File(filepath); 
-      String filename = file.getName();
-
-      String              bucketName  = environmentTypeConfigBuckets_.get(getAwsRegion());
-      String  key           = LAMBDA + "/" + getNameFactory().getServiceId() + "/" + filename;
-
-
-      
-      InputStream is = null;
-      PutObjectRequest request = null;
-      try
-      {
-        is = new FileInputStream(file);
-        
-        ObjectMetadata metadata = new ObjectMetadata();
-        metadata.setContentType(APPLICATION_JAR);
-        metadata.setContentLength(is.available());
-//        System.out.println(is.available());
-        request = new PutObjectRequest(bucketName, key, is, metadata);
-      }
-      catch (IOException e1)
-      {
-        abort("Cannot read file " + filename, e1);
-      }
-      
-      log_.info("Saving file to region: " + getAwsRegion() + " bucket: " + bucketName + " key: " + key);
-      
-      AmazonS3 s3Client = AmazonS3ClientBuilder.standard()
-          .withRegion(getAwsRegion())
-          .build();
-    
-      try
-      {
-        ObjectMetadata      metaData  = s3Client.getObjectMetadata(bucketName, key);
-        
-        if(APPLICATION_JSON.equals(metaData.getContentType()) && metaData.getContentLength() == is.available())
-        {
-          S3Object existingContent = s3Client.getObject(bucketName, key);
-          int i;
-          
-          for(i=0 ; i<metaData.getContentLength() ; i++)
-            if(existingContent.getObjectContent().read() != is.available())
-              break;
-          
-          if(i == metaData.getContentLength())
-          {
-            log_.info(filename + "has not changed, no need to overwrite.");
-            return;
-          }
-        }
-        // else its not the right content so overwrite it.
-        s3Client.putObject(request);
-        
-        file.delete();
-      }
-      catch(AmazonS3Exception e)
-      {
-        // Nothing here we will overwrite the object below...
-      }
-      catch (IOException e)
-      {
-        abort("Unexpected S3 error reading current value of config object " + bucketName + "/" + key, e);
-      }
-
-    }
-    
     @Override 
     protected OutputStream getStorageOutputStream(String filename) 
     {
@@ -1927,11 +1865,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
           
           codeSha256 = createFunctionResult.getCodeSha256();
           revisionId = createFunctionResult.getRevisionId();
-        } catch(RuntimeException ee) {
-          ee.printStackTrace();
-          throw ee;
         }
-
         log_.info("Function " + functionName + " is now revisionId " + revisionId);
         
         
@@ -2070,6 +2004,72 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       if(getNameFactory().getPodId() != null)
       {
         deleteObsoleteFunction(getNameFactory().getPhysicalServiceItemName(name).toString());
+      }
+    }
+    
+    @Override
+    protected  void executeLambdaContainer(String name) {
+
+      String functionName = getNameFactory().getLogicalServiceItemName(name).toString();
+      
+      log_.info("Invoking function "+functionName);
+        
+      InvokeResult invokeResult = lambdaClient_.invoke(new InvokeRequest()
+            .withFunctionName(functionName)
+            );
+        
+      log_.info("Invoke function "+functionName + " result : " + invokeResult.toString());
+     }
+    
+    @Override
+    protected  void cleanupLambdaContainerStorage(String name) {
+
+      String functionName = getNameFactory().getLogicalServiceItemName(name).toString();
+      
+      log_.info("Cleaning up old versions of "+functionName);
+      String              bucketName  = environmentTypeConfigBuckets_.get(getAwsRegion());
+      String  key           = LAMBDA + "/" + getNameFactory().getServiceId() + "/";
+      
+      AmazonS3 s3Client = AmazonS3ClientBuilder.standard()
+          .withRegion(getAwsRegion())
+          .build();
+      
+      TreeMap<Date, String> map = new TreeMap<>();
+
+      boolean truncated = false;
+
+      do
+      {
+        ObjectListing objects = s3Client.listObjects(bucketName, key);
+        map.putAll(objects.getObjectSummaries().stream()
+            .collect(Collectors.toMap(S3ObjectSummary::getLastModified, S3ObjectSummary::getKey)));
+
+        truncated = objects.isTruncated();
+      } while (truncated);
+
+      ArrayList<String> toDelete = new ArrayList<>();
+
+      int N = map.size() - LAMBDA_STORAGE_BACKUP;
+
+      Iterator<Entry<Date, String>> iterator = map.entrySet().iterator();
+      int i = 0;
+
+      while (iterator.hasNext() && i < N)
+      {
+        Entry<Date, String> e = iterator.next();
+
+        toDelete.add(e.getValue());
+        log_.info("Deleting " + bucketName + " / " + e.getValue() + " Last Modified " + e.getValue());
+        i++;
+      }
+
+      if (toDelete.size() > 0)
+      {
+        DeleteObjectsResult deleteResult = s3Client
+            .deleteObjects(new DeleteObjectsRequest(bucketName)
+                .withKeys(toDelete.toArray(new String[0])));
+
+        log_.info("Deleted " + functionName + " objects with result : " + deleteResult.toString());
       }
     }
 

@@ -175,7 +175,6 @@ public abstract class FugueDeploy extends CommandLineHandler
   private String                  buildId_;
   private String                  artifactoryUsername_;
   private String                  artifactoryPassword_;
-  private String                  awsDirectory_;
 
   private boolean                 primaryEnvironment_ = false;
   private boolean                 primaryRegion_      = false;
@@ -232,7 +231,6 @@ public abstract class FugueDeploy extends CommandLineHandler
     withFlag('b',   BUILD_ID,             "FUGUE_BUILD_ID",             String.class,   false, false,   (v) -> buildId_             = v);
     withFlag('A',   ARTIFACTORY_USER,     "ARTIFACTORY_USER",           String.class,   false, false,   (v) -> artifactoryUsername_ = v);
     withFlag('P',   ARTIFACTORY_PWD,      "ARTIFACTORY_PWD",            String.class,   false, false,   (v) -> artifactoryPassword_ = v);
-    withFlag('D',   AWS_DIR,              "AWS_DIR",                    String.class,   false, false,   (v) -> awsDirectory_        = v);
     
     provider_.init(this);
     
@@ -1109,8 +1107,6 @@ public abstract class FugueDeploy extends CommandLineHandler
 
     protected abstract void saveConfig();
     
-    protected abstract void saveJarFile(String filepath);
-    
     protected abstract OutputStream getStorageOutputStream(String filename);
     
     protected abstract void deleteConfig();
@@ -1130,6 +1126,8 @@ public abstract class FugueDeploy extends CommandLineHandler
     protected abstract void deployLambdaContainer(String name, String imageName, String roleId, String handler, int memorySize, int timeout, 
         int provisionedConcurrentExecutions, Map<String, String> variables, Collection<String> paths);
     protected abstract void postDeployLambdaContainer(String name, Collection<String> paths, Collection<Subscription> subscriptions);
+    protected abstract void executeLambdaContainer(String name);
+    protected abstract void cleanupLambdaContainerStorage(String name);
     protected abstract void postDeployExternalLambdaContainer(String name, String arn, Collection<String> paths);
     protected abstract void postDeployExternalHttpContainer(String name, String url, Collection<String> paths);
     protected abstract void postDeployContainers();
@@ -1471,6 +1469,12 @@ public abstract class FugueDeploy extends CommandLineHandler
           deployInitContainer(name, port, paths, healthCheckPath, roleName, imageName, jvmHeap, memory);
         }
       }
+    Map<String, JsonObject<?>> lambdaContainerMap = containerMap_.get(ContainerType.LAMBDA);
+      
+      if(action_.isDeploy_ && lambdaContainerMap != null && !lambdaContainerMap.isEmpty())
+      {
+         deployLambdaContainers(new SerialBatch<Runnable>(), ContainerType.LAMBDA_INIT, true);
+      }
     }
     
     protected void undeployInitContainers()
@@ -1530,8 +1534,7 @@ public abstract class FugueDeploy extends CommandLineHandler
   
         deployDockerContainers(batch, ContainerType.SERVICE,    false);
         deployDockerContainers(batch, ContainerType.SCHEDULED,  true);
-        deployLambdaContainers(batch, ContainerType.LAMBDA);
-        deployLambdaContainers(batch, ContainerType.LAMBDA_INIT);
+        deployLambdaContainers(batch, ContainerType.LAMBDA   ,  false);
         
         
         if(action_.isUndeploy_)
@@ -1541,7 +1544,7 @@ public abstract class FugueDeploy extends CommandLineHandler
       }
     }
     
-    private void deployLambdaContainers(IBatch<Runnable> batch, ContainerType containerType)
+    private void deployLambdaContainers(IBatch<Runnable> batch, ContainerType containerType, boolean invoke)
     {
       Map<String, JsonObject<?>> map = containerMap_.get(containerType);
       
@@ -1597,10 +1600,8 @@ public abstract class FugueDeploy extends CommandLineHandler
             
             OutputStream out = getStorageOutputStream(ArtifactoryHelper.getFilename(name, buildId_));
             
-            artifactoryHelper_.fetchArtifact(awsDirectory_, name, buildId_, out);
-            
-       //     saveJarFile(artifactPath);
-            
+            artifactoryHelper_.fetchArtifact(name, buildId_, out);
+   
             deployLambdaContainer(name,
                 container.getString(IMAGE, name),
                 container.getRequiredString(ROLE),
@@ -1611,6 +1612,12 @@ public abstract class FugueDeploy extends CommandLineHandler
                 environment,
                 paths
                 );
+            
+           cleanupLambdaContainerStorage(name);
+            
+            if(invoke) 
+              executeLambdaContainer(name);
+            
           });
         }
       }
@@ -1621,7 +1628,6 @@ public abstract class FugueDeploy extends CommandLineHandler
       if(!getContainerMap().isEmpty())
       {
         postDeployLambdaContainers(ContainerType.LAMBDA);
-        postDeployLambdaContainers(ContainerType.LAMBDA_INIT);
         postDeployExternalLambdaContainers(ContainerType.EXTERNAL_LAMBDA);
         postDeployExternalHttpContainers(ContainerType.EXTERNAL_HTTP);
       }
