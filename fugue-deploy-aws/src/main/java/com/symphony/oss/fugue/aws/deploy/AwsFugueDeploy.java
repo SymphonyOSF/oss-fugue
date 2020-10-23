@@ -274,7 +274,7 @@ import com.symphony.oss.commons.type.provider.IStringProvider;
 import com.symphony.oss.fugue.Fugue;
 import com.symphony.oss.fugue.aws.config.S3Helper;
 import com.symphony.oss.fugue.aws.secret.AwsSecretManager;
-import com.symphony.oss.fugue.deploy.ArtifactoryHelper;
+import com.symphony.oss.fugue.deploy.ArtifactHelper;
 import com.symphony.oss.fugue.deploy.ConfigHelper;
 import com.symphony.oss.fugue.deploy.ConfigProvider;
 import com.symphony.oss.fugue.deploy.FugueDeploy;
@@ -405,7 +405,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
    * @param provider              A config provider.
    * @param helpers               Zero or more config helpers.
    */
-  public AwsFugueDeploy(ConfigProvider provider, ArtifactoryHelper artifactoryHelper, ConfigHelper... helpers)
+  public AwsFugueDeploy(ConfigProvider provider, ArtifactHelper artifactoryHelper, ConfigHelper... helpers)
   {
     super(AMAZON, provider, artifactoryHelper, helpers);
   }
@@ -2027,9 +2027,9 @@ public abstract class AwsFugueDeploy extends FugueDeploy
 
       String functionName = getNameFactory().getLogicalServiceItemName(name).toString();
       
-      log_.info("Cleaning up old versions of "+functionName);
-      String              bucketName  = environmentTypeConfigBuckets_.get(getAwsRegion());
-      String  key           = LAMBDA + "/" + getNameFactory().getServiceId() + "/" + name;
+      log_.info("Cleaning up old versions of " + functionName);
+      String bucketName = environmentTypeConfigBuckets_.get(getAwsRegion());
+      String key = LAMBDA + "/" + getNameFactory().getServiceId() + "/" + name;
       
       AmazonS3 s3Client = AmazonS3ClientBuilder.standard()
           .withRegion(getAwsRegion())

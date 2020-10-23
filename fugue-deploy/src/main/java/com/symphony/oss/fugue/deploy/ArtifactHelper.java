@@ -24,25 +24,15 @@
 package com.symphony.oss.fugue.deploy;
 
 import java.io.OutputStream;
-import java.util.Map;
-import java.util.Set;
-
-import javax.annotation.Nonnull;
-
-import com.symphony.oss.commons.dom.json.ImmutableJsonObject;
-import com.symphony.oss.commons.dom.json.MutableJsonObject;
 
 /**
- * Base class for  artifactory access
+ * Base class for  artifact handling
  * 
  * @author Geremia Longobardo
  *
  */
-public class ArtifactoryHelper
+public abstract class ArtifactHelper
 {
-  protected String username_;
-  protected String password_;
-  
   private FugueDeploy fugueDeploy_;
   
   private static final String DOT_JAR   = ".jar";
@@ -56,6 +46,8 @@ public class ArtifactoryHelper
   public void init(FugueDeploy fugueDeploy)
   {
     fugueDeploy_ = fugueDeploy;
+    
+    fugueDeploy.fetchArtifactCredentials();
   }
  
   
@@ -79,20 +71,13 @@ public class ArtifactoryHelper
     return fugueDeploy_.getEnvironmentType();
   }
 
-  public void fetchArtifact(String name, String buildId, OutputStream out)
-  {
-  }
-
-
-  public void setCredentials(String username, String password)
-  {
-    username_ = username;
-    password_ = password;    
-  }
+  public abstract void fetchArtifact(String name, String buildId, OutputStream out);
 
 
   public static String getFilename(String name, String buildId)
   {
     return  name + "-" + buildId + DOT_JAR;
   }
+  
+  public abstract void setCredentials(String...creds);
 }

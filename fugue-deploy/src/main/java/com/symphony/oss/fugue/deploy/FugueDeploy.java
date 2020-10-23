@@ -155,12 +155,12 @@ public abstract class FugueDeploy extends CommandLineHandler
   private static final String     PUBLIC_DNS_SUFFIX   = "publicDnsSuffix";
   private static final String     CONFIG_FILTER       = "configFilter";
   
-  private static final String     ARTIFACTORY_USER    = "artifactoryUser";
-  private static final String     ARTIFACTORY_PWD     = "artifactoryPassword";
+  private static final String     artifact_USER    = "artifactUser";
+  private static final String     artifact_PWD     = "artifactPassword";
 
   private final String            cloudServiceProvider_;
   private final ConfigProvider    provider_;
-  private final ArtifactoryHelper artifactoryHelper_;
+  private final ArtifactHelper artifactHelper_;
   private final ConfigHelper[]    helpers_;
 
   private String                  track_;
@@ -172,8 +172,8 @@ public abstract class FugueDeploy extends CommandLineHandler
   private String                  podName_;
   private String                  instances_;
   private String                  buildId_;
-  private String                  artifactoryUsername_;
-  private String                  artifactoryPassword_;
+  private String                  artifactUsername_;
+  private String                  artifactPassword_;
 
   private boolean                 primaryEnvironment_ = false;
   private boolean                 primaryRegion_      = false;
@@ -208,11 +208,11 @@ public abstract class FugueDeploy extends CommandLineHandler
    * @param provider              A config provider.
    * @param helpers               Zero or more config helpers.
    */
-  public FugueDeploy(String cloudServiceProvider, ConfigProvider provider, ArtifactoryHelper artifactoryHelper, ConfigHelper ...helpers)
+  public FugueDeploy(String cloudServiceProvider, ConfigProvider provider, ArtifactHelper artifactHelper, ConfigHelper ...helpers)
   {
     cloudServiceProvider_ = cloudServiceProvider;
     provider_ = provider;
-    artifactoryHelper_ = artifactoryHelper;
+    artifactHelper_ = artifactHelper;
     helpers_ = helpers == null ? new ConfigHelper[0] : helpers;
     
     withFlag(null,  TRACK,                "FUGUE_TRACK",                String.class,   false, false,   (v) -> track_               = v);
@@ -228,12 +228,12 @@ public abstract class FugueDeploy extends CommandLineHandler
     withFlag('d',   "dryRun",             "FUGUE_DRY_RUN",              Boolean.class,  false, false,   (v) -> dryRun_              = v);
     withFlag('i',   "instances",          "FUGUE_INSTANCES",            String.class,   false, false,   (v) -> instances_           = v);
     withFlag('b',   BUILD_ID,             "FUGUE_BUILD_ID",             String.class,   false, false,   (v) -> buildId_             = v);
-    withFlag('A',   ARTIFACTORY_USER,     "ARTIFACTORY_USER",           String.class,   false, false,   (v) -> artifactoryUsername_ = v);
-    withFlag('P',   ARTIFACTORY_PWD,      "ARTIFACTORY_PWD",            String.class,   false, false,   (v) -> artifactoryPassword_ = v);
+    withFlag('A',   artifact_USER,     "artifact_USER",           String.class,   false, false,   (v) -> artifactUsername_ = v);
+    withFlag('P',   artifact_PWD,      "artifact_PWD",            String.class,   false, false,   (v) -> artifactPassword_ = v);
     
     provider_.init(this);
     
-    artifactoryHelper.init(this);
+    artifactHelper.init(this);
     
     for(ConfigHelper helper : helpers_)
       helper.init(this);
@@ -361,6 +361,11 @@ public abstract class FugueDeploy extends CommandLineHandler
   public String getPublicDnsSuffix()
   {
     return publicDnsSuffix_;
+  }
+  
+  void fetchArtifactCredentials()
+  {
+    artifactHelper_.setCredentials(artifactUsername_, artifactPassword_); 
   }
   
   protected void populateTags(Map<String, String> tags)
@@ -1594,12 +1599,10 @@ public abstract class FugueDeploy extends CommandLineHandler
               
               provisionedCapacity = Integer.parseInt(s);
             }
-           
-            artifactoryHelper_.setCredentials(artifactoryUsername_, artifactoryPassword_);
             
-            OutputStream out = getStorageOutputStream(ArtifactoryHelper.getFilename(name, buildId_));
+            OutputStream out = getStorageOutputStream(ArtifactHelper.getFilename(name, buildId_));
             
-            artifactoryHelper_.fetchArtifact(name, buildId_, out);
+            artifactHelper_.fetchArtifact(name, buildId_, out);
    
             deployLambdaContainer(name,
                 container.getString(IMAGE, name),
