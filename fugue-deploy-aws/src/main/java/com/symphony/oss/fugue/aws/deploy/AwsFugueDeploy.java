@@ -2028,7 +2028,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       
       log_.info("Cleaning up old versions of "+functionName);
       String              bucketName  = environmentTypeConfigBuckets_.get(getAwsRegion());
-      String  key           = LAMBDA + "/" + getNameFactory().getServiceId() + "/";
+      String  key           = LAMBDA + "/" + getNameFactory().getServiceId() + "/" + name;
       
       AmazonS3 s3Client = AmazonS3ClientBuilder.standard()
           .withRegion(getAwsRegion())
