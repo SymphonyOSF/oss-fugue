@@ -407,9 +407,9 @@ public abstract class AwsFugueDeploy extends FugueDeploy
    * @param provider              A config provider.
    * @param helpers               Zero or more config helpers.
    */
-  public AwsFugueDeploy(ConfigProvider provider, ArtifactHelper artifactoryHelper, ConfigHelper... helpers)
+  public AwsFugueDeploy(ConfigProvider provider, ArtifactHelper artifactHelper, ConfigHelper... helpers)
   {
-    super(AMAZON, provider, artifactoryHelper, helpers);
+    super(AMAZON, provider, artifactHelper, helpers);
   }
 
   @Override
