@@ -155,12 +155,9 @@ public abstract class FugueDeploy extends CommandLineHandler
   private static final String     PUBLIC_DNS_SUFFIX   = "publicDnsSuffix";
   private static final String     CONFIG_FILTER       = "configFilter";
   
-  private static final String     artifact_USER    = "artifactUser";
-  private static final String     artifact_PWD     = "artifactPassword";
-
   private final String            cloudServiceProvider_;
   private final ConfigProvider    provider_;
-  private final ArtifactHelper artifactHelper_;
+  private final ArtifactHelper    artifactHelper_;
   private final ConfigHelper[]    helpers_;
 
   private String                  track_;
@@ -172,8 +169,6 @@ public abstract class FugueDeploy extends CommandLineHandler
   private String                  podName_;
   private String                  instances_;
   private String                  buildId_;
-  private String                  artifactUsername_;
-  private String                  artifactPassword_;
 
   private boolean                 primaryEnvironment_ = false;
   private boolean                 primaryRegion_      = false;
@@ -228,8 +223,6 @@ public abstract class FugueDeploy extends CommandLineHandler
     withFlag('d',   "dryRun",             "FUGUE_DRY_RUN",              Boolean.class,  false, false,   (v) -> dryRun_              = v);
     withFlag('i',   "instances",          "FUGUE_INSTANCES",            String.class,   false, false,   (v) -> instances_           = v);
     withFlag('b',   BUILD_ID,             "FUGUE_BUILD_ID",             String.class,   false, false,   (v) -> buildId_             = v);
-    withFlag('A',   artifact_USER,     "artifact_USER",           String.class,   false, false,   (v) -> artifactUsername_ = v);
-    withFlag('P',   artifact_PWD,      "artifact_PWD",            String.class,   false, false,   (v) -> artifactPassword_ = v);
     
     provider_.init(this);
     
@@ -361,11 +354,6 @@ public abstract class FugueDeploy extends CommandLineHandler
   public String getPublicDnsSuffix()
   {
     return publicDnsSuffix_;
-  }
-  
-  void fetchArtifactCredentials()
-  {
-    artifactHelper_.setCredentials(artifactUsername_, artifactPassword_); 
   }
   
   protected void populateTags(Map<String, String> tags)
