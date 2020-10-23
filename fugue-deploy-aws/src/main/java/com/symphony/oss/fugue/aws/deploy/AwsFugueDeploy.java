@@ -1526,7 +1526,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       String              bucketName  = environmentTypeConfigBuckets_.get(getAwsRegion());
       String              key         = CONFIG + "/" + name + DOT_JSON;
       
-
+      
       log_.info("Deleting config from region: " + getAwsRegion() + " bucket: " + bucketName + " key: " + key);
       
       AmazonS3 s3Client = AmazonS3ClientBuilder.standard()
@@ -1783,7 +1783,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       String  bucketName    = environmentTypeConfigBuckets_.get(getAwsRegion());
       String  key           = LAMBDA + "/" + getNameFactory().getServiceId() + "/" +
                               imageName + "-" + getBuildId() + DOT_JAR;
-      
+
       if(action_.isDeploy_)
       {
         boolean checkProvisionedCapacity = true;
