@@ -332,8 +332,10 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       "      \"Sid\": \"\",\n" + 
       "      \"Effect\": \"Allow\",\n" + 
       "      \"Principal\": {\n" + 
-      "        \"Service\": [\"ecs-tasks.amazonaws.com\",\n" +
-      "                      \"lambda.amazonaws.com\"] " +
+      "        \"Service\": [\n" + 
+      "          \"ecs-tasks.amazonaws.com\",\n" + 
+      "          \"lambda.amazonaws.com\"\n" + 
+      "        ]" +
       "      },\n" + 
       "      \"Action\": \"sts:AssumeRole\"\n" + 
       "    }\n" + 

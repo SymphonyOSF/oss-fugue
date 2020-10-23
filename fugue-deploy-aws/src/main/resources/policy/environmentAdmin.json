@@ -89,6 +89,8 @@
                 "logs:DescribeLogGroups",
                 "logs:CreateLogGroup",
                 "logs:PutRetentionPolicy",
+                "logs:PutLogEvents",
+                "logs:CreateLogStream",
                 "events:PutTargets",
                 "events:PutRule",
                 "elasticloadbalancing:DescribeLoadBalancers",
