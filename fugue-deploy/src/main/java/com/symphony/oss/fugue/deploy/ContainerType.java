@@ -39,6 +39,8 @@ public enum ContainerType
   SCHEDULED,
   /** Lambda executable jar images. */
   LAMBDA,
+  /** Lambda executable jar images. */
+  LAMBDA_INIT,
   /** A Lambda deployed elsewhere (usually in another AWS account) */
   EXTERNAL_LAMBDA,
   /** An HTTP endpoint deployed elsewhere (usually in another AWS account) */

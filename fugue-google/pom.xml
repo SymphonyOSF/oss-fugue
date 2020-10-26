@@ -21,7 +21,7 @@
   <parent>
     <groupId>com.symphony.oss.fugue</groupId>
     <artifactId>oss-fugue</artifactId>
-    <version>0.2.15-SNAPSHOT</version>
+    <version>0.2.18-SNAPSHOT</version>
   </parent>
   <artifactId>fugue-google</artifactId>
 
@@ -64,9 +64,9 @@
     </dependency>
 
     <dependency>
-      <groupId>com.google.cloud</groupId>
-      <artifactId>google-cloud-pubsub</artifactId>
-      <version>1.56.0</version>
-    </dependency>
+	    <groupId>com.google.cloud</groupId>
+	    <artifactId>google-cloud-pubsub</artifactId>
+	    <version>1.108.4</version>
+	 </dependency>
   </dependencies>
 </project>

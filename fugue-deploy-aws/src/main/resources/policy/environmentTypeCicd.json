@@ -25,6 +25,21 @@
             ]
         },
         {
+            "Sid": "VisualEditor2",
+            "Effect": "Allow",
+            "Action": [
+                "lambda:CreateFunction",
+                "lambda:InvokeFunction",
+                "lambda:GetFunction",
+                "lambda:UpdateFunctionConfiguration",
+                "lambda:UpdateFunctionCode",
+                "lambda:PublishVersion"
+            ],
+            "Resource": [
+                "arn:aws:lambda:us-east-1:189141687483:function:sym-s2-${environmentType}-*"
+            ]
+        },
+        {
             "Sid": "SyncLambda",
             "Effect": "Allow",
             "Action": [
