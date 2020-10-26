@@ -22,7 +22,7 @@
 	<parent>
 		<groupId>com.symphony.oss</groupId>
 		<artifactId>oss-parent-pom</artifactId>
-		<version>0.4.1</version><!-- oss-parent-pom -->
+		<version>0.4.3</version><!-- oss-parent-pom -->
 	</parent>
 
   <groupId>com.symphony.oss.fugue</groupId>
@@ -94,7 +94,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<source.code.version>1.8</source.code.version>
 		<target.code.version>1.8</target.code.version>
-    <oss.commons.version>0.2.1</oss.commons.version>
+    <oss.commons.version>0.2.3</oss.commons.version>
 	</properties>
 
 

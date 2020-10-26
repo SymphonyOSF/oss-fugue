@@ -138,6 +138,11 @@
       <artifactId>commons-dom</artifactId>
       <version>${oss.commons.version}</version>
     </dependency>
+    <dependency>
+      <groupId>com.symphony.oss.commons</groupId>
+      <artifactId>commons-spotbugs</artifactId>
+      <version>${oss.commons.version}</version>
+    </dependency>
     
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
@@ -157,12 +162,6 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
-    </dependency>
-    
-    <dependency>
-      <groupId>com.github.spotbugs</groupId>
-      <artifactId>spotbugs-annotations</artifactId>
-      <optional>true</optional>
     </dependency>
   </dependencies>
 </project>
