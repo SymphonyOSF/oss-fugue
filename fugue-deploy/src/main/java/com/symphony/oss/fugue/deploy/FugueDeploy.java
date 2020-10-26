@@ -1588,9 +1588,15 @@ public abstract class FugueDeploy extends CommandLineHandler
               provisionedCapacity = Integer.parseInt(s);
             }
             
-            OutputStream out = getStorageOutputStream(ArtifactHelper.getFilename(name, buildId_));
+           try(OutputStream out = getStorageOutputStream(ArtifactHelper.getFilename(name, buildId_))){
             
             artifactHelper_.fetchArtifact(name, buildId_, out);
+            
+           }
+           catch (IOException e)
+           {
+            throw new IllegalStateException("Error while using getting the output stream ", e);
+           }
    
             deployLambdaContainer(name,
                 container.getString(IMAGE, name),
