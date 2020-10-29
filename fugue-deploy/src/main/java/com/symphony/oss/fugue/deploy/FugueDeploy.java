@@ -210,19 +210,19 @@ public abstract class FugueDeploy extends CommandLineHandler
     artifactHelper_ = artifactHelper;
     helpers_ = helpers == null ? new ConfigHelper[0] : helpers;
     
-    withFlag(null,  TRACK,                "FUGUE_TRACK",                String.class,   false, false,   (v) -> track_               = v);
-    withFlag(null,  STATION,              "FUGUE_STATION",              String.class,   false, false,   (v) -> station_             = v);
-    withFlag('s',   SERVICE,              "FUGUE_SERVICE",              String.class,   false, false,   (v) -> service_             = v);
-    withFlag('v',   ENVIRONMENT_TYPE,     "FUGUE_ENVIRONMENT_TYPE",     String.class,   false, false,   (v) -> environmentType_     = v);
-    withFlag('e',   ENVIRONMENT,          "FUGUE_ENVIRONMENT",          String.class,   false, false,   (v) -> environment_         = v);
-    withFlag('g',   REGION,               "FUGUE_REGION",               String.class,   false, false,   (v) -> region_              = v);
-    withFlag('p',   POD_NAME,             "FUGUE_POD_NAME",             String.class,   false, false,   (v) -> podName_             = v);
-    withFlag('a',   ACTION,               "FUGUE_ACTION",               String.class,   false, true,    (v) -> setAction(v));
-    withFlag('E',   "primaryEnvironment", "FUGUE_PRIMARY_ENVIRONMENT",  Boolean.class,  false, false,   (v) -> primaryEnvironment_  = v);
-    withFlag('G',   "primaryRegion",      "FUGUE_PRIMARY_REGION",       Boolean.class,  false, false,   (v) -> primaryRegion_       = v);
-    withFlag('d',   "dryRun",             "FUGUE_DRY_RUN",              Boolean.class,  false, false,   (v) -> dryRun_              = v);
-    withFlag('i',   "instances",          "FUGUE_INSTANCES",            String.class,   false, false,   (v) -> instances_           = v);
-    withFlag('b',   BUILD_ID,             "FUGUE_BUILD_ID",             String.class,   false, false,   (v) -> buildId_             = v);
+    withFlag(null,  TRACK,                "FUGUE_TRACK",                String.class,   true, false,   (v) -> track_               = v);
+    withFlag(null,  STATION,              "FUGUE_STATION",              String.class,   true, false,   (v) -> station_             = v);
+    withFlag('s',   SERVICE,              "FUGUE_SERVICE",              String.class,   true, false,   (v) -> service_             = v);
+    withFlag('v',   ENVIRONMENT_TYPE,     "FUGUE_ENVIRONMENT_TYPE",     String.class,   true, false,   (v) -> environmentType_     = v);
+    withFlag('e',   ENVIRONMENT,          "FUGUE_ENVIRONMENT",          String.class,   true, false,   (v) -> environment_         = v);
+    withFlag('g',   REGION,               "FUGUE_REGION",               String.class,   true, false,   (v) -> region_              = v);
+    withFlag('p',   POD_NAME,             "FUGUE_POD_NAME",             String.class,   true, false,   (v) -> podName_             = v);
+    withFlag('a',   ACTION,               "FUGUE_ACTION",               String.class,   true, true,    (v) -> setAction(v));
+    withFlag('E',   "primaryEnvironment", "FUGUE_PRIMARY_ENVIRONMENT",  Boolean.class,  true, false,   (v) -> primaryEnvironment_  = v);
+    withFlag('G',   "primaryRegion",      "FUGUE_PRIMARY_REGION",       Boolean.class,  true, false,   (v) -> primaryRegion_       = v);
+    withFlag('d',   "dryRun",             "FUGUE_DRY_RUN",              Boolean.class,  true, false,   (v) -> dryRun_              = v);
+    withFlag('i',   "instances",          "FUGUE_INSTANCES",            String.class,   true, false,   (v) -> instances_           = v);
+    withFlag('b',   BUILD_ID,             "FUGUE_BUILD_ID",             String.class,   true, false,   (v) -> buildId_             = v);
     
     provider_.init(this);
     
