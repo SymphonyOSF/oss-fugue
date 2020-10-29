@@ -223,7 +223,7 @@ public abstract class FugueDeploy extends CommandLineHandler
     withFlag('d',   "dryRun",             "FUGUE_DRY_RUN",              Boolean.class,  true, false,   (v) -> dryRun_              = v);
     withFlag('i',   "instances",          "FUGUE_INSTANCES",            String.class,   true, false,   (v) -> instances_           = v);
     withFlag('b',   BUILD_ID,             "FUGUE_BUILD_ID",             String.class,   true, false,   (v) -> buildId_             = v);
-    
+     
     provider_.init(this);
     
     artifactHelper.init(this);
