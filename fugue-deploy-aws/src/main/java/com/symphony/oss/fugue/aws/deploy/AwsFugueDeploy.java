@@ -2049,6 +2049,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
           ArrayList<String> tmp = map.get(o.getLastModified());
           if(tmp == null)
             map.put(o.getLastModified(), tmp = new ArrayList<>());
+          tmp.add(o.getKey());
         }
 
         truncated = objects.isTruncated();
