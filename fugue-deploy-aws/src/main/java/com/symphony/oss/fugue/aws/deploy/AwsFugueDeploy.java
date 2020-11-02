@@ -2064,9 +2064,10 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       while (iterator.hasNext() && i < N)
       {
         Entry<Date, ArrayList<String>> e = iterator.next();
-        for(String kk : e.getValue())
+        for(String kk : e.getValue()) {
           toDelete.add(kk);
-        log_.info("Deleting " + bucketName + " / " + e.getValue() + " Last Modified " + e.getValue());
+          log_.info("Deleting " + bucketName + " / " + kk + " Last Modified " + e.getKey());
+        }
         i++;
       }
 
