@@ -200,7 +200,8 @@ public abstract class FugueDeploy extends CommandLineHandler
    * Constructor.
    * 
    * @param cloudServiceProvider  Name of the CSP "amazon" or "google".
-   * @param provider              A config provider.
+   * @param provider              A config provider.  
+   * @param artifactHelper        A helper for downloading artifacts
    * @param helpers               Zero or more config helpers.
    */
   public FugueDeploy(String cloudServiceProvider, ConfigProvider provider, ArtifactHelper artifactHelper, ConfigHelper ...helpers)

@@ -2037,15 +2037,19 @@ public abstract class AwsFugueDeploy extends FugueDeploy
           .withRegion(getAwsRegion())
           .build();
       
-      TreeMap<Date, String> map = new TreeMap<>();
+      TreeMap<Date, ArrayList<String>> map = new TreeMap<>();
 
       boolean truncated = false;
 
       do
       {
         ObjectListing objects = s3Client.listObjects(bucketName, key);
-        map.putAll(objects.getObjectSummaries().stream()
-            .collect(Collectors.toMap(S3ObjectSummary::getLastModified, S3ObjectSummary::getKey)));
+        for(S3ObjectSummary o : objects.getObjectSummaries()) 
+        {
+          ArrayList<String> tmp = map.get(o.getLastModified());
+          if(tmp == null)
+            map.put(o.getLastModified(), tmp = new ArrayList<>());
+        }
 
         truncated = objects.isTruncated();
       } while (truncated);
@@ -2054,14 +2058,14 @@ public abstract class AwsFugueDeploy extends FugueDeploy
 
       int N = map.size() - LAMBDA_STORAGE_BACKUP;
 
-      Iterator<Entry<Date, String>> iterator = map.entrySet().iterator();
+      Iterator<Entry<Date, ArrayList<String>>> iterator = map.entrySet().iterator();
       int i = 0;
 
       while (iterator.hasNext() && i < N)
       {
-        Entry<Date, String> e = iterator.next();
-
-        toDelete.add(e.getValue());
+        Entry<Date, ArrayList<String>> e = iterator.next();
+        for(String kk : e.getValue())
+          toDelete.add(kk);
         log_.info("Deleting " + bucketName + " / " + e.getValue() + " Last Modified " + e.getValue());
         i++;
       }
