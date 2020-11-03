@@ -42,7 +42,6 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
@@ -192,6 +191,7 @@ import com.amazonaws.services.lambda.model.CreateFunctionResult;
 import com.amazonaws.services.lambda.model.DeleteFunctionRequest;
 import com.amazonaws.services.lambda.model.DeleteProvisionedConcurrencyConfigRequest;
 import com.amazonaws.services.lambda.model.Environment;
+import com.amazonaws.services.lambda.model.EventSourceMappingConfiguration;
 import com.amazonaws.services.lambda.model.FunctionCode;
 import com.amazonaws.services.lambda.model.FunctionConfiguration;
 import com.amazonaws.services.lambda.model.GetAliasRequest;
@@ -202,6 +202,8 @@ import com.amazonaws.services.lambda.model.GetProvisionedConcurrencyConfigReques
 import com.amazonaws.services.lambda.model.GetProvisionedConcurrencyConfigResult;
 import com.amazonaws.services.lambda.model.InvokeRequest;
 import com.amazonaws.services.lambda.model.InvokeResult;
+import com.amazonaws.services.lambda.model.ListEventSourceMappingsRequest;
+import com.amazonaws.services.lambda.model.ListEventSourceMappingsResult;
 import com.amazonaws.services.lambda.model.ListVersionsByFunctionRequest;
 import com.amazonaws.services.lambda.model.ListVersionsByFunctionResult;
 import com.amazonaws.services.lambda.model.ProvisionedConcurrencyConfigNotFoundException;
@@ -1769,10 +1771,26 @@ public abstract class AwsFugueDeploy extends FugueDeploy
 
     private void createLambdaSubscriptions(String functionName, Collection<Subscription> subscriptions)
     {
+      HashMap<String, EventSourceMappingConfiguration> mappings = new HashMap<>();
+      
+      ListEventSourceMappingsResult mappingResult = lambdaClient_.listEventSourceMappings(new ListEventSourceMappingsRequest()
+          .withFunctionName(functionName)
+          );
+      
+      for(EventSourceMappingConfiguration mapping : mappingResult.getEventSourceMappings())
+        mappings.put(mapping.getEventSourceArn(), mapping);
+      
       for(Subscription subscription : subscriptions)
       {
+        if(mappings.containsKey(subscription.getSource()))
+          mappings.remove(subscription.getSource());
+
         subscription.create(functionName);
       }
+      
+      for(Entry<String, EventSourceMappingConfiguration> e : mappings.entrySet()) 
+        AwsTopicSubscription.delete(e.getValue(), lambdaClient_);
+  
     }
 
     @Override
