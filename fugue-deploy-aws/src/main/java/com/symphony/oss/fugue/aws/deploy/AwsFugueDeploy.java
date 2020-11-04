@@ -207,6 +207,7 @@ import com.amazonaws.services.lambda.model.ListEventSourceMappingsRequest;
 import com.amazonaws.services.lambda.model.ListEventSourceMappingsResult;
 import com.amazonaws.services.lambda.model.ListVersionsByFunctionRequest;
 import com.amazonaws.services.lambda.model.ListVersionsByFunctionResult;
+import com.amazonaws.services.lambda.model.LogType;
 import com.amazonaws.services.lambda.model.ProvisionedConcurrencyConfigNotFoundException;
 import com.amazonaws.services.lambda.model.PublishVersionRequest;
 import com.amazonaws.services.lambda.model.PublishVersionResult;
@@ -2038,13 +2039,14 @@ public abstract class AwsFugueDeploy extends FugueDeploy
         
       InvokeResult invokeResult = lambdaClient_.invoke(new InvokeRequest()
             .withFunctionName(functionName)
+            .withLogType(LogType.Tail)
             );
       
         
-      log_.info("Invoke function "+functionName + " result : " + Base64.decodeBase64(invokeResult.getLogResult()));
-      
-      if(invokeResult.getStatusCode() != 200)
-        throw new IllegalStateException("Function "+ name + " terminated with code "+invokeResult.getStatusCode());
+      log_.info("Invoke function "+functionName + " result : " + new String(Base64.decodeBase64(invokeResult.getLogResult())));
+
+      if(invokeResult.getFunctionError() != null)
+        throw new IllegalStateException("Function "+ name + " terminated with an error ");
      }
     
     @Override
