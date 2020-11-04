@@ -1574,6 +1574,11 @@ public abstract class FugueDeploy extends CommandLineHandler
               environment.put("FUGUE_ACTION", action_.name());       
             }
             
+            if(!environment.containsKey("FUGUE_ACTION"))
+            {
+              environment.put("FUGUE_DRY_RUN", Boolean.toString(dryRun_));       
+            }
+            
             Collection<String> paths = container.getListOf(String.class, PATHS);
             
             int provisionedCapacity = 0;

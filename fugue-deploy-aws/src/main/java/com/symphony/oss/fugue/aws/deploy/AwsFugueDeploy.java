@@ -45,6 +45,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -2038,8 +2039,12 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       InvokeResult invokeResult = lambdaClient_.invoke(new InvokeRequest()
             .withFunctionName(functionName)
             );
+      
         
-      log_.info("Invoke function "+functionName + " result : " + invokeResult.toString());
+      log_.info("Invoke function "+functionName + " result : " + Base64.decodeBase64(invokeResult.getLogResult()));
+      
+      if(invokeResult.getStatusCode() != 200)
+        throw new IllegalStateException("Function "+ name + " terminated with code "+invokeResult.getStatusCode());
      }
     
     @Override
