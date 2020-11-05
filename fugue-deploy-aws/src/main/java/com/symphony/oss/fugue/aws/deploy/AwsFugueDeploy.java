@@ -1766,8 +1766,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
         if(!paths.isEmpty())
           createApiGatewayPaths(getFunctionInvocationArn(functionName), IntegrationType.AWS_PROXY, POST, null, null, paths);
         
-        if(!subscriptions.isEmpty())
-          createLambdaSubscriptions(functionName, subscriptions);
+         createLambdaSubscriptions(functionName, subscriptions);
       }
     }
 
