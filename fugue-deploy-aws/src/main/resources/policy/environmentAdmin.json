@@ -204,7 +204,7 @@
           "Resource": "arn:aws:dynamodb:*:*:table/sym-s2-${environmentType}-${environmentId}-*"
         },
         {
-            "Sid": "All",
+            "Sid": "Logs",
             "Effect": "Allow",
             "Action": [
                 "logs:DescribeLogGroups",
