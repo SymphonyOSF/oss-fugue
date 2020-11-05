@@ -92,10 +92,10 @@ public class GitHubConfigProvider extends ConfigProvider
     super.init(deployConfig);
     
     deployConfig
-      .withFlag('O', "gitHubOrganization", "GITHUB_ORG",    String.class, false, false, (v) -> organization_ = v)
-      .withFlag('R', "gitHubRepo",         "GITHUB_REPO",   String.class, false, true,  (v) -> repo_ = v)
-      .withFlag('B', "gitHubBranch",       "GITHUB_BRANCH", String.class, false, false, (v) -> branch_ = v)
-      .withFlag('T', "gitHubToken",        "GITHUB_TOKEN",  String.class, false, true,  (v) -> accessToken_ = v);
+      .withFlag('O', "gitHubOrganization", "GITHUB_ORG",    String.class, true, false, (v) -> organization_ = v)
+      .withFlag('R', "gitHubRepo",         "GITHUB_REPO",   String.class, true, true,  (v) -> repo_ = v)
+      .withFlag('B', "gitHubBranch",       "GITHUB_BRANCH", String.class, true, false, (v) -> branch_ = v)
+      .withFlag('T', "gitHubToken",        "GITHUB_TOKEN",  String.class, true, true,  (v) -> accessToken_ = v);
   }
 
   

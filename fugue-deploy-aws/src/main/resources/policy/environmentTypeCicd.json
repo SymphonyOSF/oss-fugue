@@ -36,8 +36,9 @@
                 "lambda:PublishVersion"
             ],
             "Resource": [
-                "arn:aws:lambda:us-east-1:189141687483:function:sym-s2-${environmentType}-*"
-            ]
+                "arn:aws:lambda:us-east-1:189141687483:function:sym-s2-${environmentType}-fugue-admin-lambda",
+                "arn:aws:lambda:us-east-1:189141687483:function:sym-s2-${environmentType}-*-admin-lambda"
+           ]
         },
         {
             "Sid": "SyncLambda",
@@ -167,20 +168,6 @@
             "Resource": [
                 "arn:aws:route53:::hostedzone/*"
             ]
-        },
-        {
-            "Action": [
-                "logs:CreateLogGroup",
-                "logs:DescribeLogGroups",
-                "logs:PutRetentionPolicy",
-                "logs:FilterLogEvents",
-                "logs:DescribeLogStreams",
-                "logs:PutRetentionPolicy",
-                "logs:GetLogEvents"
-            ],
-            "Effect": "Allow",
-            "Resource": "*",
-            "Sid": "Logs"
         }
     ]
 }

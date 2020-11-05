@@ -87,6 +87,21 @@
                 "arn:aws:iam::*:group/sym-s2-${environmentType}-*",
                 "arn:aws:secretsmanager:*:*:secret:sym-s2-fugue-${environmentType}-*"
             ]
+        },
+                {
+            "Sid": "All",
+            "Effect": "Allow",
+            "Action": [
+                "logs:DescribeLogGroups",
+                "logs:CreateLogGroup",
+                "logs:PutRetentionPolicy",
+                "logs:PutLogEvents",
+                "logs:CreateLogStream"
+
+           ],
+            "Resource": [
+                "*"
+            ]
         }
     ]
 }

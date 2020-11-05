@@ -215,4 +215,10 @@ class AwsDbSubscription extends DbSubscription
     }
     return eventSourceArn;
   }
+
+  @Override
+  public String getSource()
+  {
+    return fetchEventSourceArn();
+  }
 }

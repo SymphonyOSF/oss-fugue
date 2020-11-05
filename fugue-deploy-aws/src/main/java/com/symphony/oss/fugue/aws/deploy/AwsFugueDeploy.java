@@ -42,10 +42,10 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -192,6 +192,7 @@ import com.amazonaws.services.lambda.model.CreateFunctionResult;
 import com.amazonaws.services.lambda.model.DeleteFunctionRequest;
 import com.amazonaws.services.lambda.model.DeleteProvisionedConcurrencyConfigRequest;
 import com.amazonaws.services.lambda.model.Environment;
+import com.amazonaws.services.lambda.model.EventSourceMappingConfiguration;
 import com.amazonaws.services.lambda.model.FunctionCode;
 import com.amazonaws.services.lambda.model.FunctionConfiguration;
 import com.amazonaws.services.lambda.model.GetAliasRequest;
@@ -202,8 +203,11 @@ import com.amazonaws.services.lambda.model.GetProvisionedConcurrencyConfigReques
 import com.amazonaws.services.lambda.model.GetProvisionedConcurrencyConfigResult;
 import com.amazonaws.services.lambda.model.InvokeRequest;
 import com.amazonaws.services.lambda.model.InvokeResult;
+import com.amazonaws.services.lambda.model.ListEventSourceMappingsRequest;
+import com.amazonaws.services.lambda.model.ListEventSourceMappingsResult;
 import com.amazonaws.services.lambda.model.ListVersionsByFunctionRequest;
 import com.amazonaws.services.lambda.model.ListVersionsByFunctionResult;
+import com.amazonaws.services.lambda.model.LogType;
 import com.amazonaws.services.lambda.model.ProvisionedConcurrencyConfigNotFoundException;
 import com.amazonaws.services.lambda.model.PublishVersionRequest;
 import com.amazonaws.services.lambda.model.PublishVersionResult;
@@ -1762,17 +1766,32 @@ public abstract class AwsFugueDeploy extends FugueDeploy
         if(!paths.isEmpty())
           createApiGatewayPaths(getFunctionInvocationArn(functionName), IntegrationType.AWS_PROXY, POST, null, null, paths);
         
-        if(!subscriptions.isEmpty())
-          createLambdaSubscriptions(functionName, subscriptions);
+         createLambdaSubscriptions(functionName, subscriptions);
       }
     }
 
     private void createLambdaSubscriptions(String functionName, Collection<Subscription> subscriptions)
     {
+      HashMap<String, EventSourceMappingConfiguration> mappings = new HashMap<>();
+      
+      ListEventSourceMappingsResult mappingResult = lambdaClient_.listEventSourceMappings(new ListEventSourceMappingsRequest()
+          .withFunctionName(functionName)
+          );
+      
+      for(EventSourceMappingConfiguration mapping : mappingResult.getEventSourceMappings())
+        mappings.put(mapping.getEventSourceArn(), mapping);
+      
       for(Subscription subscription : subscriptions)
       {
+        if(mappings.containsKey(subscription.getSource()))
+          mappings.remove(subscription.getSource());
+
         subscription.create(functionName);
       }
+      
+      for(Entry<String, EventSourceMappingConfiguration> e : mappings.entrySet()) 
+        AwsTopicSubscription.delete(e.getValue(), lambdaClient_);
+  
     }
 
     @Override
@@ -2019,9 +2038,14 @@ public abstract class AwsFugueDeploy extends FugueDeploy
         
       InvokeResult invokeResult = lambdaClient_.invoke(new InvokeRequest()
             .withFunctionName(functionName)
+            .withLogType(LogType.Tail)
             );
+      
         
-      log_.info("Invoke function "+functionName + " result : " + invokeResult.toString());
+      log_.info("Invoke function "+functionName + " result : " + new String(Base64.decodeBase64(invokeResult.getLogResult())));
+
+      if(invokeResult.getFunctionError() != null)
+        throw new IllegalStateException("Function "+ name + " terminated with an error ");
      }
     
     @Override
@@ -2037,15 +2061,20 @@ public abstract class AwsFugueDeploy extends FugueDeploy
           .withRegion(getAwsRegion())
           .build();
       
-      TreeMap<Date, String> map = new TreeMap<>();
+      TreeMap<Date, ArrayList<String>> map = new TreeMap<>();
 
       boolean truncated = false;
 
       do
       {
         ObjectListing objects = s3Client.listObjects(bucketName, key);
-        map.putAll(objects.getObjectSummaries().stream()
-            .collect(Collectors.toMap(S3ObjectSummary::getLastModified, S3ObjectSummary::getKey)));
+        for(S3ObjectSummary o : objects.getObjectSummaries()) 
+        {
+          ArrayList<String> tmp = map.get(o.getLastModified());
+          if(tmp == null)
+            map.put(o.getLastModified(), tmp = new ArrayList<>());
+          tmp.add(o.getKey());
+        }
 
         truncated = objects.isTruncated();
       } while (truncated);
@@ -2054,15 +2083,16 @@ public abstract class AwsFugueDeploy extends FugueDeploy
 
       int N = map.size() - LAMBDA_STORAGE_BACKUP;
 
-      Iterator<Entry<Date, String>> iterator = map.entrySet().iterator();
+      Iterator<Entry<Date, ArrayList<String>>> iterator = map.entrySet().iterator();
       int i = 0;
 
       while (iterator.hasNext() && i < N)
       {
-        Entry<Date, String> e = iterator.next();
-
-        toDelete.add(e.getValue());
-        log_.info("Deleting " + bucketName + " / " + e.getValue() + " Last Modified " + e.getValue());
+        Entry<Date, ArrayList<String>> e = iterator.next();
+        for(String kk : e.getValue()) {
+          toDelete.add(kk);
+          log_.info("Deleting " + bucketName + " / " + kk + " Last Modified " + e.getKey());
+        }
         i++;
       }
 

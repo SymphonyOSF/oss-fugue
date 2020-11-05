@@ -200,7 +200,8 @@ public abstract class FugueDeploy extends CommandLineHandler
    * Constructor.
    * 
    * @param cloudServiceProvider  Name of the CSP "amazon" or "google".
-   * @param provider              A config provider.
+   * @param provider              A config provider.  
+   * @param artifactHelper        A helper for downloading artifacts
    * @param helpers               Zero or more config helpers.
    */
   public FugueDeploy(String cloudServiceProvider, ConfigProvider provider, ArtifactHelper artifactHelper, ConfigHelper ...helpers)
@@ -223,7 +224,7 @@ public abstract class FugueDeploy extends CommandLineHandler
     withFlag('d',   "dryRun",             "FUGUE_DRY_RUN",              Boolean.class,  true, false,   (v) -> dryRun_              = v);
     withFlag('i',   "instances",          "FUGUE_INSTANCES",            String.class,   true, false,   (v) -> instances_           = v);
     withFlag('b',   BUILD_ID,             "FUGUE_BUILD_ID",             String.class,   true, false,   (v) -> buildId_             = v);
-    
+
     provider_.init(this);
     
     artifactHelper.init(this);
@@ -1567,6 +1568,15 @@ public abstract class FugueDeploy extends CommandLineHandler
             {
               putFugueConfig(environment);
               
+            }
+            if(!environment.containsKey("FUGUE_ACTION"))
+            {
+              environment.put("FUGUE_ACTION", action_.name());       
+            }
+            
+            if(!environment.containsKey("FUGUE_DRY_RUN"))
+            {
+              environment.put("FUGUE_DRY_RUN", Boolean.toString(dryRun_));       
             }
             
             Collection<String> paths = container.getListOf(String.class, PATHS);
