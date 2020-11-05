@@ -168,20 +168,6 @@
             "Resource": [
                 "arn:aws:route53:::hostedzone/*"
             ]
-        },
-        {
-            "Action": [
-                "logs:CreateLogGroup",
-                "logs:DescribeLogGroups",
-                "logs:PutRetentionPolicy",
-                "logs:FilterLogEvents",
-                "logs:DescribeLogStreams",
-                "logs:PutRetentionPolicy",
-                "logs:GetLogEvents"
-            ],
-            "Effect": "Allow",
-            "Resource": "*",
-            "Sid": "Logs"
         }
     ]
 }
