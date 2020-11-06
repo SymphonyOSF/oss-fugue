@@ -2041,9 +2041,10 @@ public abstract class AwsFugueDeploy extends FugueDeploy
             .withLogType(LogType.Tail)
             );
       
-        
+      log_.info("******** Lambda Execution Log START *********") ; 
       log_.info("Invoke function "+functionName + " result : " + new String(Base64.decodeBase64(invokeResult.getLogResult())));
-
+      log_.info("******** Lambda Execution Log END *********") ; 
+      
       if(invokeResult.getFunctionError() != null)
         throw new IllegalStateException("Function "+ name + " terminated with an error ");
      }
