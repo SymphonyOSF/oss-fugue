@@ -1368,8 +1368,10 @@ public abstract class AwsFugueDeploy extends FugueDeploy
     private void createEnvironmentTypeRootUser(Name baseName, List<String> keys, List<Name> nonKeyUsers)
     {
       Name name = baseName.append(ROOT);
-      
-      createUser(name, null, keys, nonKeyUsers);
+      String policyArn = createPolicyFromResource(name, "policy/environmentTypeRoot.json");
+      String groupName = createGroup(name, policyArn);
+      createUser(name, groupName, keys, nonKeyUsers);
+
     }
     
     private void createEnvironmentTypeCicdUser(Name baseName, List<String> keys, List<Name> nonKeyUsers)
