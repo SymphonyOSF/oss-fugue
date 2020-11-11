@@ -785,6 +785,15 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       
       log_.debug("Created user \"" + userName + "\"");
       
+      try
+      {
+        Thread.sleep(10000);
+      }
+      catch (InterruptedException e1)
+      {
+        log_.warn("Interrupted", e1);
+      }
+      
       createAccessKey(name, userName, keys);
     }
     
@@ -974,6 +983,15 @@ public abstract class AwsFugueDeploy extends FugueDeploy
           .withPolicyDocument(trustDocument)
           .withRoleName(roleName.toString())
           );
+        
+        try
+        {
+          Thread.sleep(10000);
+        }
+        catch (InterruptedException e1)
+        {
+          log_.warn("Interrupted", e1);
+        }
       }
       
       return role.getArn();
@@ -1368,7 +1386,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
     private void createEnvironmentTypeRootUser(Name baseName, List<String> keys, List<Name> nonKeyUsers)
     {
       Name name = baseName.append(ROOT);
-      log_.info("**** UPDATING ROOT POLICY "+name);
+
       String policyArn = createPolicyFromResource(name, "policy/environmentTypeRoot.json");
       String groupName = createGroup(name, policyArn);
       createUser(name, groupName, keys, nonKeyUsers);
