@@ -986,7 +986,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
         
         try
         {
-          Thread.sleep(20000);
+          Thread.sleep(30000);
         }
         catch (InterruptedException e1)
         {
@@ -1176,6 +1176,17 @@ public abstract class AwsFugueDeploy extends FugueDeploy
           .withPolicyName(policyName));
       
       log_.debug("Created policy " + result.getPolicy().getArn());
+      
+      try
+      {
+        Thread.sleep(20000);
+      }
+      catch (InterruptedException e1)
+      {
+        log_.error("Interrupted", e1);
+        
+        throw e;
+      }
     }
     
     return policyArn;
