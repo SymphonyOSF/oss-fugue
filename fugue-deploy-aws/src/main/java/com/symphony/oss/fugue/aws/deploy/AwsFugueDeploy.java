@@ -400,6 +400,10 @@ public abstract class AwsFugueDeploy extends FugueDeploy
   private AmazonDynamoDB amazonDynamoDB_;
 
   private DynamoDB dynamoDB_;
+  
+  private boolean wait_invoke;
+  
+  
 
 
 
@@ -1002,6 +1006,8 @@ public abstract class AwsFugueDeploy extends FugueDeploy
         log_.warn("Interrupted", e1);
       }
       log_.debug("Created role " + roleName + ", waiting to allow role to become active...OK carry on.");
+      
+      wait_invoke = true;
     }
    
     for(String policyArn : policyArnList)
@@ -1158,6 +1164,8 @@ public abstract class AwsFugueDeploy extends FugueDeploy
           .withPolicyName(policyName));
       
       log_.debug("Created policy " + result.getPolicy().getArn());
+      
+      wait_invoke = true;
     }
     
     return policyArn;
@@ -2037,14 +2045,17 @@ public abstract class AwsFugueDeploy extends FugueDeploy
     protected  void executeLambdaContainer(String name) {
 
       String functionName = getNameFactory().getLogicalServiceItemName(name).toString();
-      log_.info("Waiting before invoking "+functionName);
-      try
+      if(wait_invoke) 
       {
-        Thread.sleep(30000);
-      }
-      catch (InterruptedException e1)
-      {
-        log_.warn("Interrupted", e1);
+        log_.info("Waiting before invoking "+functionName);
+        try
+        {
+          Thread.sleep(30000);
+        }
+        catch (InterruptedException e1)
+        {
+          log_.warn("Interrupted", e1);
+        }
       }
       
       log_.info("Invoking function "+functionName);
