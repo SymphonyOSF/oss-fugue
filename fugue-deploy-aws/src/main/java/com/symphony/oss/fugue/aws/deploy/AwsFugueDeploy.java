@@ -1013,7 +1013,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       
       try
       {
-        Thread.sleep(20000);
+        Thread.sleep(30000);
       }
       catch (InterruptedException e1)
       {
