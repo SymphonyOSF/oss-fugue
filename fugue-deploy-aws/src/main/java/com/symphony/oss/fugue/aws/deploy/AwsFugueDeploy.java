@@ -787,7 +787,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       
       try
       {
-        Thread.sleep(30000);
+        Thread.sleep(20000);
       }
       catch (InterruptedException e1)
       {
@@ -986,7 +986,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
         
         try
         {
-          Thread.sleep(30000);
+          Thread.sleep(20000);
         }
         catch (InterruptedException e1)
         {
@@ -1013,7 +1013,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       
       try
       {
-        Thread.sleep(30000);
+        Thread.sleep(20000);
       }
       catch (InterruptedException e1)
       {
