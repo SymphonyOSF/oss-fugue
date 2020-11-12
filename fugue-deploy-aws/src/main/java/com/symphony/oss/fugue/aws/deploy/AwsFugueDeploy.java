@@ -785,15 +785,6 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       
       log_.debug("Created user \"" + userName + "\"");
       
-      try
-      {
-        Thread.sleep(20000);
-      }
-      catch (InterruptedException e1)
-      {
-        log_.warn("Interrupted", e1);
-      }
-      
       createAccessKey(name, userName, keys);
     }
     
@@ -983,15 +974,6 @@ public abstract class AwsFugueDeploy extends FugueDeploy
           .withPolicyDocument(trustDocument)
           .withRoleName(roleName.toString())
           );
-        
-        try
-        {
-          Thread.sleep(30000);
-        }
-        catch (InterruptedException e1)
-        {
-          log_.warn("Interrupted", e1);
-        }
       }
       
       return role.getArn();
@@ -1013,7 +995,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       
       try
       {
-        Thread.sleep(30000);
+        Thread.sleep(10000);
       }
       catch (InterruptedException e1)
       {
@@ -1176,17 +1158,6 @@ public abstract class AwsFugueDeploy extends FugueDeploy
           .withPolicyName(policyName));
       
       log_.debug("Created policy " + result.getPolicy().getArn());
-      
-      try
-      {
-        Thread.sleep(20000);
-      }
-      catch (InterruptedException e1)
-      {
-        log_.error("Interrupted", e1);
-        
-        throw e;
-      }
     }
     
     return policyArn;
@@ -1400,6 +1371,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
 
       String policyArn = createPolicyFromResource(name, "policy/environmentTypeRoot.json");
       String groupName = createGroup(name, policyArn);
+      
       createUser(name, groupName, keys, nonKeyUsers);
 
     }
@@ -2065,8 +2037,18 @@ public abstract class AwsFugueDeploy extends FugueDeploy
     protected  void executeLambdaContainer(String name) {
 
       String functionName = getNameFactory().getLogicalServiceItemName(name).toString();
+      log_.info("Waiting before invoking "+functionName);
+      try
+      {
+        Thread.sleep(30000);
+      }
+      catch (InterruptedException e1)
+      {
+        log_.warn("Interrupted", e1);
+      }
       
       log_.info("Invoking function "+functionName);
+      
         
       InvokeResult invokeResult = lambdaClient_.invoke(new InvokeRequest()
             .withFunctionName(functionName)
