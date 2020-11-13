@@ -1005,7 +1005,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       {
         log_.warn("Interrupted", e1);
       }
-      log_.debug("Created role " + roleName + ", waiting to allow role to become active...OK carry on.");
+      log_.debug("Created role " + roleName + ", will wait to allow role to become active before launching init task");
       
       wait_invoke = true;
     }
