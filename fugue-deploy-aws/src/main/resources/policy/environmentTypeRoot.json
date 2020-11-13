@@ -187,7 +187,7 @@
                 "lambda:PublishVersion"
             ],
             "Resource": [
-                "arn:aws:lambda:us-east-1:189141687483:function:sym-s2-${environmentType}-fugue-root-lambda"
+                "arn:aws:lambda:*:*:function:sym-s2-${environmentType}-*"
             ]
         }
     ]

@@ -400,6 +400,10 @@ public abstract class AwsFugueDeploy extends FugueDeploy
   private AmazonDynamoDB amazonDynamoDB_;
 
   private DynamoDB dynamoDB_;
+  
+  private boolean wait_invoke;
+  
+  
 
 
 
@@ -1001,7 +1005,9 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       {
         log_.warn("Interrupted", e1);
       }
-      log_.debug("Created role " + roleName + ", waiting to allow role to become active...OK carry on.");
+      log_.debug("Created role " + roleName + ", will wait to allow role to become active before launching init task");
+      
+      wait_invoke = true;
     }
    
     for(String policyArn : policyArnList)
@@ -1158,6 +1164,8 @@ public abstract class AwsFugueDeploy extends FugueDeploy
           .withPolicyName(policyName));
       
       log_.debug("Created policy " + result.getPolicy().getArn());
+      
+      wait_invoke = true;
     }
     
     return policyArn;
@@ -1368,8 +1376,12 @@ public abstract class AwsFugueDeploy extends FugueDeploy
     private void createEnvironmentTypeRootUser(Name baseName, List<String> keys, List<Name> nonKeyUsers)
     {
       Name name = baseName.append(ROOT);
+
+      String policyArn = createPolicyFromResource(name, "policy/environmentTypeRoot.json");
+      String groupName = createGroup(name, policyArn);
       
-      createUser(name, null, keys, nonKeyUsers);
+      createUser(name, groupName, keys, nonKeyUsers);
+
     }
     
     private void createEnvironmentTypeCicdUser(Name baseName, List<String> keys, List<Name> nonKeyUsers)
@@ -2033,6 +2045,19 @@ public abstract class AwsFugueDeploy extends FugueDeploy
     protected  void executeLambdaContainer(String name) {
 
       String functionName = getNameFactory().getLogicalServiceItemName(name).toString();
+     
+      if(wait_invoke) 
+      {
+        log_.info("Waiting before invoking "+functionName);
+        try
+        {
+          Thread.sleep(40000);
+        }
+        catch (InterruptedException e1)
+        {
+          log_.warn("Interrupted", e1);
+        }
+      }
       
       log_.info("Invoking function "+functionName);
         
