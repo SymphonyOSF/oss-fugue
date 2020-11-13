@@ -2045,12 +2045,13 @@ public abstract class AwsFugueDeploy extends FugueDeploy
     protected  void executeLambdaContainer(String name) {
 
       String functionName = getNameFactory().getLogicalServiceItemName(name).toString();
+     
       if(wait_invoke) 
       {
         log_.info("Waiting before invoking "+functionName);
         try
         {
-          Thread.sleep(30000);
+          Thread.sleep(40000);
         }
         catch (InterruptedException e1)
         {
