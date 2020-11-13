@@ -2060,7 +2060,6 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       }
       
       log_.info("Invoking function "+functionName);
-      
         
       InvokeResult invokeResult = lambdaClient_.invoke(new InvokeRequest()
             .withFunctionName(functionName)
