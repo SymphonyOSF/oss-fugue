@@ -63,6 +63,8 @@ import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
 import com.amazonaws.services.dynamodbv2.model.AmazonDynamoDBException;
 import com.amazonaws.services.dynamodbv2.model.AttributeDefinition;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import com.amazonaws.services.dynamodbv2.model.BatchWriteItemRequest;
+import com.amazonaws.services.dynamodbv2.model.BatchWriteItemResult;
 import com.amazonaws.services.dynamodbv2.model.BillingMode;
 import com.amazonaws.services.dynamodbv2.model.CancellationReason;
 import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
@@ -76,6 +78,7 @@ import com.amazonaws.services.dynamodbv2.model.KeySchemaElement;
 import com.amazonaws.services.dynamodbv2.model.KeyType;
 import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughputExceededException;
 import com.amazonaws.services.dynamodbv2.model.Put;
+import com.amazonaws.services.dynamodbv2.model.PutRequest;
 import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
 import com.amazonaws.services.dynamodbv2.model.ScalarAttributeType;
 import com.amazonaws.services.dynamodbv2.model.StreamSpecification;
@@ -146,6 +149,8 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
   protected final int                 payloadLimit_;
   protected final boolean             validate_;
   protected final StreamSpecification streamSpecification_;
+  
+  private static final int MAX_TRANSACTION_SIZE = 25;
   
   protected AbstractDynamoDbKvTable(AbstractBuilder<?,?> builder)
   {
@@ -322,6 +327,54 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
       throw new IllegalStateException(e);
     }
   }
+  
+  @Override
+  public void storeNonTransactional(Collection<IKvItem> kvItems, ITraceContext trace)
+  {
+    List<Item> items = new ArrayList<>();
+    for (IKvItem kvItem : kvItems)
+    {
+      String partitionKey = getPartitionKey(kvItem);
+      String sortKey = kvItem.getSortKey().asString();
+        
+      UpdateOrPut updateOrPut = new UpdateOrPut(kvItem, partitionKey, sortKey, payloadLimit_);
+
+      items.add(Item.fromMap(updateOrPut.putItem_).withPrimaryKey(new PrimaryKey(
+          new KeyAttribute(ColumnNamePartitionKey,  partitionKey.toString()),
+          new KeyAttribute(ColumnNameSortKey,       sortKey.toString())
+          )));
+
+    }
+    
+    
+    TableWriteItems tableWriteItems = new TableWriteItems(objectTable_.getTableName())
+          .withItemsToPut(items);
+    
+    BatchWriteItemOutcome outcome = dynamoDB_.batchWriteItem(tableWriteItems);
+
+    long                          delay                 = 4;
+    Map<String, List<WriteRequest>> unprocessedItems = outcome.getUnprocessedItems();
+
+    while(outcome.getUnprocessedItems().size()>0)
+    {
+        log_.info("Retry " + unprocessedItems.size()  + " unprocessed items after " + delay + "ms.");
+        try
+        {
+          Thread.sleep(delay);
+
+          if (delay < 1000)
+            delay *= 1.2;
+        }
+        catch (InterruptedException e)
+        {
+          log_.warn("Sleep interrupted", e);
+        }
+        
+        unprocessedItems = dynamoDB_.batchWriteItemUnprocessed(unprocessedItems).getUnprocessedItems();
+
+    }
+  }
+
 
 //  @Override
 //  public void store(@Nullable IKvPartitionSortKeyProvider partitionSortKeyProvider, Collection<IKvItem> kvItems, ITraceContext trace) throws ObjectExistsException
@@ -2167,6 +2220,12 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
       
       return self();
     }
+  }
+  
+  @Override
+  public int getTransactionItemsLimit()
+  {
+    return MAX_TRANSACTION_SIZE;
   }
  }
 
