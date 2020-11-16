@@ -49,12 +49,21 @@ import com.symphony.oss.fugue.trace.ITraceContext;
 public interface IKvTable extends IFugueComponent
 {
   /**
-   * Store the given collection of items, overwriting any existing object with the same partition and sort keys.
+   * Store the given collection of items transactionally, overwriting any existing object with the same partition and sort keys.
    * 
    * @param kvItems Items to be stored.
    * @param trace   Trace context.
    */
   void store(Collection<IKvItem> kvItems, ITraceContext trace);
+  
+  /**
+   * Store the given collection of items, overwriting any existing object with the same partition and sort keys.
+   * 
+   * @param kvItems Items to be stored.
+   * @param trace   Trace context.
+   */
+  void storeNonTransactional(Collection<IKvItem> kvItems, ITraceContext trace);
+  
   
   /**
    * Store the given item, provided the given condition is met.
@@ -216,4 +225,10 @@ public interface IKvTable extends IFugueComponent
    * @param trace                     Trace context.
    */
   void deleteRow(IKvPartitionSortKeyProvider partitionSortKeyProvider, ITraceContext trace);
+  
+  /**
+   * Gets the maximum number of items that can be stored in a transaction
+   * 
+   */
+  int getTransactionItemsLimit();
 }

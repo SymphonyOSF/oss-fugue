@@ -493,6 +493,13 @@ public void start()
   }
   
   @Override
+  public void storeNonTransactional(Collection<IKvItem> kvItems, ITraceContext trace)
+  {
+    for(IKvItem item : kvItems)
+      store(item);
+  }
+  
+  @Override
   public IKvTableTransaction createTransaction()
   {
     return new Transaction();
@@ -867,6 +874,12 @@ public void start()
       
       return self();
     }
+  }
+
+  @Override
+  public int getTransactionItemsLimit()
+  {
+    return 25;
   }
 
 }
