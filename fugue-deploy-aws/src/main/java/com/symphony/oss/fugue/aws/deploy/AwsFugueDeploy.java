@@ -1951,6 +1951,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
 
         }
 
+        createLogGroupIfNecessary("/aws/lambda/" + functionName);
 
         if(!paths.isEmpty())
         {
@@ -3300,9 +3301,12 @@ public abstract class AwsFugueDeploy extends FugueDeploy
 
     private String createLogGroupIfNecessary()
     {
+        return createLogGroupIfNecessary(getNameFactory().getPhysicalServiceName().toString());
+    }
+    
+    private String createLogGroupIfNecessary(String name)
+    {
       boolean create = true;
-      
-      String name = getNameFactory().getPhysicalServiceName().toString();
       
       DescribeLogGroupsResult result = logsClient_.describeLogGroups(new DescribeLogGroupsRequest()
           .withLogGroupNamePrefix(name)
@@ -3323,11 +3327,11 @@ public abstract class AwsFugueDeploy extends FugueDeploy
             .withLogGroupName(name)
             .withTags(getTags())
             );
-        
-        logsClient_.putRetentionPolicy(new PutRetentionPolicyRequest()
-            .withLogGroupName(name)
-            .withRetentionInDays(14));
       }
+      
+      logsClient_.putRetentionPolicy(new PutRetentionPolicyRequest()
+          .withLogGroupName(name)
+          .withRetentionInDays(14));
       
       return name;
     }

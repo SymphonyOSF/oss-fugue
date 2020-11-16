@@ -36,7 +36,8 @@
                 "lambda:PublishVersion"
             ],
             "Resource": [
-                "arn:aws:lambda:*:*:function:sym-s2-${environmentType}-fugue-admin-lambda"
+                "arn:aws:lambda:*:*:function:sym-s2-${environmentType}-fugue-admin-lambda",
+                "arn:aws:lambda:*:*:function:sym-s2-${environmentType}-*-fugue-admin-lambda"
            ]
         },
         {
