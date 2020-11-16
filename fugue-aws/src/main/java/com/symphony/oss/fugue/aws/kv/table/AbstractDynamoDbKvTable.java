@@ -331,8 +331,6 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
   @Override
   public void storeNonTransactional(Collection<IKvItem> kvItems, ITraceContext trace)
   {
-    ArrayList<UpdateOrPut> itemsToPut = new ArrayList<>();
-
     List<Item> items = new ArrayList<>();
     for (IKvItem kvItem : kvItems)
     {
@@ -340,8 +338,8 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
       String sortKey = kvItem.getSortKey().asString();
         
       UpdateOrPut updateOrPut = new UpdateOrPut(kvItem, partitionKey, sortKey, payloadLimit_);
-      
-      items.add(ItemUtils.toItem(updateOrPut.updateItem_).withPrimaryKey(new PrimaryKey(
+
+      items.add(Item.fromMap(updateOrPut.putItem_).withPrimaryKey(new PrimaryKey(
           new KeyAttribute(ColumnNamePartitionKey,  partitionKey.toString()),
           new KeyAttribute(ColumnNameSortKey,       sortKey.toString())
           )));
