@@ -63,8 +63,6 @@ import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
 import com.amazonaws.services.dynamodbv2.model.AmazonDynamoDBException;
 import com.amazonaws.services.dynamodbv2.model.AttributeDefinition;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.dynamodbv2.model.BatchWriteItemRequest;
-import com.amazonaws.services.dynamodbv2.model.BatchWriteItemResult;
 import com.amazonaws.services.dynamodbv2.model.BillingMode;
 import com.amazonaws.services.dynamodbv2.model.CancellationReason;
 import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
@@ -78,7 +76,6 @@ import com.amazonaws.services.dynamodbv2.model.KeySchemaElement;
 import com.amazonaws.services.dynamodbv2.model.KeyType;
 import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughputExceededException;
 import com.amazonaws.services.dynamodbv2.model.Put;
-import com.amazonaws.services.dynamodbv2.model.PutRequest;
 import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
 import com.amazonaws.services.dynamodbv2.model.ScalarAttributeType;
 import com.amazonaws.services.dynamodbv2.model.StreamSpecification;
@@ -331,6 +328,8 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
   @Override
   public void storeNonTransactional(Collection<IKvItem> kvItems, ITraceContext trace)
   {
+    ArrayList<UpdateOrPut> itemsToPut = new ArrayList<>();
+
     List<Item> items = new ArrayList<>();
     for (IKvItem kvItem : kvItems)
     {
@@ -338,8 +337,8 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
       String sortKey = kvItem.getSortKey().asString();
         
       UpdateOrPut updateOrPut = new UpdateOrPut(kvItem, partitionKey, sortKey, payloadLimit_);
-
-      items.add(Item.fromMap(updateOrPut.putItem_).withPrimaryKey(new PrimaryKey(
+      
+      items.add(ItemUtils.toItem(updateOrPut.updateItem_).withPrimaryKey(new PrimaryKey(
           new KeyAttribute(ColumnNamePartitionKey,  partitionKey.toString()),
           new KeyAttribute(ColumnNameSortKey,       sortKey.toString())
           )));

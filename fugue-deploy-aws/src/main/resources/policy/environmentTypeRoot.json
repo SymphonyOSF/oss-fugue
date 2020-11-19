@@ -168,7 +168,12 @@
                 "logs:CreateLogGroup",
                 "logs:PutRetentionPolicy",
                 "logs:PutLogEvents",
-                "logs:CreateLogStream"
+                "logs:CreateLogStream",
+                "ec2:DescribeNetworkInterfaces",
+                "ec2:DescribeSubnets",
+                "ec2:DescribeSecurityGroups",
+                "ec2:DescribeVpcs",
+                "ec2:CreateNetworkInterface" 
 
            ],
             "Resource": [
@@ -184,10 +189,11 @@
                 "lambda:GetFunction",
                 "lambda:UpdateFunctionConfiguration",
                 "lambda:UpdateFunctionCode",
+                "lambda:TagResource",
                 "lambda:PublishVersion"
             ],
             "Resource": [
-                "arn:aws:lambda:*:*:function:sym-s2-${environmentType}-*"
+               "arn:aws:lambda:*:*:function:sym-s2-*-fugue-*-lambda"
             ]
         }
     ]
