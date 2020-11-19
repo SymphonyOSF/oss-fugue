@@ -193,7 +193,7 @@
                 "lambda:PublishVersion"
             ],
             "Resource": [
-                "arn:aws:lambda:*:*:function:sym-s2-${environmentType}-*"
+               "arn:aws:lambda:*:*:function:sym-s2-*-fugue-*-lambda"
             ]
         }
     ]
