@@ -1967,10 +1967,21 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
       }
     
       Map<String, AttributeValue> lastEvaluatedKey = null;
+      long start = System.currentTimeMillis();
       ItemCollection<QueryOutcome> items = objectTable_.query(spec);
+      long stop = System.currentTimeMillis() - start;
+      System.out.println("Query took ms "+stop);
+      
+      long next = System.currentTimeMillis();
+      ArrayList<Long> times = new ArrayList<>();
+      
       String before = null;
+      start = System.currentTimeMillis();
       for(Page<Item, QueryOutcome> page : items.pages())
       {
+        times.add(new Long(System.currentTimeMillis() - next));
+        next = System.currentTimeMillis();
+        
         Iterator<Item> it = page.iterator();
         
         while(it.hasNext())
@@ -1985,6 +1996,11 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
           }
         }
       }
+      
+      stop = System.currentTimeMillis() - start;
+      System.out.println("Loop took ms "+stop);
+      for (int k = 1; k <= times.size(); k++)
+        System.out.println("Page " + k + " took ms " + times.get(k - 1));
       
       if(before == null && after != null)
       {
