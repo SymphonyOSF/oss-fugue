@@ -1977,9 +1977,9 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
       String before = null;
       for(Page<Item, QueryOutcome> page : items.pages())
       {
-        trace.trace("Read page "+(k++));
         
         Iterator<Item> it = page.iterator();
+        trace.trace("Read page "+(k++));
         p = 0;
         while(it.hasNext())
         {
@@ -1993,7 +1993,7 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
             before = item.getString(ColumnNameSortKey);
           }
         }
-        trace.trace("Finished consuming items: "+p);
+        trace.trace("Consumed : "+p);
       }
       trace.trace("Finished reading pages");
       
