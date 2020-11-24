@@ -1912,6 +1912,8 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
   {
     return doDynamoQueryTask(() ->
     {
+      trace.trace("Preparing request");
+      
       ValueMap valueMap = new ValueMap()
           .withString(":v_partition", getPartitionKey(partitionKey))
           ;
@@ -1967,25 +1969,21 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
       }
     
       Map<String, AttributeValue> lastEvaluatedKey = null;
-      long start = System.currentTimeMillis();
+      trace.trace("Calling query");
       ItemCollection<QueryOutcome> items = objectTable_.query(spec);
-      long stop = System.currentTimeMillis() - start;
-      System.out.println("Query took ms "+stop);
-      
-      long next = System.currentTimeMillis();
-      ArrayList<Long> times = new ArrayList<>();
-      
+      trace.trace("Preparing loop");
+      int k = 1;
+      int p = 0;
       String before = null;
-      start = System.currentTimeMillis();
       for(Page<Item, QueryOutcome> page : items.pages())
       {
-        times.add(new Long(System.currentTimeMillis() - next));
-        next = System.currentTimeMillis();
+        trace.trace("Read page "+(k++));
         
         Iterator<Item> it = page.iterator();
-        
+        p = 0;
         while(it.hasNext())
         {
+          p++;
           Item item = it.next();
           
           consumer.consume(item, trace);
@@ -1995,12 +1993,9 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
             before = item.getString(ColumnNameSortKey);
           }
         }
+        trace.trace("Finished consuming items: "+p);
       }
-      
-      stop = System.currentTimeMillis() - start;
-      System.out.println("Loop took ms "+stop);
-      for (int k = 1; k <= times.size(); k++)
-        System.out.println("Page " + k + " took ms " + times.get(k - 1));
+      trace.trace("Finished reading pages");
       
       if(before == null && after != null)
       {
