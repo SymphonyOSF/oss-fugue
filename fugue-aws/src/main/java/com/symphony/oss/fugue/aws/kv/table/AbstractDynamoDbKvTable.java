@@ -1975,6 +1975,8 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
       int k = 1;
       int p = 0;
       String before = null;
+      long start=0;
+      long total=0;
       for(Page<Item, QueryOutcome> page : items.pages())
       {
         
@@ -1985,8 +1987,9 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
         {
           p++;
           Item item = it.next();
-          
+          start=System.currentTimeMillis();
           consumer.consume(item, trace);
+          total+=System.currentTimeMillis()-start;
           
           if(before == null && after != null)
           {
@@ -1996,7 +1999,7 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
         trace.trace("Consumed : "+p);
       }
       trace.trace("Finished reading pages");
-      
+      trace.trace("Cons time"+total);
       if(before == null && after != null)
       {
         before = "";
