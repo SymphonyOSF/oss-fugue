@@ -1974,11 +1974,10 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
       trace.trace("Preparing loop");
       int p = 1;
       int k = 0;
-      String before = null;
       
+      String before = null;
       for(Page<Item, QueryOutcome> page : items.pages())
       {
-        
         Iterator<Item> it = page.iterator();
         
         trace.trace("Read page "+(p++));
