@@ -1986,7 +1986,7 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
         {
           k++;
           Item item = it.next();
-
+          
           consumer.consume(item, trace);
           
           if(before == null && after != null)
