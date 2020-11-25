@@ -1972,20 +1972,20 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
       trace.trace("Calling query");
       ItemCollection<QueryOutcome> items = objectTable_.query(spec);
       trace.trace("Preparing loop");
-      int k = 1;
-      int p = 0;
+      int p = 1;
+      int k = 0;
       String before = null;
-
+      
       for(Page<Item, QueryOutcome> page : items.pages())
       {
         
         Iterator<Item> it = page.iterator();
         
-        trace.trace("Read page "+(k++));
-        p = 0;
+        trace.trace("Read page "+(p++));
+        k = 0;
         while(it.hasNext())
         {
-          p++;
+          k++;
           Item item = it.next();
 
           consumer.consume(item, trace);
@@ -1995,7 +1995,7 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
             before = item.getString(ColumnNameSortKey);
           }
         }
-        trace.trace("Consumed : "+p);
+        trace.trace("Consumed : "+k);
       }
       trace.trace("Finished reading pages");
 
