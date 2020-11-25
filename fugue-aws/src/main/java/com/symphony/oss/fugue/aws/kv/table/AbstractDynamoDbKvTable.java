@@ -1912,6 +1912,8 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
   {
     return doDynamoQueryTask(() ->
     {
+      trace.trace("Preparing request");
+      
       ValueMap valueMap = new ValueMap()
           .withString(":v_partition", getPartitionKey(partitionKey))
           ;
@@ -1967,14 +1969,22 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
       }
     
       Map<String, AttributeValue> lastEvaluatedKey = null;
+      trace.trace("Calling query");
       ItemCollection<QueryOutcome> items = objectTable_.query(spec);
+      trace.trace("Preparing loop");
+      int p = 1;
+      int k = 0;
+      
       String before = null;
       for(Page<Item, QueryOutcome> page : items.pages())
       {
         Iterator<Item> it = page.iterator();
         
+        trace.trace("Read page "+(p++));
+        k = 0;
         while(it.hasNext())
         {
+          k++;
           Item item = it.next();
           
           consumer.consume(item, trace);
@@ -1984,8 +1994,10 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
             before = item.getString(ColumnNameSortKey);
           }
         }
+        trace.trace("Consumed : "+k);
       }
-      
+      trace.trace("Finished reading pages");
+
       if(before == null && after != null)
       {
         before = "";
