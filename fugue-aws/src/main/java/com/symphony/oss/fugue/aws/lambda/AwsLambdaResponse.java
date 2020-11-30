@@ -96,8 +96,8 @@ public class AwsLambdaResponse extends JsonLambdaResponse
 
   public synchronized PrintWriter getWriter() throws IOException
   {
-    if(outputStream_ != null)
-      throw new IOException("getOutputStream() has already been called.");
+//    if(outputStream_ != null)
+//      throw new IOException("getOutputStream() has already been called.");
 
     if(writer_ == null)
     {
@@ -110,8 +110,8 @@ public class AwsLambdaResponse extends JsonLambdaResponse
   
   public synchronized OutputStream getOutputStream() throws IOException
   {
-    if(writer_ != null)
-      throw new IOException("getWriter() has already been called.");
+//    if(writer_ != null)
+//      throw new IOException("getWriter() has already been called.");
     
     if(outputStream_ == null)
       outputStream_ = new ByteArrayOutputStream();
