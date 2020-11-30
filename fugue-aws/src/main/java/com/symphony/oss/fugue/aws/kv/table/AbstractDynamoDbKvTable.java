@@ -1899,9 +1899,11 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
       @Nullable String after,
       @Nullable String sortKeyPrefix,
       @Nullable Map<String, Object> filterAttributes,
-      Consumer<String> consumer, ITraceContext trace)
+      Consumer<String> consumer, boolean parseObjects, ITraceContext trace)
   {
-    return doFetchPartitionObjects(partitionKey, scanForwards, limit, after, sortKeyPrefix, filterAttributes, new PartitionConsumer(consumer), trace);
+    return parseObjects?
+     doFetchPartitionObjects(partitionKey, scanForwards, limit, after, sortKeyPrefix, filterAttributes, new PartitionConsumer(consumer), trace) :
+     doFetchPartitionObjects(partitionKey, scanForwards, limit, after, sortKeyPrefix, filterAttributes, consumer, trace);
   }
 
   private IKvPagination doFetchPartitionObjects(IKvPartitionKeyProvider partitionKey, boolean scanForwards, Integer limit, 
@@ -2003,7 +2005,119 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
         before = "";
       }
       
-      lastEvaluatedKey = items.getLastLowLevelResult().getQueryResult().getLastEvaluatedKey();
+       lastEvaluatedKey = items.getLastLowLevelResult().getQueryResult().getLastEvaluatedKey();
+      
+      if(lastEvaluatedKey != null)
+      {
+        AttributeValue sequenceKeyAttr = lastEvaluatedKey.get(ColumnNameSortKey);
+        
+        return new KvPagination(before, sequenceKeyAttr.getS());
+      }
+      
+      return new KvPagination(before, null);
+    });
+  }
+  
+  private IKvPagination doFetchPartitionObjects(IKvPartitionKeyProvider partitionKey, boolean scanForwards, Integer limit, 
+      @Nullable String after,
+      @Nullable String sortKeyPrefix,
+      @Nullable Map<String, Object> filterAttributes,
+      Consumer<String> consumer, ITraceContext trace)
+  {
+    return doDynamoQueryTask(() ->
+    {
+      trace.trace("Preparing request");
+      
+      ValueMap valueMap = new ValueMap()
+          .withString(":v_partition", getPartitionKey(partitionKey))
+          ;
+      
+      String keyConditionExpression = ColumnNamePartitionKey + " = :v_partition";
+      
+      if(sortKeyPrefix != null)
+      {
+        keyConditionExpression += " and begins_with(" + ColumnNameSortKey + ", :v_sortKeyPrefix)";
+        valueMap.put(":v_sortKeyPrefix", sortKeyPrefix);
+      }
+      
+      StringBuilder filter = null;
+      
+      if(filterAttributes != null)
+      {
+        for(Entry<String, Object> entry : filterAttributes.entrySet())
+        {
+          if(filter == null)
+            filter = new StringBuilder();
+          else
+            filter.append(" and ");
+          
+          filter.append(entry.getKey());
+          filter.append(" = :f_" );
+          filter.append(entry.getKey());
+          valueMap.put(":f_" + entry.getKey(), entry.getValue());
+        }
+      }
+      
+      QuerySpec spec = new QuerySpec()
+          .withKeyConditionExpression(keyConditionExpression)
+          .withValueMap(valueMap)
+          .withScanIndexForward(scanForwards)
+          ;
+      
+      if(filter != null)
+      {
+        spec.withFilterExpression(filter.toString());
+      }
+      
+      if(limit != null)
+      {
+        spec.withMaxResultSize(limit);
+      }
+      
+      if(after != null && after.length()>0)
+      {
+        spec.withExclusiveStartKey(
+            new KeyAttribute(ColumnNamePartitionKey, getPartitionKey(partitionKey)),
+            new KeyAttribute(ColumnNameSortKey,  after)
+            );
+      }
+    
+      Map<String, AttributeValue> lastEvaluatedKey = null;
+      trace.trace("Calling query");
+      ItemCollection<QueryOutcome> items = objectTable_.query(spec);
+      trace.trace("Preparing loop");
+      int p = 1;
+      int k = 0;
+      
+      String before = null;
+      for(Page<Item, QueryOutcome> page : items.pages())
+      {
+        Iterator<Item> it = page.iterator();
+        
+        trace.trace("Read page "+(p++));
+        k = 0;
+        while(it.hasNext())
+        {
+          k++;
+          Item item = it.next();
+          
+          consumer.accept(item.getString(ColumnNameDocument));
+          
+          if(before == null && after != null)
+          {
+            before = item.getString(ColumnNameSortKey);
+          }
+        }
+        trace.trace("Consumed : "+k);
+      }
+      trace.trace("Finished reading pages");
+
+      if(before == null && after != null)
+      {
+        before = "";
+      }
+      
+       lastEvaluatedKey = items.getLastLowLevelResult().getQueryResult().getLastEvaluatedKey();
       
       if(lastEvaluatedKey != null)
       {
