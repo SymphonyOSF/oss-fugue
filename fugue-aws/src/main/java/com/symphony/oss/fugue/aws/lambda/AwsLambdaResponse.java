@@ -74,7 +74,7 @@ public class AwsLambdaResponse extends JsonLambdaResponse
     if(outputStream_ != null)
     {
       String body = Base64.encodeBase64String(outputStream_.toByteArray());
-      
+      System.out.println(body);
       if(body != null && body.length()>0)
       {
         put(RESPONSE_BODY, body);

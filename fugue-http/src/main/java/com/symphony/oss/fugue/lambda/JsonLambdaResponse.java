@@ -25,6 +25,9 @@ package com.symphony.oss.fugue.lambda;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Iterator;
+
+import org.checkerframework.checker.units.qual.s;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -58,6 +61,10 @@ public abstract class JsonLambdaResponse extends LambdaResponse
   @Override
   public void write(OutputStream outputStream) throws IOException
   {
+    Iterator<String> it = json_.fieldNames();
+    while(it.hasNext())
+      System.out.println(it.next());
+ 
     mapper_.writeValue(System.out, json_);
     mapper_.writeValue(outputStream, json_);
   }
