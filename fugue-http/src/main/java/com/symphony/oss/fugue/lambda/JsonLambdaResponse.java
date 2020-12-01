@@ -69,7 +69,7 @@ public abstract class JsonLambdaResponse extends LambdaResponse
       
       
     }
- 
+    System.out.println(mapper_.writeValueAsString(json_));
     mapper_.writeValue(outputStream, json_);
   }
 }
