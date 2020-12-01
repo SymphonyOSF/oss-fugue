@@ -58,7 +58,6 @@ public abstract class JsonLambdaResponse extends LambdaResponse
   @Override
   public void write(OutputStream outputStream) throws IOException
   {
-    mapper_.writeValue(System.out, json_);
     mapper_.writeValue(outputStream, json_);
   }
 }
