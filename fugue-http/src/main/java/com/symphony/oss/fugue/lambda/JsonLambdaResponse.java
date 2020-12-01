@@ -65,7 +65,7 @@ public abstract class JsonLambdaResponse extends LambdaResponse
     while(it.hasNext()) {
      String s = it.next();
      System.out.println(s);
-      System.out.println(json_.get(s));
+      System.out.println(json_.get(s).asText());
       
       
     }
