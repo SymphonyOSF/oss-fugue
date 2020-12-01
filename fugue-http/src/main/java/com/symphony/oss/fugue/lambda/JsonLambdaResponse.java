@@ -34,30 +34,36 @@ public abstract class JsonLambdaResponse extends LambdaResponse
   private static final ObjectMapper        mapper_    = new ObjectMapper();
   
   private final ObjectNode  json_ = mapper_.createObjectNode();
+  private final ObjectNode  json_2 = mapper_.createObjectNode();
 
   protected void put(String name, String value)
   {
     json_.put(name, value);
+    json_2.put(name, value);
   }
   
   protected void put(String name, int value)
   {
     json_.put(name, value);
+    json_2.put(name, value);
   }
   
   protected void put(String name, boolean value)
   {
     json_.put(name, value);
+    json_2.put(name, value);
   }
   
   protected ObjectNode putObject(String name)
   {
+    json_2.putObject(name);
     return json_.putObject(name);
   }
 
   @Override
   public void write(OutputStream outputStream) throws IOException
   {
+    mapper_.writeValue(System.out, json_2);
     mapper_.writeValue(outputStream, json_);
   }
 }
