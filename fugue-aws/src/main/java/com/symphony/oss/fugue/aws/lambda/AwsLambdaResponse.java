@@ -84,7 +84,6 @@ public class AwsLambdaResponse extends JsonLambdaResponse
     else if(stringWriter_ != null)
     {
       String body = stringWriter_.toString();
-      System.out.println("BODY2:" + body);
       if(body != null && body.length()>0)
       {
         put(RESPONSE_BODY, body);
