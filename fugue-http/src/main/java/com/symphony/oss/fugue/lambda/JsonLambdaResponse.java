@@ -61,14 +61,6 @@ public abstract class JsonLambdaResponse extends LambdaResponse
   @Override
   public void write(OutputStream outputStream) throws IOException
   {
-    Iterator<String> it = json_.fieldNames();
-    while(it.hasNext()) {
-     String s = it.next();
-     System.out.println(s);
-      System.out.println(json_.get(s).asText());
-      
-      
-    }
     mapper_.writeValue(outputStream, json_);
   }
 }

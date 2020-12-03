@@ -2074,6 +2074,7 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
         spec.withMaxResultSize(limit);
       }
       
+      
       if(after != null && after.length()>0)
       {
         spec.withExclusiveStartKey(

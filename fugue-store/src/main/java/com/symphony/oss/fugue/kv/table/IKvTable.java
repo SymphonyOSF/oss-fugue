@@ -231,5 +231,4 @@ public interface IKvTable extends IFugueComponent
    * 
    */
   int getTransactionItemsLimit();
-
 }
