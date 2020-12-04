@@ -717,7 +717,7 @@ public void start()
   @Override
   public IKvPagination fetchPartitionObjects(IKvPartitionKeyProvider partitionKeyProvider, boolean scanForwards, Integer limit,
       String after, String sortKeyPrefix,
-      @Nullable Map<String, Object> filterAttributes, Consumer<String> consumer, ITraceContext trace)
+      @Nullable Map<String, Object> filterAttributes, Consumer<String> consumer, boolean parseObject, ITraceContext trace)
   {
     String partitionKey = getPartitionKey(partitionKeyProvider);
     
