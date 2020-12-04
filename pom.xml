@@ -27,7 +27,7 @@
 
   <groupId>com.symphony.oss.fugue</groupId>
 	<artifactId>oss-fugue</artifactId>
-	<version>0.2.28-SNAPSHOT</version>
+	<version>0.2.28</version>
 	<packaging>pom</packaging>
 
 	<url>https://github.com/SymphonyOSF/oss-fugue</url>
