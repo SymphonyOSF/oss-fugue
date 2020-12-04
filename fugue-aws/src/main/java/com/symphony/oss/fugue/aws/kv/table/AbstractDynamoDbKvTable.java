@@ -1906,7 +1906,7 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
      doFetchPartitionObjects(partitionKey, scanForwards, limit, after, sortKeyPrefix, filterAttributes, consumer, null, trace);
   }
   
-  private static final int API_GATEWAY_SIZE_LIMIT = 5000 * 1024;
+  private static final int API_GATEWAY_SIZE_LIMIT = 3 * 1024 * 1024;
 
   private IKvPagination doFetchPartitionObjects(IKvPartitionKeyProvider partitionKey, boolean scanForwards, Integer limit, 
       @Nullable String after,
