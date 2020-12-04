@@ -1905,6 +1905,8 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
      doFetchPartitionObjects(partitionKey, scanForwards, limit, after, sortKeyPrefix, filterAttributes, null, new PartitionConsumer(consumer), trace) :
      doFetchPartitionObjects(partitionKey, scanForwards, limit, after, sortKeyPrefix, filterAttributes, consumer, null, trace);
   }
+  
+  private static final int API_GATEWAY_SIZE_LIMIT = 5000 * 1024;
 
   private IKvPagination doFetchPartitionObjects(IKvPartitionKeyProvider partitionKey, boolean scanForwards, Integer limit, 
       @Nullable String after,
@@ -1977,6 +1979,8 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
       int p = 1;
       int k = 0;
       
+      int response_body_size = 0;
+      
       String before = null;
       for(Page<Item, QueryOutcome> page : items.pages())
       {
@@ -1990,11 +1994,25 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
           Item item = it.next();
           
           if (stringConsumer != null)
-            stringConsumer.accept(item.getString(ColumnNameDocument));
+          {
+            String document = item.getString(ColumnNameDocument);
+
+            response_body_size += document.length();
+            
+            if (response_body_size < API_GATEWAY_SIZE_LIMIT)
+            {
+              stringConsumer.accept(document);
+            }
+            else
+            {     
+              trace.trace("Threshold reached, returning");
+              return new KvPagination(before, item.getString(ColumnNameDocument));
+            }
+          }
           else
             itemConsumer.consume(item, trace);
 
-          if(before == null && after != null)
+          if (before == null && after != null)
           {
             before = item.getString(ColumnNameSortKey);
           }
