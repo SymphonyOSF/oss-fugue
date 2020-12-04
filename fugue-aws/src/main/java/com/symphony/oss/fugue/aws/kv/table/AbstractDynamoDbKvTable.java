@@ -2009,7 +2009,7 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
         before = "";
       }
       
-       lastEvaluatedKey = items.getLastLowLevelResult().getQueryResult().getLastEvaluatedKey();
+      lastEvaluatedKey = items.getLastLowLevelResult().getQueryResult().getLastEvaluatedKey();
       
       if(lastEvaluatedKey != null)
       {
