@@ -201,7 +201,7 @@ public interface IKvTable extends IFugueComponent
       @Nullable String after,
       @Nullable String sortKeyPrefix,
       @Nullable Map<String, Object> filterAttributes,
-      Consumer<String> consumer, ITraceContext trace);
+      Consumer<String> consumer, boolean parseObjects, ITraceContext trace);
   
   /**
    * Return Users Permissions from the given partition.

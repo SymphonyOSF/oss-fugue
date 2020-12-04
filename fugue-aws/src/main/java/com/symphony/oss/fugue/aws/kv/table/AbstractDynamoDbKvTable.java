@@ -688,7 +688,7 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
     {
       DeleteConsumer deleteConsumer = new DeleteConsumer(absoluteHashPrefix);
       
-      after = doFetchPartitionObjects(versionPartitionKey, true, 12, after, null, null, deleteConsumer, trace).getAfter();
+      after = doFetchPartitionObjects(versionPartitionKey, true, 12, after, null, null, null, deleteConsumer, trace).getAfter();
       
       deleteConsumer.dynamoBatchWrite();
     } while (after != null);
@@ -713,7 +713,7 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
     {
       DeleteSystemObjectConsumer deleteConsumer = new DeleteSystemObjectConsumer();
       
-      after = doFetchPartitionObjects(partitionKeyProvider, true, 24, after, null, null, deleteConsumer, trace).getAfter();
+      after = doFetchPartitionObjects(partitionKeyProvider, true, 24, after, null, null, null, deleteConsumer, trace).getAfter();
       
       deleteConsumer.dynamoBatchWrite();
     } while (after != null);
@@ -1899,16 +1899,18 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
       @Nullable String after,
       @Nullable String sortKeyPrefix,
       @Nullable Map<String, Object> filterAttributes,
-      Consumer<String> consumer, ITraceContext trace)
+      Consumer<String> consumer, boolean parseObjects, ITraceContext trace)
   {
-    return doFetchPartitionObjects(partitionKey, scanForwards, limit, after, sortKeyPrefix, filterAttributes, new PartitionConsumer(consumer), trace);
+    return parseObjects?
+     doFetchPartitionObjects(partitionKey, scanForwards, limit, after, sortKeyPrefix, filterAttributes, null, new PartitionConsumer(consumer), trace) :
+     doFetchPartitionObjects(partitionKey, scanForwards, limit, after, sortKeyPrefix, filterAttributes, consumer, null, trace);
   }
 
   private IKvPagination doFetchPartitionObjects(IKvPartitionKeyProvider partitionKey, boolean scanForwards, Integer limit, 
       @Nullable String after,
       @Nullable String sortKeyPrefix,
       @Nullable Map<String, Object> filterAttributes,
-      AbstractItemConsumer consumer, ITraceContext trace)
+      Consumer<String> stringConsumer, AbstractItemConsumer itemConsumer, ITraceContext trace)
   {
     return doDynamoQueryTask(() ->
     {
@@ -1987,8 +1989,11 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
           k++;
           Item item = it.next();
           
-          consumer.consume(item, trace);
-          
+          if (stringConsumer != null)
+            stringConsumer.accept(item.getString(ColumnNameDocument));
+          else
+            itemConsumer.consume(item, trace);
+
           if(before == null && after != null)
           {
             before = item.getString(ColumnNameSortKey);
