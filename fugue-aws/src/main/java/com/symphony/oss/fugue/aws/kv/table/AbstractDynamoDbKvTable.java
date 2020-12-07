@@ -1959,11 +1959,11 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
         spec.withFilterExpression(filter.toString());
       }
       
-//      if(limit != null)
-//      {
-//        spec.withMaxResultSize(limit);
-//      }
-//      
+      if(limit != null)
+      {
+        spec.withMaxResultSize(limit);
+      }
+      
       if(after != null && after.length()>0)
       {
         spec.withExclusiveStartKey(
@@ -2006,7 +2006,7 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
             }
             else
             {     
-              trace.trace("Threshold reached at:"+ (t+k));
+              trace.trace("Threshold at:"+ (t+k));
               return new KvPagination(before, item.getString(ColumnNameDocument));
             }
           }
