@@ -1959,11 +1959,11 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
         spec.withFilterExpression(filter.toString());
       }
       
-      if(limit != null)
-      {
-        spec.withMaxResultSize(limit);
-      }
-      
+//      if(limit != null)
+//      {
+//        spec.withMaxResultSize(limit);
+//      }
+//      
       if(after != null && after.length()>0)
       {
         spec.withExclusiveStartKey(
