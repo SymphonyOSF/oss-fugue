@@ -1978,6 +1978,7 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
       trace.trace("Preparing loop");
       int p = 1;
       int k = 0;
+      int t = 0;
       
       int response_body_size = 0;
       
@@ -2000,14 +2001,12 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
             response_body_size += document.length();
             
             if (response_body_size < API_GATEWAY_SIZE_LIMIT)
-            {
-           
+            {          
               stringConsumer.accept(document);
             }
             else
             {     
-              System.out.println("MAXIMUM: "+response_body_size/1024+"kb items: "+k);
-              trace.trace("Threshold reached, returning");
+              trace.trace("Threshold reached at:"+ (t+k));
               return new KvPagination(before, item.getString(ColumnNameDocument));
             }
           }
@@ -2020,8 +2019,9 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
           }
         }
         trace.trace("Consumed : "+k);
+        t+=k;
       }
-      trace.trace("Finished reading pages");
+      trace.trace("Fetched object "+t);
 
       if(before == null && after != null)
       {
