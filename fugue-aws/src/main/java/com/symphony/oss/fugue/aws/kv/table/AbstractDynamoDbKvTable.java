@@ -2006,7 +2006,7 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
             }
             else
             {     
-              System.out.println("BODY_SIZE: "+response_body_size/1024+" items: "+k);
+              System.out.println("MAXIMUM: "+response_body_size/1024+"kb items: "+k);
               trace.trace("Threshold reached, returning");
               return new KvPagination(before, item.getString(ColumnNameDocument));
             }
@@ -2027,6 +2027,8 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
       {
         before = "";
       }
+      
+      System.out.println("RET: "+response_body_size/1024+"kb items: "+k);
       
       lastEvaluatedKey = items.getLastLowLevelResult().getQueryResult().getLastEvaluatedKey();
       
