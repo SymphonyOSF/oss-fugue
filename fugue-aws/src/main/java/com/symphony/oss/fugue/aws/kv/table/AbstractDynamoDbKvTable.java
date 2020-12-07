@@ -2001,10 +2001,12 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
             
             if (response_body_size < API_GATEWAY_SIZE_LIMIT)
             {
+           
               stringConsumer.accept(document);
             }
             else
             {     
+              System.out.println("BODY_SIZE: "+response_body_size/1024+" items: "+k);
               trace.trace("Threshold reached, returning");
               return new KvPagination(before, item.getString(ColumnNameDocument));
             }
