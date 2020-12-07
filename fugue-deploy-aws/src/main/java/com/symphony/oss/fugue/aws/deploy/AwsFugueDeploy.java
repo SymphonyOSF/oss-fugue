@@ -3085,6 +3085,11 @@ public abstract class AwsFugueDeploy extends FugueDeploy
                 .withOp(Op.Replace)
                 .withPath("/*/*/throttling/rateLimit")
                 .withValue(gatewayApiRate_+"")
+                ,
+                new PatchOperation()
+                .withOp(Op.Replace)
+                .withPath("/variables/GatewayType")
+                .withValue(isPublic_ ? "PUBLIC" : "INTERNAL")
                 )
         );
         
