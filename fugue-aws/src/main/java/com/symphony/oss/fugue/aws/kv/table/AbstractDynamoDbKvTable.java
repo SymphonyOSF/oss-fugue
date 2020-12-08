@@ -34,6 +34,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import javax.annotation.Nonnull;
@@ -1893,26 +1894,32 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
       log_.info("Table \"" + objectTableName_ + "\" Does not exist.");
     }
   }
-
   @Override
   public IKvPagination fetchPartitionObjects(IKvPartitionKeyProvider partitionKey, boolean scanForwards, Integer limit, 
       @Nullable String after,
       @Nullable String sortKeyPrefix,
       @Nullable Map<String, Object> filterAttributes,
-      Consumer<String> consumer, boolean parseObjects, ITraceContext trace)
+      Consumer<String> consumer, ITraceContext trace)
   {
-    return parseObjects?
-     doFetchPartitionObjects(partitionKey, scanForwards, limit, after, sortKeyPrefix, filterAttributes, null, new PartitionConsumer(consumer), trace) :
-     doFetchPartitionObjects(partitionKey, scanForwards, limit, after, sortKeyPrefix, filterAttributes, consumer, null, trace);
+    return doFetchPartitionObjects(partitionKey, scanForwards, limit, after, sortKeyPrefix, filterAttributes, null, new PartitionConsumer(consumer), trace);
+  }
+  @Override
+  public IKvPagination fetchPartitionObjects(IKvPartitionKeyProvider partitionKey, boolean scanForwards, Integer limit, 
+      @Nullable String after,
+      @Nullable String sortKeyPrefix,
+      @Nullable Map<String, Object> filterAttributes,
+      BiConsumer<String, String> consumer, ITraceContext trace)
+  {
+    return doFetchPartitionObjects(partitionKey, scanForwards, limit, after, sortKeyPrefix, filterAttributes, consumer, null, trace);
   }
   
-  private static final int API_GATEWAY_SIZE_LIMIT = 4 * 1024 * 1024;
+  private static final int API_GATEWAY_SIZE_LIMIT = 5 * 1024 * 1024;
 
   private IKvPagination doFetchPartitionObjects(IKvPartitionKeyProvider partitionKey, boolean scanForwards, Integer limit, 
       @Nullable String after,
       @Nullable String sortKeyPrefix,
       @Nullable Map<String, Object> filterAttributes,
-      Consumer<String> stringConsumer, AbstractItemConsumer itemConsumer, ITraceContext trace)
+      BiConsumer<String, String> stringConsumer, AbstractItemConsumer itemConsumer, ITraceContext trace)
   {
     return doDynamoQueryTask(() ->
     {
@@ -1978,7 +1985,7 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
       trace.trace("Preparing loop");
       int p = 1;
       int k = 0;
-      int t = 0;
+      int total = 0;
       
       int response_body_size = 0;
       
@@ -1993,6 +2000,7 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
         {
           k++;
           Item item = it.next();
+          String sortKey = item.getString(ColumnNameSortKey);
           
           if (stringConsumer != null)
           {
@@ -2002,12 +2010,12 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
             
             if (response_body_size < API_GATEWAY_SIZE_LIMIT)
             {          
-              stringConsumer.accept(document);
+              stringConsumer.accept(sortKey, document);
             }
             else
             {     
-              trace.trace("Threshold at:"+ (t+k));
-              return new KvPagination(before, item.getString(ColumnNameSortKey));
+              trace.trace("Threshold at:"+ (total+k));
+              return new KvPagination(before, sortKey);
             }
           }
           else
@@ -2015,13 +2023,13 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
 
           if (before == null && after != null)
           {
-            before = item.getString(ColumnNameSortKey);
+            before = sortKey;
           }
         }
         trace.trace("Consumed : "+k);
-        t+=k;
+        total+=k;
       }
-      trace.trace("Fetched object "+t);
+      trace.trace("Fetched object "+total);
 
       if(before == null && after != null)
       {
