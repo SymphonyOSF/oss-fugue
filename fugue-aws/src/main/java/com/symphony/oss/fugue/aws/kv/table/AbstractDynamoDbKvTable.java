@@ -39,6 +39,7 @@ import java.util.function.Consumer;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.management.RuntimeErrorException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -2028,6 +2029,7 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
         }
         trace.trace("Consumed : "+k);
         total+=k;
+        throw new RuntimeException("THIS IS TO BE EXPECTED");
       }
       trace.trace("Fetched object "+total);
 
