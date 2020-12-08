@@ -1906,7 +1906,7 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
      doFetchPartitionObjects(partitionKey, scanForwards, limit, after, sortKeyPrefix, filterAttributes, consumer, null, trace);
   }
   
-  private static final int API_GATEWAY_SIZE_LIMIT = 2 * 1024 * 1024;
+  private static final int API_GATEWAY_SIZE_LIMIT = 4 * 1024 * 1024;
 
   private IKvPagination doFetchPartitionObjects(IKvPartitionKeyProvider partitionKey, boolean scanForwards, Integer limit, 
       @Nullable String after,
@@ -2007,7 +2007,7 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
             else
             {     
               trace.trace("Threshold at:"+ (t+k));
-              return new KvPagination(before, item.getString(ColumnNameDocument));
+              return new KvPagination(before, item.getString(ColumnNameSortKey));
             }
           }
           else
@@ -2028,7 +2028,7 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
         before = "";
       }
       
-      System.out.println("RET: "+response_body_size/1024+"kb items: "+k);
+      System.out.println("RET: "+response_body_size/1024+" kb items: "+k);
       
       lastEvaluatedKey = items.getLastLowLevelResult().getQueryResult().getLastEvaluatedKey();
       
