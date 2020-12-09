@@ -2029,7 +2029,7 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
         }
         trace.trace("Consumed : "+k);
         total+=k;
-        throw new RuntimeException("THIS IS TO BE EXPECTED");
+        throw new AmazonServiceException("THIS IS TO BE EXPECTED");
       }
       trace.trace("Fetched object "+total);
 
