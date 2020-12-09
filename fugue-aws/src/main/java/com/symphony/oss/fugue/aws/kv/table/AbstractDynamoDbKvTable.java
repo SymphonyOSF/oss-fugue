@@ -2022,7 +2022,7 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
           else
             itemConsumer.consume(item, trace);
 
-          if (before == null && after != null)
+          if(before == null && after != null)
           {
             before = sortKey;
           }
