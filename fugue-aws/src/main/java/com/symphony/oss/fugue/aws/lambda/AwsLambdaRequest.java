@@ -215,6 +215,7 @@ public class AwsLambdaRequest extends JsonLambdaRequest
     return requestHeaders_.get(name.toLowerCase());
   }
 
+  @Override
   public Map<String, String> getStageVariables()
   {
     return stageVariables_;

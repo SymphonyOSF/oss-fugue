@@ -2029,16 +2029,13 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
         }
         trace.trace("Consumed : "+k);
         total+=k;
-        throw new AmazonServiceException("THIS IS TO BE EXPECTED");
       }
-      trace.trace("Fetched object "+total);
+      trace.trace("Fetched total "+total);
 
       if(before == null && after != null)
       {
         before = "";
       }
-      
-      System.out.println("RET: "+response_body_size/1024+" kb items: "+k);
       
       lastEvaluatedKey = items.getLastLowLevelResult().getQueryResult().getLastEvaluatedKey();
       
