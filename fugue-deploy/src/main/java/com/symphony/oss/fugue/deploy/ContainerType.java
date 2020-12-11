@@ -44,7 +44,9 @@ public enum ContainerType
   /** A Lambda deployed elsewhere (usually in another AWS account) */
   EXTERNAL_LAMBDA,
   /** An HTTP endpoint deployed elsewhere (usually in another AWS account) */
-  EXTERNAL_HTTP
+  EXTERNAL_HTTP,
+  /** An Api Gateway integration */
+  API_INTEGRATION
   ;
   
   /**

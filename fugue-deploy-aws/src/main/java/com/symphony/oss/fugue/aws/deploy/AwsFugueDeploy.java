@@ -51,7 +51,11 @@ import org.slf4j.LoggerFactory;
 
 import com.amazonaws.services.apigateway.AmazonApiGateway;
 import com.amazonaws.services.apigateway.AmazonApiGatewayClientBuilder;
+import com.amazonaws.services.apigateway.model.Authorizer;
+import com.amazonaws.services.apigateway.model.AuthorizerType;
 import com.amazonaws.services.apigateway.model.ConnectionType;
+import com.amazonaws.services.apigateway.model.CreateAuthorizerRequest;
+import com.amazonaws.services.apigateway.model.CreateAuthorizerResult;
 import com.amazonaws.services.apigateway.model.CreateBasePathMappingRequest;
 import com.amazonaws.services.apigateway.model.CreateBasePathMappingResult;
 import com.amazonaws.services.apigateway.model.CreateDeploymentRequest;
@@ -65,10 +69,14 @@ import com.amazonaws.services.apigateway.model.CreateRestApiResult;
 import com.amazonaws.services.apigateway.model.DeleteMethodRequest;
 import com.amazonaws.services.apigateway.model.EndpointConfiguration;
 import com.amazonaws.services.apigateway.model.EndpointType;
+import com.amazonaws.services.apigateway.model.GetAuthorizersRequest;
+import com.amazonaws.services.apigateway.model.GetAuthorizersResult;
 import com.amazonaws.services.apigateway.model.GetBasePathMappingRequest;
 import com.amazonaws.services.apigateway.model.GetBasePathMappingResult;
 import com.amazonaws.services.apigateway.model.GetDomainNameRequest;
 import com.amazonaws.services.apigateway.model.GetDomainNameResult;
+import com.amazonaws.services.apigateway.model.GetGatewayResponseRequest;
+import com.amazonaws.services.apigateway.model.GetGatewayResponseResult;
 import com.amazonaws.services.apigateway.model.GetMethodRequest;
 import com.amazonaws.services.apigateway.model.GetMethodResult;
 import com.amazonaws.services.apigateway.model.GetResourcesRequest;
@@ -81,9 +89,12 @@ import com.amazonaws.services.apigateway.model.Integration;
 import com.amazonaws.services.apigateway.model.IntegrationType;
 import com.amazonaws.services.apigateway.model.Op;
 import com.amazonaws.services.apigateway.model.PatchOperation;
+import com.amazonaws.services.apigateway.model.PutGatewayResponseRequest;
 import com.amazonaws.services.apigateway.model.PutIntegrationRequest;
+import com.amazonaws.services.apigateway.model.PutIntegrationResponseRequest;
 import com.amazonaws.services.apigateway.model.PutIntegrationResult;
 import com.amazonaws.services.apigateway.model.PutMethodRequest;
+import com.amazonaws.services.apigateway.model.PutMethodResponseRequest;
 import com.amazonaws.services.apigateway.model.PutMethodResult;
 import com.amazonaws.services.apigateway.model.Resource;
 import com.amazonaws.services.apigateway.model.RestApi;
@@ -266,7 +277,6 @@ import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder
 import com.amazonaws.services.securitytoken.model.GetCallerIdentityRequest;
 import com.amazonaws.services.securitytoken.model.GetCallerIdentityResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.symphony.oss.commons.dom.json.IJsonArray;
 import com.symphony.oss.commons.dom.json.IJsonDomNode;
@@ -279,11 +289,11 @@ import com.symphony.oss.commons.immutable.ImmutableByteArray;
 import com.symphony.oss.commons.type.provider.IStringProvider;
 import com.symphony.oss.fugue.Fugue;
 import com.symphony.oss.fugue.aws.config.S3Helper;
-import com.symphony.oss.fugue.aws.deploy.AwsFugueDeploy.AwsDeploymentContext;
 import com.symphony.oss.fugue.aws.secret.AwsSecretManager;
 import com.symphony.oss.fugue.deploy.ArtifactHelper;
 import com.symphony.oss.fugue.deploy.ConfigHelper;
 import com.symphony.oss.fugue.deploy.ConfigProvider;
+import com.symphony.oss.fugue.deploy.ContainerType;
 import com.symphony.oss.fugue.deploy.FugueDeploy;
 import com.symphony.oss.fugue.deploy.FugueDeployAction;
 import com.symphony.oss.fugue.deploy.Subscription;
@@ -326,10 +336,11 @@ public abstract class AwsFugueDeploy extends FugueDeploy
 
   private static final ObjectMapper      MAPPER                        = new ObjectMapper();
 
-  private static final String AWS_CONFIG_BUCKET = "awsConfigBucket";
-  private static final String AWS_ACCOUNT_ID    = "awsAccountId";
-  private static final String AWS_VPC_ID    = "awsVpcId";
-  private static final String AWS_VPC_ENDPOINT_ID    = "awsVpcEndpointId";
+  private static final String AWS_CONFIG_BUCKET     = "awsConfigBucket";
+  private static final String AWS_ACCOUNT_ID        = "awsAccountId";
+  private static final String AWS_REGION            = "awsRegion";
+  private static final String AWS_VPC_ID            = "awsVpcId";
+  private static final String AWS_VPC_ENDPOINT_ID   = "awsVpcEndpointId";
 
   private static final String APPLICATION_JSON = "application/json";
   private static final String APPLICATION_JAR = "application/java-archive";
@@ -368,8 +379,8 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       "  ]\n" + 
       "}";
   
-  private static final Map<String, String>  HTTP_REQUEST_PARAMS = ImmutableMap.of("integration.request.path.proxy", "method.request.path.proxy");
-  private static final List<String>         HTTP_CACHE_KEY_PARAMS = ImmutableList.of("method.request.path.proxy");
+  private static final Map<String, String>  HTTP_INTEGRATION_REQUEST_PARAMS = ImmutableMap.of("integration.request.path.proxy", "method.request.path.proxy");
+  private static final Map<String, Boolean> HTTP_METHOD_REQUEST_PARAMS = ImmutableMap.of("method.request.path.proxy", Boolean.TRUE);
 
   private static final String               HOST_HEADER = "host-header";
   private static final String               PATH_PATERN = "path-pattern";
@@ -1403,6 +1414,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       }
       
       templateVariables.put(AWS_ACCOUNT_ID, awsAccountId_);
+      templateVariables.put(AWS_REGION, awsRegion_);
       templateVariables.put(AWS_VPC_ID, awsVpcId_);
       templateVariables.put(AWS_VPC_ENDPOINT_ID, awsVpcEndpointId_);
       
@@ -1737,6 +1749,266 @@ public abstract class AwsFugueDeploy extends FugueDeploy
         log_.warn("Failed to delete task definition", e);
       }
     }
+    
+    class AuthorizerModel
+    {
+      private final String               name_;
+      private final String               functionName_;
+      private final String               type_;
+      private final String               identitySource_;
+      
+      AuthorizerModel(IJsonObject<?> authorizer)
+      {
+        name_           = authorizer.getRequiredString("name");
+        functionName_   = getNameFactory().getLogicalServiceItemName(name_).toString();
+        type_           = authorizer.getRequiredString("type");
+        identitySource_ = authorizer.getRequiredString("identitySource");
+      }
+    }
+    
+    class MethodRequestModel
+    {
+      private final Collection<String>   cachedParameters_;
+      private final Map<String, Boolean> methodRequestParams_;
+      private final AuthorizerModel      authorizer_;
+      private final String              httpMethod_;
+      
+      public MethodRequestModel(IJsonObject<?> methodRequest)
+      {
+        cachedParameters_ = ((JsonObject<?>)methodRequest).getListOf(String.class, "cachedParameters");
+        
+        methodRequestParams_ = new HashMap<>();
+        IJsonObject<?> mParams = methodRequest.getRequiredObject("parameters");
+        
+        Iterator<String> mIt = mParams.getNameIterator();
+        
+        while(mIt.hasNext())
+        {
+          String n = mIt.next();
+          Boolean v = mParams.getRequiredBoolean(n);
+          
+          methodRequestParams_.put(n, v);
+        }
+        
+        IJsonObject<?> authorizer = methodRequest.getObject("authorizor");
+        
+        if(authorizer == null)
+          authorizer_ = null;
+        else
+          authorizer_ = new AuthorizerModel(authorizer);
+
+        httpMethod_ = methodRequest.getRequiredString("httpMethod");
+      }
+
+      public MethodRequestModel(Map<String, Boolean> methodRequestParams, String httpMethod)
+      {
+        cachedParameters_ = new ArrayList<String>();
+        methodRequestParams_ = methodRequestParams;
+        authorizer_ = null;
+        httpMethod_ = httpMethod;
+      }
+    }
+    
+    class MethodResponseModel
+    {
+      private final String              statusCode_;
+      private final Map<String, String> responseModels_;
+      
+      public MethodResponseModel(IJsonObject<?> methodResponse)
+      {
+        statusCode_ = methodResponse.getRequiredString("statusCode");
+        responseModels_ = new HashMap<>();
+        IJsonObject<?> iParams = methodResponse.getRequiredObject("responseModels");
+        
+        Iterator<String> iIt = iParams.getNameIterator();
+        
+        while(iIt.hasNext())
+        {
+          String n = iIt.next();
+          String v = iParams.getRequiredString(n);
+          
+          responseModels_.put(n, v);
+        }
+      }
+    }
+    
+    class IntegrationResponseModel
+    {
+      private final String              statusCode_;
+      
+      public IntegrationResponseModel(IJsonObject<?> integrationResponse)
+      {
+        statusCode_ = integrationResponse.getRequiredString("statusCode");
+      }
+    }
+    
+    class IntegrationRequestModel
+    {
+      private final String              uri_;
+      private final IntegrationType     integrationType_;
+      private final Map<String, String> integrationRequestParams_;
+      private final String              roleArn_;
+      private final String              httpMethod_;
+
+      public IntegrationRequestModel(IJsonObject<?> integrationRequest)
+      {
+        uri_ = integrationRequest.getRequiredString("uri");
+        integrationType_ = IntegrationType.valueOf(integrationRequest.getRequiredString("integrationType"));
+        
+        integrationRequestParams_ = new HashMap<>();
+        IJsonObject<?> iParams = integrationRequest.getRequiredObject("parameters");
+        
+        Iterator<String> iIt = iParams.getNameIterator();
+        
+        while(iIt.hasNext())
+        {
+          String n = iIt.next();
+          String v = iParams.getRequiredString(n);
+          
+          integrationRequestParams_.put(n, v);
+        }
+        roleArn_ = getRoleArn(getNameFactory().getLogicalServiceItemName(integrationRequest.getRequiredString(ROLE)).append(ROLE));
+        httpMethod_ = integrationRequest.getRequiredString("httpMethod");
+      }
+      
+      IntegrationRequestModel(String uri, IntegrationType integrationType, String httpMethod,
+          Map<String, String> integrationRequestParams)
+        {
+          uri_ = uri;
+          integrationType_ = integrationType;
+          httpMethod_ = httpMethod;
+          integrationRequestParams_ = integrationRequestParams;
+          roleArn_ = null;
+        }
+    }
+    
+    class ContainerModel
+    {
+      private String                         name_;
+      private ContainerType                  type_;
+      private final MethodRequestModel       methodRequest_;
+      private final MethodResponseModel      methodResponse_;
+      private final IntegrationRequestModel  integrationRequest_;
+      private final IntegrationResponseModel integrationResponse_;
+      private final Collection<String>       paths_;
+
+      ContainerModel(String name, JsonObject<?> jsonObject)
+      {
+        name_ = name;
+        type_ = ContainerType.parse(jsonObject.getRequiredString("containerType"));
+        
+        IJsonObject<?> obj = jsonObject.getObject("methodRequest");
+        if(obj == null)
+          methodRequest_ = null;
+        else
+          methodRequest_ = new MethodRequestModel(obj);
+        
+        obj = jsonObject.getObject("integrationRequest");
+        
+        if(obj == null)
+          integrationRequest_ = null;
+        else
+          integrationRequest_ = new IntegrationRequestModel(obj);
+
+        obj = jsonObject.getObject("methodResponse");
+        
+        if(obj == null)
+          methodResponse_ = null;
+        else
+          methodResponse_ = new MethodResponseModel(obj);
+        
+        obj = jsonObject.getObject("integrationResponse");
+        if(obj == null)
+          integrationResponse_ = null;
+        else
+          integrationResponse_ = new IntegrationResponseModel(obj);
+        
+        paths_ = jsonObject.getListOf(String.class, "paths");
+      }
+      
+      ContainerModel(String uri, IntegrationType integrationType, String integrationHttpMethod,
+        Map<String, String> integrationRequestParams, Map<String, Boolean> methodRequestParams,
+        Collection<String> paths)
+      {
+        integrationRequest_ = new IntegrationRequestModel(uri, integrationType, integrationHttpMethod, integrationRequestParams);
+        integrationResponse_ = null;
+        methodRequest_ = new MethodRequestModel(methodRequestParams, ANY);
+        methodResponse_ = null;
+        paths_ = paths;
+      }
+    }
+
+    @Override
+    protected void postDeployApiIntegrationContainer(String name, JsonObject<?> jsonObject)
+    {
+      if(action_.isDeploy_)
+      {
+        log_.info("postDeployApiIntegrationContainer name=" + name + ", jsonObject=" + jsonObject);
+        
+        ContainerModel containerModel = new ContainerModel(name, jsonObject);
+//        /*
+//         * For AWS or AWS_PROXY integrations, the URI is of the form 
+//         * arn:aws:apigateway:{region}:{subdomain.service|service}:path|action/{service_api}. 
+//         * Here, {Region} is the API Gateway region (e.g., us-east-1); {service} is the name of the integrated 
+//         * AWS service (e.g., s3); and {subdomain} is a designated subdomain supported by certain AWS service 
+//         * for fast host-name lookup. action can be used for an AWS service action-based API, using an 
+//         * Action={name}&{p1}={v1}&p2={v2}... query string. The ensuing {service_api} refers to a supported 
+//         * action {name} plus any required input parameters. Alternatively, path can be used for an AWS service 
+//         * path-based API. The ensuing service_api refers to the path to an AWS service resource, including 
+//         * the region of the integrated AWS service, if applicable. For example, for integration with the S3 
+//         * API of GetObject, the uri can be either 
+//         * arn:aws:apigateway:us-west-2:s3:action/GetObject&Bucket={bucket}&Key={key} or 
+//         * arn:aws:apigateway:us-west-2:s3:path/{bucket}/{key}
+//         */
+//        IJsonObject<?> methodRequest = jsonObject.getRequiredObject("methodRequest");
+//        IJsonObject<?> integrationRequest = jsonObject.getRequiredObject("integrationRequest");
+//        
+//        String uri = integrationRequest.getRequiredString("uri");
+//        IntegrationType integrationType = IntegrationType.valueOf(integrationRequest.getRequiredString("integrationType"));
+//        Collection<String> paths = jsonObject.getListOf(String.class, "paths");
+//        Collection<String> cachedParameters = ((JsonObject<?>)methodRequest).getListOf(String.class, "cachedParameters");
+//        
+//        if(!paths.isEmpty())
+//        { 
+//          Map<String, String> integrationRequestParams = new HashMap<>();
+//          Map<String, Boolean> methodRequestParams = new HashMap<>();
+//          
+//          IJsonObject<?> mParams = methodRequest.getRequiredObject("parameters");
+//          
+//          Iterator<String> mIt = mParams.getNameIterator();
+//          
+//          while(mIt.hasNext())
+//          {
+//            String n = mIt.next();
+//            Boolean v = mParams.getRequiredBoolean(n);
+//            
+//            methodRequestParams.put(n, v);
+//          }
+//          
+//          IJsonObject<?> iParams = integrationRequest.getRequiredObject("parameters");
+//          
+//          Iterator<String> iIt = iParams.getNameIterator();
+//          
+//          while(iIt.hasNext())
+//          {
+//            String n = iIt.next();
+//            String v = iParams.getRequiredString(n);
+//            
+//            integrationRequestParams.put(n, v);
+//          }
+//          
+//          Name    roleName        = getNameFactory().getLogicalServiceItemName(integrationRequest.getRequiredString(ROLE)).append(ROLE);
+//          String  roleArn         = getRoleArn(roleName);
+//          String  authorizerName  = methodRequest.getString("authorization", null);
+          
+
+        if(!containerModel.paths_.isEmpty())
+        {
+          internalApiGatewayManager_.createApiGatewayPaths(containerModel);
+          publicApiGatewayManager_.createApiGatewayPaths(containerModel);
+        }
+      }
+    }
 
     @Override
     protected void postDeployExternalHttpContainer(String name, String url, Collection<String> paths)
@@ -1752,8 +2024,10 @@ public abstract class AwsFugueDeploy extends FugueDeploy
           
           url = url + "/{proxy}";
           
-          internalApiGatewayManager_.createApiGatewayPaths(url, IntegrationType.HTTP_PROXY, ANY, HTTP_REQUEST_PARAMS, HTTP_CACHE_KEY_PARAMS, paths);
-          publicApiGatewayManager_.createApiGatewayPaths(url, IntegrationType.HTTP_PROXY, ANY, HTTP_REQUEST_PARAMS, HTTP_CACHE_KEY_PARAMS, paths);
+          ContainerModel containerModel = new ContainerModel(url, IntegrationType.HTTP_PROXY, ANY, HTTP_INTEGRATION_REQUEST_PARAMS, HTTP_METHOD_REQUEST_PARAMS, paths);
+          
+          internalApiGatewayManager_.createApiGatewayPaths(containerModel);
+          publicApiGatewayManager_.createApiGatewayPaths(containerModel);
         }
       }
     }
@@ -1767,8 +2041,10 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       {
         if(!paths.isEmpty())
         {
-          internalApiGatewayManager_.createApiGatewayPaths(getExternalFunctionInvocationArn(arn), IntegrationType.AWS_PROXY, POST, null, null, paths);
-          publicApiGatewayManager_.createApiGatewayPaths(getExternalFunctionInvocationArn(arn), IntegrationType.AWS_PROXY, POST, null, null, paths);
+          ContainerModel containerModel = new ContainerModel(getExternalFunctionInvocationArn(arn), IntegrationType.AWS_PROXY, POST, null, null, paths);
+          
+          internalApiGatewayManager_.createApiGatewayPaths(containerModel);
+          publicApiGatewayManager_.createApiGatewayPaths(containerModel);
         }
       }
     }
@@ -1784,8 +2060,10 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       {
         if(!paths.isEmpty())
         {
-          internalApiGatewayManager_.createApiGatewayPaths(getFunctionInvocationArn(functionName), IntegrationType.AWS_PROXY, POST, null, null, paths);
-          publicApiGatewayManager_.createApiGatewayPaths(getFunctionInvocationArn(functionName), IntegrationType.AWS_PROXY, POST, null, null, paths);
+          ContainerModel containerModel = new ContainerModel(getFunctionInvocationArn(functionName), IntegrationType.AWS_PROXY, POST, null, null, paths);
+          
+          internalApiGatewayManager_.createApiGatewayPaths(containerModel);
+          publicApiGatewayManager_.createApiGatewayPaths(containerModel);
         }
         
         createLambdaSubscriptions(functionName, subscriptions);
@@ -3017,6 +3295,8 @@ public abstract class AwsFugueDeploy extends FugueDeploy
     
     class ApiGatewayManager
     {
+      private static final String EMPTY = "Empty";
+      
       private final String  name_;
       private final String  stageName_;
       private final boolean createIfNecessary_;
@@ -3152,7 +3432,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
             
             String resourcePolicy = loadTemplateFromResource("policy/apiGatewayResourcePolicy.json");
             
-            log_.debug("resourcePOlicy " + resourcePolicy);
+            log_.debug("resourcePolicy " + resourcePolicy);
             
             UpdateRestApiResult updateResult = apiClient_.updateRestApi(new UpdateRestApiRequest()
                 .withRestApiId(apiGatewayId_)
@@ -3290,9 +3570,14 @@ public abstract class AwsFugueDeploy extends FugueDeploy
         }
       }
 
-      private void createApiGatewayPath(Map<String, String> pathIdMap, String uri, IntegrationType integrationType, String integrationHttpMethod,
-          Map<String, String> httpRequestParams, List<String> httpCacheKeyParams,
-          String parentResourceId, String[] pathElements, int cnt, String currentPath)
+      private void createApiGatewayPath(
+          ContainerModel containerModel,
+          Map<String, String> pathIdMap, 
+//          String uri, IntegrationType integrationType, String integrationHttpMethod,
+//          Map<String, String> integrationRequestParams, Map<String, Boolean> methodRequestParams,
+//          Collection<String> cacheKeyParams,
+//          String roleArn, String authorizerName, 
+          String parentResourceId,  String[] pathElements, int cnt, String currentPath)
       {
         currentPath = currentPath + "/" + pathElements[cnt];
         
@@ -3313,51 +3598,240 @@ public abstract class AwsFugueDeploy extends FugueDeploy
         
         if(pathElements.length > ++cnt)
         {
-          createApiGatewayPath(pathIdMap, uri, integrationType, integrationHttpMethod,
-              httpRequestParams, httpCacheKeyParams, resourceId, pathElements, cnt, currentPath);
+          createApiGatewayPath(containerModel, pathIdMap,
+//              uri, integrationType, integrationHttpMethod,
+//              integrationRequestParams, methodRequestParams, cacheKeyParams, roleArn, authorizerName, 
+              resourceId, pathElements, cnt, currentPath);
         }
         else
         {
-          createMethod(uri, integrationType, integrationHttpMethod, httpRequestParams, httpCacheKeyParams, resourceId);
+          createMethod(containerModel,
+//              uri, integrationType, integrationHttpMethod, integrationRequestParams, methodRequestParams, cacheKeyParams, roleArn, authorizerName,
+              resourceId);
         }
       }
 
-      private void createMethod(String uri, IntegrationType integrationType, String integrationHttpMethod,
-          Map<String, String> httpRequestParams, List<String> httpCacheKeyParams, String resourceId)
+      private void createMethod(
+//          String uri, IntegrationType integrationType, String integrationHttpMethod,
+//          Map<String, String> integrationRequestParams, Map<String, Boolean> methodRequestParams, Collection<String> cacheKeyParams,
+//          String roleArn, String authorizerName,
+          ContainerModel containerModel,
+          String resourceId)
       {
-        Map<String, Boolean> rp;
-        
-        if(httpCacheKeyParams == null)
+        PutMethodRequest putMethodRequest = new PutMethodRequest()
+          .withHttpMethod(containerModel.methodRequest_.httpMethod_)
+          .withResourceId(resourceId)
+          .withRestApiId(apiGatewayId_)
+          .withRequestParameters(containerModel.methodRequest_.methodRequestParams_)
+          ;
+          
+        if(containerModel.methodRequest_.authorizer_ == null)
         {
-          rp = null;
+          putMethodRequest
+            .withAuthorizationType(NONE)
+            ;
         }
         else
         {
-          rp = new HashMap<>(httpCacheKeyParams.size());
+          Authorizer authorizer = null;
           
-          for(String p : httpCacheKeyParams)
-            rp.put(p, Boolean.TRUE);
+          GetAuthorizersResult authorizers = apiClient_.getAuthorizers(new GetAuthorizersRequest()
+              .withRestApiId(apiGatewayId_)
+              );
+          
+          for(Authorizer a : authorizers.getItems())
+          {
+            if(a.getName().equals(containerModel.methodRequest_.authorizer_.name_))
+            {
+              authorizer = a;
+              break;
+            }
+          }
+          
+          String authorizerId;
+          
+          if(authorizer == null)
+          {
+            String authorizerUri = String.format("arn:aws:apigateway:%s:lambda:path/2015-03-31/functions/arn:aws:lambda:%s:%s:function:%s/invocations",
+                awsRegion_, awsRegion_, awsAccountId_, containerModel.methodRequest_.authorizer_.functionName_);
+            
+            CreateAuthorizerResult authResult = apiClient_.createAuthorizer(new CreateAuthorizerRequest()
+                .withRestApiId(apiGatewayId_)
+                .withName(containerModel.methodRequest_.authorizer_.name_)
+                .withIdentitySource(containerModel.methodRequest_.authorizer_.identitySource_)
+                .withType(AuthorizerType.REQUEST)
+                .withAuthorizerUri(authorizerUri)
+                );
+            
+            authorizerId = authResult.getId();
+          }
+          else
+          {
+            authorizerId = authorizer.getId();
+          }
+          
+          putMethodRequest
+            .withAuthorizationType("CUSTOM")
+            .withAuthorizerId(authorizerId)
+            ;
+          
+          
+          
+          
+          
+          
+          
+          
+//          getTemplateVariables().put("apiGatewayId", apiGatewayId_);
+//          getTemplateVariables().put("awsFunctionName", containerModel.methodRequest_.authorizer_.functionName_);
+//          
+//          String resourcePolicy = loadTemplateFromResource("policy/apiGatewayResourcePolicy.json");
+//          
+//          log_.debug("Function esourcePolicy " + resourcePolicy);
+//          
+//          try
+//          {
+//          com.amazonaws.services.lambda.model.GetPolicyResult policyResult = lambdaClient_.getPolicy(new com.amazonaws.services.lambda.model.GetPolicyRequest()
+//              .withFunctionName(containerModel.methodRequest_.authorizer_.functionName_)
+//              );
+//          
+//            String p =policyResult.getPolicy();
+//            
+//            if(p.equals(resourcePolicy))
+//            {
+//              log_.info("Policy for auth lambda " + containerModel.methodRequest_.authorizer_.functionName_ + " is good, nothing to do here.");
+//            }
+//            else
+//            {
+//              log_.info("Policy for auth lambda " + containerModel.methodRequest_.authorizer_.functionName_ + " needs to be updated...");
+//            }
+//          }
+//          catch(RuntimeException e)
+//          {
+//            log_.info("Policy for auth lambda " + containerModel.methodRequest_.authorizer_.functionName_ + " does not exist...");
+//            e.printStackTrace();
+//          }
+
+
+          try
+          {
+          
+            lambdaClient_.addPermission(new AddPermissionRequest()
+                .withFunctionName(containerModel.methodRequest_.authorizer_.functionName_)
+                .withStatementId("apiGatewayAuth")
+                .withAction("lambda:InvokeFunction")
+                .withPrincipal("apigateway.amazonaws.com")
+                .withSourceArn(
+                  String.format("arn:aws:execute-api:%s:%s:%s/authorizers/%s",
+                      awsRegion_, awsAccountId_, apiGatewayId_, authorizerId)
+                )
+              );
+          }
+          catch(com.amazonaws.services.lambda.model.ResourceConflictException e)
+          {
+            log_.info("Function " + containerModel.methodRequest_.authorizer_.functionName_ + " already has resource policy.");
+          }
+          
+          
+          
+          
+          
+        
+          
         }
         
-        PutMethodResult method = apiClient_.putMethod(new PutMethodRequest()
-            .withHttpMethod(ANY)
-            .withResourceId(resourceId)
-            .withRestApiId(apiGatewayId_)
-            .withAuthorizationType(NONE)
-            .withRequestParameters(rp)
-            );
+        PutMethodResult method = apiClient_.putMethod(putMethodRequest);
         
-        PutIntegrationResult integration = apiClient_.putIntegration(new PutIntegrationRequest()
-            .withResourceId(resourceId)
-            .withRestApiId(apiGatewayId_)
-            .withHttpMethod(ANY)
-            .withUri(uri)
-            .withIntegrationHttpMethod(integrationHttpMethod)
-            .withType(integrationType)
-            .withConnectionType(ConnectionType.INTERNET)
-            .withRequestParameters(httpRequestParams)
-            .withCacheKeyParameters(httpCacheKeyParams)
-            );
+        PutIntegrationRequest putIntegrationRequest = new PutIntegrationRequest()
+          .withResourceId(resourceId)
+          .withRestApiId(apiGatewayId_)
+          .withHttpMethod(containerModel.methodRequest_.httpMethod_)
+          .withUri(containerModel.integrationRequest_.uri_)
+          .withIntegrationHttpMethod(containerModel.integrationRequest_.httpMethod_)
+          .withType(containerModel.integrationRequest_.integrationType_)
+          .withConnectionType(ConnectionType.INTERNET)
+          .withRequestParameters(containerModel.integrationRequest_.integrationRequestParams_)
+          .withCacheKeyParameters(containerModel.methodRequest_.cachedParameters_)
+          ;
+        
+        if(containerModel.integrationRequest_.roleArn_ != null)
+          putIntegrationRequest.withCredentials(containerModel.integrationRequest_.roleArn_);
+        
+        PutIntegrationResult integration = apiClient_.putIntegration(putIntegrationRequest);
+        
+        if(containerModel.methodResponse_ != null)
+        {
+//          boolean methodResultOk = false;
+//          try
+//          {
+//            GetMethodResponseResult methodRespResult = apiClient_.getMethodResponse(new GetMethodResponseRequest()
+//                .withHttpMethod(containerModel.methodRequest_.httpMethod_)
+//                .withResourceId(resourceId)
+//                .withRestApiId(apiGatewayId_)
+//                .withStatusCode(containerModel.methodResponse_.statusCode_)
+//              );
+//            
+//            if(mapEquals(methodRespResult.getResponseModels(), containerModel.methodResponse_.responseModels_))
+//            {
+//              methodResultOk = true;
+//            };
+//          }
+//          catch(com.amazonaws.services.apigateway.model.NotFoundException e)
+//          {
+//            methodResultOk = false;
+//          }
+//          
+//          if(methodResultOk)
+//          {
+//            log_.info("Method result is ok.");
+//          }
+//          else
+          {
+            log_.info("Method result needs updating...");
+            
+            apiClient_.putMethodResponse(new PutMethodResponseRequest()
+                .withHttpMethod(containerModel.methodRequest_.httpMethod_)
+                .withResourceId(resourceId)
+                .withRestApiId(apiGatewayId_)
+                .withStatusCode(containerModel.methodResponse_.statusCode_)
+                .withResponseModels(containerModel.methodResponse_.responseModels_)
+                );
+          }
+        }
+        
+        if(containerModel.integrationResponse_ != null)
+        {
+//          boolean integrationResultOk = false;
+//          try
+//          {
+//            GetIntegrationResponseResult integrationRespResult = apiClient_.getIntegrationResponse(new GetIntegrationResponseRequest()
+//                .withHttpMethod(containerModel.integrationRequest_.httpMethod_)
+//                .withResourceId(resourceId)
+//                .withRestApiId(apiGatewayId_)
+//                .withStatusCode(containerModel.integrationResponse_.statusCode_)
+//              );
+//          }
+//          catch(com.amazonaws.services.apigateway.model.NotFoundException e)
+//          {
+//            integrationResultOk = false;
+//          }
+//          
+//          if(integrationResultOk)
+//          {
+//            log_.info("Integration result is ok.");
+//          }
+//          else
+          {
+            log_.info("Integration result needs updating...");
+            
+            apiClient_.putIntegrationResponse(new PutIntegrationResponseRequest()
+                .withHttpMethod(containerModel.methodRequest_.httpMethod_)
+                .withResourceId(resourceId)
+                .withRestApiId(apiGatewayId_)
+                .withStatusCode(containerModel.integrationResponse_.statusCode_)
+                );
+          }
+        }
         
         log_.info("Created method " + method.getHttpMethod() + " with integration " + integration.getType() + " to " + integration.getUri());
       }
@@ -3494,8 +3968,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
         return apiGatewayTargetDomain_;
       }
 
-      private void createApiGatewayPaths(String uri, IntegrationType integrationType, String integrationHttpMethod,
-          Map<String, String> httpRequestParams, List<String> httpCacheKeyParams, Collection<String> paths)
+      private void createApiGatewayPaths(ContainerModel containerModel)
       {
         if(isPublic_==false && awsVpcEndpointId_ == null)
         {
@@ -3507,7 +3980,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
         Set<String> remainingPaths = new HashSet<>();
         Set<String> remainingMethods = new HashSet<>();
         
-        for(String path : paths)
+        for(String path : containerModel.paths_)
         {
           remainingPaths.add(path.replace("*", "{proxy+}"));
         }
@@ -3532,8 +4005,6 @@ public abstract class AwsFugueDeploy extends FugueDeploy
           
             // Are they correct?
             
-            
-            
             if(resource.getResourceMethods() == null)
             {
               log_.info("Resource " + resource.getPath() + " has no methods, will add...");
@@ -3541,14 +4012,15 @@ public abstract class AwsFugueDeploy extends FugueDeploy
             }
             else
             {
+              boolean methodOk = false;
               for(String methodName : resource.getResourceMethods().keySet())
               {
                 log_.info("Existing method " + methodName);
                 
-                if(ANY.equals(methodName))
+                if(containerModel.methodRequest_.httpMethod_.equals(methodName))
                 {
                   GetMethodResult method = apiClient_.getMethod(new GetMethodRequest()
-                    .withHttpMethod(ANY)
+                    .withHttpMethod(containerModel.methodRequest_.httpMethod_)
                     .withResourceId(resource.getId())
                     .withRestApiId(apiGatewayId_)
                     );
@@ -3558,7 +4030,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
                   
                   boolean ok = integration != null;
                   
-                  if(!mapEquals(httpRequestParams, requestParams))
+                  if(!mapEquals(containerModel.integrationRequest_.integrationRequestParams_, requestParams))
                     ok = false;
                   
                   if(ok)
@@ -3567,14 +4039,14 @@ public abstract class AwsFugueDeploy extends FugueDeploy
                     
                     if(rp == null)
                     {
-                      if(!collectionEquals(null, httpCacheKeyParams))
+                      if(!mapEquals(null, containerModel.methodRequest_.methodRequestParams_))
                       {
                         ok = false;
                       }
                     }
                     else
                     {
-                      if(!collectionEquals(rp.keySet(), httpCacheKeyParams))
+                      if(!mapEquals(rp, containerModel.methodRequest_.methodRequestParams_))
                       {
                         ok = false;
                       }
@@ -3583,33 +4055,39 @@ public abstract class AwsFugueDeploy extends FugueDeploy
                   
                   if(ok)
                   {
-                    List<String> cacheKeyParams = integration == null ? null : integration.getCacheKeyParameters();
+                    List<String> currentCacheKeyParams = integration == null ? null : integration.getCacheKeyParameters();
                     
-                    if(!collectionEquals(httpCacheKeyParams, cacheKeyParams))
+                    if(!collectionEquals(containerModel.methodRequest_.cachedParameters_, currentCacheKeyParams))
                       ok = false;
                   }
 
+                  String authType = containerModel.methodRequest_.authorizer_ == null ? NONE : "CUSTOM";
+
                   if(ok &&
-                      NONE.equals(method.getAuthorizationType())
+                      authType.equals(method.getAuthorizationType())
                       && method.getMethodIntegration() != null
-                      && integrationType.toString().equals(integration.getType())
-                      && integrationHttpMethod.equals(integration.getHttpMethod())
-                      && uri.equals(method.getMethodIntegration().getUri())
+                      && containerModel.integrationRequest_.integrationType_.toString().equals(integration.getType())
+                      && containerModel.integrationRequest_.httpMethod_.equals(integration.getHttpMethod())
+                      && containerModel.integrationRequest_.uri_.equals(method.getMethodIntegration().getUri())
                       )
                   {
                     log_.info("Existing method is good.");
+                    methodOk = true;
                   }
                   else
                   {
                     log_.info("Existing method needs to be updated.");
                     deleteMethod(method.getHttpMethod(), resource.getId());
-                    remainingMethods.add(resource.getId());
+                    //remainingMethods.add(resource.getId());
                   }
                 }
                 else
                 {
                   deleteMethod(methodName, resource.getId());
                 }
+                
+                if(!methodOk)
+                  remainingMethods.add(resource.getId());
               }
             }
           }
@@ -3622,7 +4100,11 @@ public abstract class AwsFugueDeploy extends FugueDeploy
         {
           log_.info("Creating path " + path);
           
-          createApiGatewayPath(pathIdMap, uri, integrationType, integrationHttpMethod, httpRequestParams, httpCacheKeyParams, rootResourceId, path.split("/"), 1, "");
+          createApiGatewayPath(containerModel, pathIdMap, 
+//              uri, integrationType, integrationHttpMethod,
+//              integrationRequestParams, methodRequestParams, cacheKeyParams, roleArn,
+              rootResourceId, path.split("/"), 1, "");
+          
           deploy_=true;
         }
         
@@ -3630,7 +4112,10 @@ public abstract class AwsFugueDeploy extends FugueDeploy
         {
           log_.info("Creating method for resource " + resourceId);
           
-          createMethod(uri, integrationType, integrationHttpMethod, httpRequestParams, httpCacheKeyParams, resourceId);
+          createMethod(
+              containerModel,
+              //uri, integrationType, integrationHttpMethod, integrationRequestParams, methodRequestParams, cacheKeyParams, roleArn,
+              resourceId);
           deploy_=true;
         }
         
@@ -3648,6 +4133,30 @@ public abstract class AwsFugueDeploy extends FugueDeploy
           log_.info("Stage does not exist.");
           createStage_ = true;
           deploy_=true;
+        }
+        
+        GetGatewayResponseResult gwResp = apiClient_.getGatewayResponse(new GetGatewayResponseRequest()
+            .withRestApiId(apiGatewayId_)
+            .withResponseType("ACCESS_DENIED")
+            );
+        
+        String template = "{\"message\":$context.authorizer.error}";
+        String currentTemplate = gwResp.getResponseTemplates().get(APPLICATION_JSON);
+        
+        if(gwResp.getDefaultResponse() || !template.equals(currentTemplate))
+        {
+          log_.info("Gateway response for ACCESS_DENIED needs updating...");
+          Map<String, String> responseTemplates = new HashMap<>();
+          responseTemplates.put(APPLICATION_JSON, template);
+          apiClient_.putGatewayResponse(new PutGatewayResponseRequest()
+              .withRestApiId(apiGatewayId_)
+              .withResponseType("ACCESS_DENIED")
+              .withResponseTemplates(responseTemplates)
+              );
+        }
+        else
+        {
+          log_.info("Gateway response for ACCESS_DENIED is ok.");
         }
       }
     }
