@@ -1123,6 +1123,7 @@ public abstract class FugueDeploy extends CommandLineHandler
     protected abstract void cleanupLambdaContainerStorage(String name);
     protected abstract void postDeployExternalLambdaContainer(String name, String arn, Collection<String> paths);
     protected abstract void postDeployExternalHttpContainer(String name, String url, Collection<String> paths);
+    protected abstract void postDeployApiIntegrationContainer(String name, JsonObject<?> jsonObject);
     protected abstract void postDeployContainers();
     
     protected abstract void deployService();
@@ -1597,16 +1598,16 @@ public abstract class FugueDeploy extends CommandLineHandler
               
               provisionedCapacity = Integer.parseInt(s);
             }
-            
-           try(OutputStream out = getStorageOutputStream(ArtifactHelper.getFilename(name, buildId_))){
-            
-            artifactHelper_.fetchArtifact(name, buildId_, out);
-            
-           }
-           catch (IOException e)
-           {
-            throw new IllegalStateException("Error while using getting the output stream ", e);
-           }
+           
+            log_.info("About to upload " + name + " version " + buildId_);
+            try(OutputStream out = getStorageOutputStream(ArtifactHelper.getFilename(name, buildId_)))
+            {
+              artifactHelper_.fetchArtifact(name, buildId_, out);
+            }
+            catch (IOException e)
+            {
+              throw new IllegalStateException("Error while using getting the output stream ", e);
+            }
    
             deployLambdaContainer(name,
                 container.getString(IMAGE, name),
@@ -1636,6 +1637,7 @@ public abstract class FugueDeploy extends CommandLineHandler
         postDeployLambdaContainers(ContainerType.LAMBDA);
         postDeployExternalLambdaContainers(ContainerType.EXTERNAL_LAMBDA);
         postDeployExternalHttpContainers(ContainerType.EXTERNAL_HTTP);
+        postDeployApiIntegrationContainers(ContainerType.API_INTEGRATION);
       }
       postDeployContainers();
     }
@@ -1680,6 +1682,19 @@ public abstract class FugueDeploy extends CommandLineHandler
           postDeployExternalLambdaContainer(name, arn,
               paths
               );
+        }
+      }
+    }
+
+    private void postDeployApiIntegrationContainers(ContainerType containerType)
+    {
+      Map<String, JsonObject<?>> map = containerMap_.get(containerType);
+      
+      if(map != null)
+      {
+        for(String name : map.keySet())
+        {
+          postDeployApiIntegrationContainer(name, map.get(name));
         }
       }
     }
