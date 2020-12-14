@@ -21,7 +21,7 @@
   <parent>
     <groupId>com.symphony.oss.fugue</groupId>
     <artifactId>oss-fugue</artifactId>
-    <version>0.2.30-SNAPSHOT</version>
+    <version>0.2.30</version>
   </parent>
   <artifactId>fugue-launch</artifactId>
 
