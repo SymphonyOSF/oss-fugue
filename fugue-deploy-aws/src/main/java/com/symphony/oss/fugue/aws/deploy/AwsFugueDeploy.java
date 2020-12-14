@@ -67,6 +67,7 @@ import com.amazonaws.services.apigateway.model.CreateResourceResult;
 import com.amazonaws.services.apigateway.model.CreateRestApiRequest;
 import com.amazonaws.services.apigateway.model.CreateRestApiResult;
 import com.amazonaws.services.apigateway.model.DeleteMethodRequest;
+import com.amazonaws.services.apigateway.model.DeleteResourceRequest;
 import com.amazonaws.services.apigateway.model.EndpointConfiguration;
 import com.amazonaws.services.apigateway.model.EndpointType;
 import com.amazonaws.services.apigateway.model.GetAuthorizersRequest;
@@ -1891,6 +1892,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       private final IntegrationRequestModel  integrationRequest_;
       private final IntegrationResponseModel integrationResponse_;
       private final Collection<String>       paths_;
+      private final Collection<String>       obsoletePaths_;
 
       ContainerModel(String name, JsonObject<?> jsonObject)
       {
@@ -1923,7 +1925,18 @@ public abstract class AwsFugueDeploy extends FugueDeploy
         else
           integrationResponse_ = new IntegrationResponseModel(obj);
         
+        // the real code to set paths and obsolete paths:
         paths_ = jsonObject.getListOf(String.class, "paths");
+        obsoletePaths_ = jsonObject.getListOf(String.class, "obsoletePaths");
+        
+        // for testing add obsolete paths to paths to create some things we can delete:
+//        List<String> paths = jsonObject.getListOf(String.class, "paths");
+//        List<String> obsoletePaths = jsonObject.getListOf(String.class, "obsoletePaths");
+//        
+//        paths.addAll(obsoletePaths);
+//        paths_ = paths;
+//        obsoletePaths_ = new ArrayList<>();
+        // end test code
       }
       
       ContainerModel(String uri, IntegrationType integrationType, String integrationHttpMethod,
@@ -1935,6 +1948,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
         methodRequest_ = new MethodRequestModel(methodRequestParams, ANY);
         methodResponse_ = null;
         paths_ = paths;
+        obsoletePaths_ = new ArrayList<>();
       }
     }
 
@@ -3295,8 +3309,6 @@ public abstract class AwsFugueDeploy extends FugueDeploy
     
     class ApiGatewayManager
     {
-      private static final String EMPTY = "Empty";
-      
       private final String  name_;
       private final String  stageName_;
       private final boolean createIfNecessary_;
@@ -3573,10 +3585,6 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       private void createApiGatewayPath(
           ContainerModel containerModel,
           Map<String, String> pathIdMap, 
-//          String uri, IntegrationType integrationType, String integrationHttpMethod,
-//          Map<String, String> integrationRequestParams, Map<String, Boolean> methodRequestParams,
-//          Collection<String> cacheKeyParams,
-//          String roleArn, String authorizerName, 
           String parentResourceId,  String[] pathElements, int cnt, String currentPath)
       {
         currentPath = currentPath + "/" + pathElements[cnt];
@@ -3599,22 +3607,16 @@ public abstract class AwsFugueDeploy extends FugueDeploy
         if(pathElements.length > ++cnt)
         {
           createApiGatewayPath(containerModel, pathIdMap,
-//              uri, integrationType, integrationHttpMethod,
-//              integrationRequestParams, methodRequestParams, cacheKeyParams, roleArn, authorizerName, 
               resourceId, pathElements, cnt, currentPath);
         }
         else
         {
           createMethod(containerModel,
-//              uri, integrationType, integrationHttpMethod, integrationRequestParams, methodRequestParams, cacheKeyParams, roleArn, authorizerName,
               resourceId);
         }
       }
 
       private void createMethod(
-//          String uri, IntegrationType integrationType, String integrationHttpMethod,
-//          Map<String, String> integrationRequestParams, Map<String, Boolean> methodRequestParams, Collection<String> cacheKeyParams,
-//          String roleArn, String authorizerName,
           ContainerModel containerModel,
           String resourceId)
       {
@@ -3674,44 +3676,6 @@ public abstract class AwsFugueDeploy extends FugueDeploy
             .withAuthorizationType("CUSTOM")
             .withAuthorizerId(authorizerId)
             ;
-          
-          
-          
-          
-          
-          
-          
-          
-//          getTemplateVariables().put("apiGatewayId", apiGatewayId_);
-//          getTemplateVariables().put("awsFunctionName", containerModel.methodRequest_.authorizer_.functionName_);
-//          
-//          String resourcePolicy = loadTemplateFromResource("policy/apiGatewayResourcePolicy.json");
-//          
-//          log_.debug("Function esourcePolicy " + resourcePolicy);
-//          
-//          try
-//          {
-//          com.amazonaws.services.lambda.model.GetPolicyResult policyResult = lambdaClient_.getPolicy(new com.amazonaws.services.lambda.model.GetPolicyRequest()
-//              .withFunctionName(containerModel.methodRequest_.authorizer_.functionName_)
-//              );
-//          
-//            String p =policyResult.getPolicy();
-//            
-//            if(p.equals(resourcePolicy))
-//            {
-//              log_.info("Policy for auth lambda " + containerModel.methodRequest_.authorizer_.functionName_ + " is good, nothing to do here.");
-//            }
-//            else
-//            {
-//              log_.info("Policy for auth lambda " + containerModel.methodRequest_.authorizer_.functionName_ + " needs to be updated...");
-//            }
-//          }
-//          catch(RuntimeException e)
-//          {
-//            log_.info("Policy for auth lambda " + containerModel.methodRequest_.authorizer_.functionName_ + " does not exist...");
-//            e.printStackTrace();
-//          }
-
 
           try
           {
@@ -3731,13 +3695,6 @@ public abstract class AwsFugueDeploy extends FugueDeploy
           {
             log_.info("Function " + containerModel.methodRequest_.authorizer_.functionName_ + " already has resource policy.");
           }
-          
-          
-          
-          
-          
-        
-          
         }
         
         PutMethodResult method = apiClient_.putMethod(putMethodRequest);
@@ -3761,6 +3718,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
         
         if(containerModel.methodResponse_ != null)
         {
+// since we are calling this from inside create method this check will never pass...
 //          boolean methodResultOk = false;
 //          try
 //          {
@@ -3801,6 +3759,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
         
         if(containerModel.integrationResponse_ != null)
         {
+// since we are calling this from inside create method this check will never pass...
 //          boolean integrationResultOk = false;
 //          try
 //          {
@@ -3979,10 +3938,16 @@ public abstract class AwsFugueDeploy extends FugueDeploy
         Map<String, String> pathIdMap = new HashMap<>();
         Set<String> remainingPaths = new HashSet<>();
         Set<String> remainingMethods = new HashSet<>();
+        Set<String> obsoletePaths = new HashSet<>();
         
         for(String path : containerModel.paths_)
         {
           remainingPaths.add(path.replace("*", "{proxy+}"));
+        }
+        
+        for(String path : containerModel.obsoletePaths_)
+        {
+          obsoletePaths.add(path.replace("*", "{proxy+}"));
         }
         
         String rootResourceId = null;
@@ -4090,6 +4055,21 @@ public abstract class AwsFugueDeploy extends FugueDeploy
                   remainingMethods.add(resource.getId());
               }
             }
+          }
+          else if(obsoletePaths.remove(resource.getPath()))
+          {
+            log_.info("Obsolete resource " + resource.getPath() + " exists.");
+            
+            for(String methodName : resource.getResourceMethods().keySet())
+            {
+              log_.info("Deleting obsolete method " + methodName + "...");
+              deleteMethod(methodName, resource.getId());
+            }
+            log_.info("Deleting obsolete resource " + resource.getPath() + "...");
+            apiClient_.deleteResource(new DeleteResourceRequest()
+                .withRestApiId(apiGatewayId_)
+                .withResourceId(resource.getId())
+                );
           }
         }
         
