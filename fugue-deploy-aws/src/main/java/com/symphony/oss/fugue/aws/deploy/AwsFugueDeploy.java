@@ -3682,7 +3682,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
           
             lambdaClient_.addPermission(new AddPermissionRequest()
                 .withFunctionName(containerModel.methodRequest_.authorizer_.functionName_)
-                .withStatementId("apiGatewayAuth")
+                .withStatementId("api_" + stageName_)
                 .withAction("lambda:InvokeFunction")
                 .withPrincipal("apigateway.amazonaws.com")
                 .withSourceArn(
