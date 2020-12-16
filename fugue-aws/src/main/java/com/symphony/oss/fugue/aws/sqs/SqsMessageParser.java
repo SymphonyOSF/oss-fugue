@@ -39,16 +39,10 @@ public class SqsMessageParser
     {
       tree = mapper.readTree(json);
 
-      try
-      {
-        JsonNode error = tree.get("Error");
-        if (error != null)
-          throw new IllegalStateException("Received SQS Message: " + json);
-      }
-      catch (RuntimeException e1)
-      {
-        throw new IllegalStateException("Error returned: " + json);
-      }
+      JsonNode error = tree.get("Error");
+       if (error != null)
+        throw new IllegalStateException("Received SQS Message: " + json);
+
       JsonNode response = tree.get("ReceiveMessageResponse");
       if(response == null)
         return new ArrayList<>();
