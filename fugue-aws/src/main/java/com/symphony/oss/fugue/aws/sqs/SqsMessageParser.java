@@ -57,7 +57,6 @@ public class SqsMessageParser
     }
     catch (JsonProcessingException e)
     {
-      e.printStackTrace();
       throw new IllegalStateException("Error parsing the JSON: "+json);
     }
   }
