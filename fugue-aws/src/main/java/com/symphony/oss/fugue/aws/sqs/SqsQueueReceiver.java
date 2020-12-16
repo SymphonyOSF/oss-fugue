@@ -55,7 +55,7 @@ public class SqsQueueReceiver implements IQueueReceiver
   private static final Logger log_ = LoggerFactory.getLogger(SqsQueueReceiver.class);
 
   private final AmazonSQS     sqsClient_;
-  private String              queueUrl_;
+  private String        queueUrl_;
   
   private    static final int                   MAX_SQS_MESSAGES  = 10;  
 

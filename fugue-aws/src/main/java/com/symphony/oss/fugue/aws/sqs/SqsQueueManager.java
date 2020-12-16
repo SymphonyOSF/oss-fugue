@@ -34,7 +34,6 @@ import org.slf4j.LoggerFactory;
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.services.sqs.model.QueueDeletedRecentlyException;
@@ -185,7 +184,6 @@ public class SqsQueueManager implements IQueueManager
     private String                 accountId_;
     private Map<String, String>    tags_ = new HashMap<>();
     //  private String configPath_ = "org/symphonyoss/s2/fugue/aws/sqs";
-    private String endPoint_;
     private boolean gateway_;
     private String                        proxyUsername_;
     private URL                           proxyUrl_;
