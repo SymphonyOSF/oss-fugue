@@ -103,6 +103,7 @@
                 "apigateway:PUT",
                 "apigateway:POST",
                 "apigateway:PATCH",
+                "apigateway:UpdateRestApiPolicy",
                 "lambda:ListEventSourceMappings",
                 "lambda:CreateEventSourceMapping"
             ],

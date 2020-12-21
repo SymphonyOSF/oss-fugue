@@ -36,6 +36,7 @@ import java.util.NavigableMap;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
@@ -717,7 +718,7 @@ public void start()
   @Override
   public IKvPagination fetchPartitionObjects(IKvPartitionKeyProvider partitionKeyProvider, boolean scanForwards, Integer limit,
       String after, String sortKeyPrefix,
-      @Nullable Map<String, Object> filterAttributes, Consumer<String> consumer, boolean parseObject, ITraceContext trace)
+      @Nullable Map<String, Object> filterAttributes, Consumer<String> consumer, ITraceContext trace)
   {
     String partitionKey = getPartitionKey(partitionKeyProvider);
     
@@ -780,6 +781,74 @@ public void start()
         
     return new KvPagination(before, null);
   }
+  
+  @Override
+  public IKvPagination fetchPartitionObjects(IKvPartitionKeyProvider partitionKeyProvider, boolean scanForwards, Integer limit,
+      String after, String sortKeyPrefix, Map<String, Object> filterAttributes, BiConsumer<String, String> consumer,
+      ITraceContext trace)
+  {
+    String partitionKey = getPartitionKey(partitionKeyProvider);
+    
+    TreeMap<String, IKvItem> partition = getPartition(partitionKey);
+
+    NavigableMap<String, IKvItem> map; 
+    String before = null;
+    
+    if(after == null)
+    {
+      if(scanForwards)
+        map = partition;
+      else
+        map = partition.descendingMap();
+    }
+    else if(scanForwards)
+    {
+      map   = partition.tailMap(after, false);
+      before = map.isEmpty() ||  map.firstKey().equals(partition.firstKey()) ? null : map.firstKey();
+    }
+    else
+    {
+      map   = partition.descendingMap().tailMap(after, false);
+      before = map.isEmpty() ||  map.firstKey().equals(partition.firstKey()) ? null : map.firstKey();
+    }
+    
+    if(limit == null)
+      limit = 100;
+    
+    int available = map.entrySet().size();
+    
+    for(Entry<String, IKvItem> entry : map.entrySet())
+    {
+      boolean ok = (sortKeyPrefix == null || entry.getKey().startsWith(sortKeyPrefix));
+      
+      if(ok && filterAttributes != null)
+      {
+        for(Entry<String, Object> attr : filterAttributes.entrySet())
+        {
+          Object rowAttr = entry.getValue().getAdditionalAttributes().get(attr.getKey());
+          
+          if(!attr.getValue().equals(rowAttr))
+          {
+            ok = false;
+            break;
+          }
+        }
+      }
+      
+      available--;
+      
+      if(ok)
+      {
+        consumer.accept(entry.getValue().getSortKey().asString(), entry.getValue().getJson());
+      
+        if(--limit <= 0)
+          return new KvPagination(before, available==0 ? null : entry.getKey());
+      }
+    }
+        
+    return new KvPagination(before, null);
+  }
+
   
   @Override
   public IKvPagination fetchPartitionUsers(IKvPartitionKeyProvider partitionKeyProvider, Integer limit,

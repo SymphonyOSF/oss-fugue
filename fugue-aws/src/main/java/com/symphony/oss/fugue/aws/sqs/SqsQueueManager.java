@@ -33,6 +33,8 @@ import org.slf4j.LoggerFactory;
 
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.services.sqs.AmazonSQS;
+import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.services.sqs.model.QueueDeletedRecentlyException;
 import com.amazonaws.services.sqs.model.QueueDoesNotExistException;
@@ -67,7 +69,7 @@ public class SqsQueueManager implements IQueueManager
   private final String                       accountId_;
   private final ImmutableMap<String, String> tags_;
 
-  private final GatewayAmazonSQSClient                    sqsClient_;
+  private final AmazonSQS                    sqsClient_;
   //private Map<String, SqsQueueSender>          senderMap_ = new HashMap<>();
   private boolean gateway_;
   
@@ -115,9 +117,9 @@ public class SqsQueueManager implements IQueueManager
     if(builder.proxyPassword_ != null)
       configuration.setProxyPassword(builder.proxyPassword_);
 
-    builder.sqsBuilder_.withClientConfiguration(configuration);
-    
-    sqsClient_ = (GatewayAmazonSQSClient) builder.sqsBuilder_.build();
+    sqsClient_ = builder.sqsBuilder_
+     .withClientConfiguration(configuration)
+     .build();
     
     gateway_ = builder.gateway_;
   }
@@ -177,12 +179,11 @@ public class SqsQueueManager implements IQueueManager
    */
   public static class Builder extends BaseAbstractBuilder<Builder, SqsQueueManager>
   {
-    private GatewayAmazonSQSClientBuilder       sqsBuilder_;
+    private AmazonSQSClientBuilder       sqsBuilder_;
     private String                 region_;
     private String                 accountId_;
     private Map<String, String>    tags_ = new HashMap<>();
     //  private String configPath_ = "org/symphonyoss/s2/fugue/aws/sqs";
-    private String endPoint_;
     private boolean gateway_;
     private String                        proxyUsername_;
     private URL                           proxyUrl_;
@@ -195,7 +196,7 @@ public class SqsQueueManager implements IQueueManager
     {
       super(Builder.class);
       
-      sqsBuilder_ = GatewayAmazonSQSClientBuilder
+      sqsBuilder_ = AmazonSQSClientBuilder
           .standard();
       
     }
@@ -275,24 +276,6 @@ public class SqsQueueManager implements IQueueManager
     public Builder withTags(Map<String, String> tags)
     {
       tags_.putAll(tags);
-      
-      return self();
-    }
-    
-    /**
-     * Set the API endpoint.
-     * 
-     * @param endpoint The AWS gateway endpoint for SQS.
-     * 
-     * @return this (fluent method)
-     */
-    public Builder withEndpoint(String endpoint)
-    {
-      endPoint_ = endpoint;
-      
-      sqsBuilder_.withEndpoint(endPoint_);
-      
-      gateway_ = true;
       
       return self();
     }
