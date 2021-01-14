@@ -86,6 +86,9 @@ public interface IKvTable extends IFugueComponent
    */
   void storeEntitlementMapping(IKvItem kvItem, KvCondition effective, KvCondition entAction, String action, ITraceContext trace);
   
+  /**
+   * @return the transaction.
+   */
   IKvTableTransaction createTransaction();
 
 //  /**
@@ -129,7 +132,7 @@ public interface IKvTable extends IFugueComponent
   /**
    * Physically delete all the system objects from the given partition.
    * 
-   * @param partitionSortKeyProvider  The partition and sort key of the existing item.
+   * @param partitionKeyProvider  The partition key.
    * @param trace                     Trace context.
    */
   void deleteSystemPartitionObjects(IKvPartitionKeyProvider partitionKeyProvider, ITraceContext trace);
@@ -249,6 +252,7 @@ public interface IKvTable extends IFugueComponent
   
   /**
    * Gets the maximum number of items that can be stored in a transaction
+   * @return the transaction limit
    * 
    */
   int getTransactionItemsLimit();

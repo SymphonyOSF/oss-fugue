@@ -51,17 +51,34 @@ public class AwsLambdaResponse extends JsonLambdaResponse
   private ByteArrayOutputStream  outputStream_;
   private ObjectNode headers_;
 
+  /**
+   * Set the response
+   * 
+   * @param statusCode the response http code
+   * @param message      the response message
+   */
   public AwsLambdaResponse(int statusCode, String message)
   {
     setStatus(statusCode);
     setMessage(message);
 }
   
+  /**
+   * Set the response in case of exception
+   * 
+   * @param cause      the exception cause
+   */
   public AwsLambdaResponse(Throwable cause)
   {
     this(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, cause);
   }
   
+  /**
+   * Set the response in case of exception
+   * 
+   * @param statusCode the response http code
+   * @param cause      the exception cause
+   */
   public AwsLambdaResponse(int statusCode, Throwable cause)
   {
     setStatus(statusCode);
@@ -119,6 +136,11 @@ public class AwsLambdaResponse extends JsonLambdaResponse
     return outputStream_;
   }
 
+  /**
+   * Set the response status code
+   * 
+   * @param statusCode the reponse http code
+   */
   public void setStatus(int statusCode)
   {
     put(RESPONSE_STATUS, statusCode);
@@ -129,11 +151,22 @@ public class AwsLambdaResponse extends JsonLambdaResponse
     //put(RESPONSE_MESSAGE, message);
   }
   
+  /**
+   * Set the content type
+   * 
+   * @param contentType The content type (es. text/plain)
+   */
   public void setContentType(String contentType)
   {
     setHeader("Content-Type", contentType);
   }
   
+  /**
+   *  Add an header to the response
+   * 
+   * @param name The header field
+   * @param value The header value
+   */
   public synchronized void setHeader(String name, String value)
   {
     if(headers_ == null)
