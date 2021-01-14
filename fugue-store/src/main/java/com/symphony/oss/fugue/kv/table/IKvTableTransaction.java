@@ -59,6 +59,12 @@ public interface IKvTableTransaction
   void update(IKvPartitionSortKeyProvider partitionSortKeyProvider, Hash absoluteHash, Set<IKvItem> kvItems);
 
 
+  /**
+   * Commits the transaction.
+   * 
+   * @param trace
+   * @throws TransactionFailedException
+   */
   void commit(ITraceContext trace) throws TransactionFailedException;
   
 }
