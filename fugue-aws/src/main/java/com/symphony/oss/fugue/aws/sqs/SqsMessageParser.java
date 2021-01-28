@@ -22,12 +22,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class SqsMessageParser
 {
+  private static final Logger log_   = LoggerFactory.getLogger(SqsMessageParser.class);
+
   static ObjectMapper mapper = new ObjectMapper();
 
   public static List<SqsResponseMessage> parse(String json)
@@ -39,17 +44,21 @@ public class SqsMessageParser
     {
       tree = mapper.readTree(json);
 
-      JsonNode error = tree.get("Error");
-       if (error != null)
-        throw new IllegalStateException("Received SQS Message: " + json);
-       
-      JsonNode message = tree.get("message");
-       if (message != null)
-        throw new IllegalStateException("Received SQS Message: " + json);
+//      JsonNode error = tree.get("Error");
+//       if (error != null)
+//        throw new IllegalStateException("Received SQS Message: " + json);
+//       
+//      JsonNode message = tree.get("message");
+//       if (message != null)
+//        throw new IllegalStateException("Received SQS Message: " + json);
 
       JsonNode response = tree.get("ReceiveMessageResponse");
       if(response == null)
+      {
+        log_.error("Received invalid SQS response: " + json);
+        
         return new ArrayList<>();
+      }
       JsonNode result = response.get("ReceiveMessageResult");
 
       messages = result.get("messages");
