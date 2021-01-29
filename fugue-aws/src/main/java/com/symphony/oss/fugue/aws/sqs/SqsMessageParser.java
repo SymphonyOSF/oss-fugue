@@ -55,7 +55,10 @@ public class SqsMessageParser
       JsonNode response = tree.get("ReceiveMessageResponse");
       if(response == null)
       {
-        log_.error("Received invalid SQS response: " + json);
+        if(tree.get("DeleteMessageResponse") == null)
+        {
+          log_.error("Received invalid SQS response: " + json);
+        }
         
         return new ArrayList<>();
       }
