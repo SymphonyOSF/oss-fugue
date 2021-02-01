@@ -3326,7 +3326,7 @@ public abstract class AwsFugueDeploy extends FugueDeploy
       private String        apiGatewayPrivateDomainName_;
       private String        apiGatewayPrivateTargetDomain_;
 
-      private boolean       deploy_;
+      private boolean       deploy_ = true;
       private boolean       createStage_;
 
       ApiGatewayManager(String name, String stageName, boolean createIfNecessary, boolean isPublic)
