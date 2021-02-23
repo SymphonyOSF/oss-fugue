@@ -690,7 +690,7 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
     {
       DeleteConsumer deleteConsumer = new DeleteConsumer(absoluteHashPrefix);
       
-      after = doFetchPartitionObjects(versionPartitionKey, true, 12, after, null, null, null, deleteConsumer, trace).getAfter();
+      after = doFetchPartitionObjects(versionPartitionKey, true, 12, after, null, null, null, null, null, null, null, deleteConsumer, trace).getAfter();
       
       deleteConsumer.dynamoBatchWrite();
     } while (after != null);
@@ -715,7 +715,7 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
     {
       DeleteSystemObjectConsumer deleteConsumer = new DeleteSystemObjectConsumer();
       
-      after = doFetchPartitionObjects(partitionKeyProvider, true, 24, after, null, null, null, deleteConsumer, trace).getAfter();
+      after = doFetchPartitionObjects(partitionKeyProvider, true, 24, after, null, null, null, null, null, null, null, deleteConsumer, trace).getAfter();
       
       deleteConsumer.dynamoBatchWrite();
     } while (after != null);
@@ -1900,19 +1900,35 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
   public IKvPagination fetchPartitionObjects(IKvPartitionKeyProvider partitionKey, boolean scanForwards, Integer limit, 
       @Nullable String after,
       @Nullable String sortKeyPrefix,
+      @Nullable String sortKeyPrefixMinExclusive,
+      @Nullable String sortKeyPrefixMinInclusive,
+      @Nullable String sortKeyPrefixMaxExclusive, 
+      @Nullable String sortKeyPrefixMaxInclusive,
       @Nullable Map<String, Object> filterAttributes,
       Consumer<String> consumer, ITraceContext trace)
   {
-    return doFetchPartitionObjects(partitionKey, scanForwards, limit, after, sortKeyPrefix, filterAttributes, null, new PartitionConsumer(consumer), trace);
+    return doFetchPartitionObjects(partitionKey, scanForwards, limit, after, sortKeyPrefix,  
+        sortKeyPrefixMinExclusive,
+        sortKeyPrefixMinInclusive,
+        sortKeyPrefixMaxExclusive,
+        sortKeyPrefixMaxInclusive, filterAttributes, null, new PartitionConsumer(consumer), trace);
   }
   @Override
   public IKvPagination fetchPartitionObjects(IKvPartitionKeyProvider partitionKey, boolean scanForwards, Integer limit, 
       @Nullable String after,
       @Nullable String sortKeyPrefix,
+      @Nullable String sortKeyPrefixMinExclusive,
+      @Nullable String sortKeyPrefixMinInclusive,
+      @Nullable String sortKeyPrefixMaxExclusive, 
+      @Nullable String sortKeyPrefixMaxInclusive,
       @Nullable Map<String, Object> filterAttributes,
       BiConsumer<String, String> consumer, ITraceContext trace)
   {
-    return doFetchPartitionObjects(partitionKey, scanForwards, limit, after, sortKeyPrefix, filterAttributes, consumer, null, trace);
+    return doFetchPartitionObjects(partitionKey, scanForwards, limit, after, sortKeyPrefix,        
+        sortKeyPrefixMinExclusive,
+        sortKeyPrefixMinInclusive,
+        sortKeyPrefixMaxExclusive,
+        sortKeyPrefixMaxInclusive, filterAttributes, consumer, null, trace);
   }
   
   private static final int API_GATEWAY_SIZE_LIMIT = 5 * 1024 * 1024;
@@ -1920,6 +1936,10 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
   private IKvPagination doFetchPartitionObjects(IKvPartitionKeyProvider partitionKey, boolean scanForwards, Integer limit, 
       @Nullable String after,
       @Nullable String sortKeyPrefix,
+      @Nullable String sortKeyPrefixMinExclusive,
+      @Nullable String sortKeyPrefixMinInclusive,
+      @Nullable String sortKeyPrefixMaxExclusive, 
+      @Nullable String sortKeyPrefixMaxInclusive,
       @Nullable Map<String, Object> filterAttributes,
       BiConsumer<String, String> stringConsumer, AbstractItemConsumer itemConsumer, ITraceContext trace)
   {
@@ -1937,6 +1957,30 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
       {
         keyConditionExpression += " and begins_with(" + ColumnNameSortKey + ", :v_sortKeyPrefix)";
         valueMap.put(":v_sortKeyPrefix", sortKeyPrefix);
+      }
+      else
+      {
+        if (sortKeyPrefixMinExclusive != null)
+        {
+          keyConditionExpression += " and " + ColumnNameSortKey + " > :v_sortKeyMin";
+          valueMap.put(":v_sortKeyMin", sortKeyPrefixMinExclusive);
+        }
+        else if (sortKeyPrefixMinInclusive != null)
+        {
+          keyConditionExpression += " and " + ColumnNameSortKey + " >= :v_sortKeyMin";
+          valueMap.put(":v_sortKeyMin", sortKeyPrefixMinInclusive);
+        }
+        
+        if (sortKeyPrefixMaxExclusive != null)
+        {
+          keyConditionExpression += " and " + ColumnNameSortKey + " < :v_sortKeyMax";
+          valueMap.put(":v_sortKeyMax", sortKeyPrefixMaxExclusive);
+        }
+        else if (sortKeyPrefixMaxInclusive != null)
+        {
+          keyConditionExpression += " and " + ColumnNameSortKey + " <= :v_sortKeyMax";
+          valueMap.put(":v_sortKeyMax", sortKeyPrefixMaxInclusive);
+        }
       }
       
       StringBuilder filter = null;
