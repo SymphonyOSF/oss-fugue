@@ -717,7 +717,8 @@ public void start()
 
   @Override
   public IKvPagination fetchPartitionObjects(IKvPartitionKeyProvider partitionKeyProvider, boolean scanForwards, Integer limit,
-      String after, String sortKeyPrefix,
+      String after, String sortKeyPrefix, String sortKeyPrefixMinExclusive, String sortKeyPrefixMinInclusive,
+      String sortKeyPrefixMaxExclusive, String sortKeyPrefixMaxInclusive,
       @Nullable Map<String, Object> filterAttributes, Consumer<String> consumer, ITraceContext trace)
   {
     String partitionKey = getPartitionKey(partitionKeyProvider);
@@ -784,7 +785,8 @@ public void start()
   
   @Override
   public IKvPagination fetchPartitionObjects(IKvPartitionKeyProvider partitionKeyProvider, boolean scanForwards, Integer limit,
-      String after, String sortKeyPrefix, Map<String, Object> filterAttributes, BiConsumer<String, String> consumer,
+      String after, String sortKeyPrefix, String sortKeyPrefixMinExclusive, String sortKeyPrefixMinInclusive,
+      String sortKeyPrefixMaxExclusive, String sortKeyPrefixMaxInclusive, Map<String, Object> filterAttributes, BiConsumer<String, String> consumer,
       ITraceContext trace)
   {
     String partitionKey = getPartitionKey(partitionKeyProvider);
