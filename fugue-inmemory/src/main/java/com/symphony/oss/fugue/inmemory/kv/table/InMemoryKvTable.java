@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
+import java.util.NavigableSet;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
@@ -749,10 +750,11 @@ public void start()
       limit = 100;
     
     int available = map.entrySet().size();
+    NavigableSet<String> keys = map.navigableKeySet();
     
     for(Entry<String, IKvItem> entry : map.entrySet())
     {
-      boolean ok = (sortKeyPrefix == null || entry.getKey().startsWith(sortKeyPrefix));
+      boolean ok = checkKey(sortKeyPrefix, sortKeyMin, sortKeyMax, entry.getKey());
       
       if(ok && filterAttributes != null)
       {
@@ -780,6 +782,25 @@ public void start()
     }
         
     return new KvPagination(before, null);
+  }
+  
+  private boolean checkKey(String sortKeyPrefix, String sortKeyMin, String sortKeyMax, String key)
+  {
+    boolean ret = false;
+
+    if (sortKeyMin != null || sortKeyMax != null)
+    {
+      ret = (sortKeyMin == null || key.compareTo(sortKeyMin) >= 0)
+          && (sortKeyMax == null || key.compareTo(sortKeyMax) <= 0);
+    }
+    else if (sortKeyPrefix != null)
+    {
+      ret = key.startsWith(sortKeyPrefix);
+    }
+    else
+      ret = true;
+
+    return ret;
   }
   
   @Override
@@ -819,7 +840,7 @@ public void start()
     
     for(Entry<String, IKvItem> entry : map.entrySet())
     {
-      boolean ok = (sortKeyPrefix == null || entry.getKey().startsWith(sortKeyPrefix));
+      boolean ok = checkKey(sortKeyPrefix, sortKeyMin, sortKeyMax, entry.getKey());
       
       if(ok && filterAttributes != null)
       {
