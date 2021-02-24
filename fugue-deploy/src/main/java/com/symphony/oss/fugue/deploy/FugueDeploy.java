@@ -28,6 +28,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -149,11 +150,14 @@ public abstract class FugueDeploy extends CommandLineHandler
   private static final String     IMAGE               = "image";
 
   private static final String     DNS_SUFFIX          = "dnsSuffix";
+  private static final String     RATE                = "gatewayApiRate";
+  private static final String     BURST               = "gatewayApiBurst";
   private static final String     PUBLIC_DNS_SUFFIX   = "publicDnsSuffix";
   private static final String     CONFIG_FILTER       = "configFilter";
-
+  
   private final String            cloudServiceProvider_;
   private final ConfigProvider    provider_;
+  private final ArtifactHelper    artifactHelper_;
   private final ConfigHelper[]    helpers_;
 
   private String                  track_;
@@ -189,35 +193,41 @@ public abstract class FugueDeploy extends CommandLineHandler
   
   protected abstract void validateAccount(IJsonObject<?> config);
   protected DomSerializer domDerializer_ = DomSerializer.newBuilder().withCompactMode(true).build();
+  protected Double          gatewayApiRate_;
+  protected Integer         gatewayApiBurst_;
   
   /**
    * Constructor.
    * 
    * @param cloudServiceProvider  Name of the CSP "amazon" or "google".
-   * @param provider              A config provider.
+   * @param provider              A config provider.  
+   * @param artifactHelper        A helper for downloading artifacts
    * @param helpers               Zero or more config helpers.
    */
-  public FugueDeploy(String cloudServiceProvider, ConfigProvider provider, ConfigHelper ...helpers)
+  public FugueDeploy(String cloudServiceProvider, ConfigProvider provider, ArtifactHelper artifactHelper, ConfigHelper ...helpers)
   {
     cloudServiceProvider_ = cloudServiceProvider;
     provider_ = provider;
+    artifactHelper_ = artifactHelper;
     helpers_ = helpers == null ? new ConfigHelper[0] : helpers;
     
-    withFlag(null,  TRACK,                "FUGUE_TRACK",                String.class,   false, false,   (v) -> track_               = v);
-    withFlag(null,  STATION,              "FUGUE_STATION",              String.class,   false, false,   (v) -> station_             = v);
-    withFlag('s',   SERVICE,              "FUGUE_SERVICE",              String.class,   false, false,   (v) -> service_             = v);
-    withFlag('v',   ENVIRONMENT_TYPE,     "FUGUE_ENVIRONMENT_TYPE",     String.class,   false, false,   (v) -> environmentType_     = v);
-    withFlag('e',   ENVIRONMENT,          "FUGUE_ENVIRONMENT",          String.class,   false, false,   (v) -> environment_         = v);
-    withFlag('g',   REGION,               "FUGUE_REGION",               String.class,   false, false,   (v) -> region_              = v);
-    withFlag('p',   POD_NAME,             "FUGUE_POD_NAME",             String.class,   false, false,   (v) -> podName_             = v);
-    withFlag('a',   ACTION,               "FUGUE_ACTION",               String.class,   false, true,    (v) -> setAction(v));
-    withFlag('E',   "primaryEnvironment", "FUGUE_PRIMARY_ENVIRONMENT",  Boolean.class,  false, false,   (v) -> primaryEnvironment_  = v);
-    withFlag('G',   "primaryRegion",      "FUGUE_PRIMARY_REGION",       Boolean.class,  false, false,   (v) -> primaryRegion_       = v);
-    withFlag('d',   "dryRun",             "FUGUE_DRY_RUN",              Boolean.class,  false, false,   (v) -> dryRun_              = v);
-    withFlag('i',   "instances",          "FUGUE_INSTANCES",            String.class,   false, false,   (v) -> instances_           = v);
-    withFlag('b',   BUILD_ID,             "FUGUE_BUILD_ID",             String.class,   false, false,   (v) -> buildId_             = v);
-    
+    withFlag(null,  TRACK,                "FUGUE_TRACK",                String.class,   true, false,   (v) -> track_               = v);
+    withFlag(null,  STATION,              "FUGUE_STATION",              String.class,   true, false,   (v) -> station_             = v);
+    withFlag('s',   SERVICE,              "FUGUE_SERVICE",              String.class,   true, false,   (v) -> service_             = v);
+    withFlag('v',   ENVIRONMENT_TYPE,     "FUGUE_ENVIRONMENT_TYPE",     String.class,   true, false,   (v) -> environmentType_     = v);
+    withFlag('e',   ENVIRONMENT,          "FUGUE_ENVIRONMENT",          String.class,   true, false,   (v) -> environment_         = v);
+    withFlag('g',   REGION,               "FUGUE_REGION",               String.class,   true, false,   (v) -> region_              = v);
+    withFlag('p',   POD_NAME,             "FUGUE_POD_NAME",             String.class,   true, false,   (v) -> podName_             = v);
+    withFlag('a',   ACTION,               "FUGUE_ACTION",               String.class,   true, true,    (v) -> setAction(v));
+    withFlag('E',   "primaryEnvironment", "FUGUE_PRIMARY_ENVIRONMENT",  Boolean.class,  true, false,   (v) -> primaryEnvironment_  = v);
+    withFlag('G',   "primaryRegion",      "FUGUE_PRIMARY_REGION",       Boolean.class,  true, false,   (v) -> primaryRegion_       = v);
+    withFlag('d',   "dryRun",             "FUGUE_DRY_RUN",              Boolean.class,  true, false,   (v) -> dryRun_              = v);
+    withFlag('i',   "instances",          "FUGUE_INSTANCES",            String.class,   true, false,   (v) -> instances_           = v);
+    withFlag('b',   BUILD_ID,             "FUGUE_BUILD_ID",             String.class,   true, false,   (v) -> buildId_             = v);
+     
     provider_.init(this);
+    
+    artifactHelper.init(this);
     
     for(ConfigHelper helper : helpers_)
       helper.init(this);
@@ -378,7 +388,7 @@ public abstract class FugueDeploy extends CommandLineHandler
     if(podName_ != null && !tenantContextMap_.containsKey(podName_))
       tenantContextMap_.put(podName_, createContext(podName_, createNameFactory(environmentType_, environment_, region_, podName_, null, service_)));
 
-    log_.info("FugueDeploy v3.2");
+    log_.info("FugueDeploy v3.3");
     log_.info("ACTION           = " + action_);
     log_.info("ENVIRONMENT_TYPE = " + environmentType_);
     log_.info("ENVIRONMENT      = " + environment_);
@@ -441,6 +451,8 @@ public abstract class FugueDeploy extends CommandLineHandler
     validateAccount(multiTenantConfig);
     
     dnsSuffix_      = multiTenantConfig.getRequiredString(DNS_SUFFIX);
+    gatewayApiRate_ = multiTenantConfig.getRequiredDouble(RATE);
+    gatewayApiBurst_= multiTenantConfig.getRequiredInteger(BURST);
     publicDnsSuffix_= multiTenantConfig.getRequiredString(PUBLIC_DNS_SUFFIX);
     
     
@@ -580,7 +592,7 @@ public abstract class FugueDeploy extends CommandLineHandler
           
           Map<ContainerType, Map<String, JsonObject<?>>>  containerMap;
           Collection<String> paths = 
-              containerType==ContainerType.LAMBDA ?     // FIXME: remove when we move service endpoints to ApiGateway
+              containerType==ContainerType.LAMBDA || containerType==ContainerType.LAMBDA_INIT ?     // FIXME: remove when we move service endpoints to ApiGateway
               container.getListOf(String.class, PATHS)
               : new ArrayList<>();
           
@@ -1088,6 +1100,8 @@ public abstract class FugueDeploy extends CommandLineHandler
 
     protected abstract void saveConfig();
     
+    protected abstract OutputStream getStorageOutputStream(String filename);
+    
     protected abstract void deleteConfig();
     
     protected abstract void deleteRole(String roleName);
@@ -1105,8 +1119,11 @@ public abstract class FugueDeploy extends CommandLineHandler
     protected abstract void deployLambdaContainer(String name, String imageName, String roleId, String handler, int memorySize, int timeout, 
         int provisionedConcurrentExecutions, Map<String, String> variables, Collection<String> paths);
     protected abstract void postDeployLambdaContainer(String name, Collection<String> paths, Collection<Subscription> subscriptions);
+    protected abstract void executeLambdaContainer(String name);
+    protected abstract void cleanupLambdaContainerStorage(String name);
     protected abstract void postDeployExternalLambdaContainer(String name, String arn, Collection<String> paths);
     protected abstract void postDeployExternalHttpContainer(String name, String url, Collection<String> paths);
+    protected abstract void postDeployApiIntegrationContainer(String name, JsonObject<?> jsonObject);
     protected abstract void postDeployContainers();
     
     protected abstract void deployService();
@@ -1446,6 +1463,12 @@ public abstract class FugueDeploy extends CommandLineHandler
           deployInitContainer(name, port, paths, healthCheckPath, roleName, imageName, jvmHeap, memory);
         }
       }
+    Map<String, JsonObject<?>> lambdaContainerMap = containerMap_.get(ContainerType.LAMBDA);
+      
+      if(action_.isDeploy_ && lambdaContainerMap != null && !lambdaContainerMap.isEmpty())
+      {
+         deployLambdaContainers(new SerialBatch<Runnable>(), ContainerType.LAMBDA_INIT, true);
+      }
     }
     
     protected void undeployInitContainers()
@@ -1505,7 +1528,7 @@ public abstract class FugueDeploy extends CommandLineHandler
   
         deployDockerContainers(batch, ContainerType.SERVICE,    false);
         deployDockerContainers(batch, ContainerType.SCHEDULED,  true);
-        deployLambdaContainers(batch, ContainerType.LAMBDA);
+        deployLambdaContainers(batch, ContainerType.LAMBDA   ,  false);
         
         
         if(action_.isUndeploy_)
@@ -1515,7 +1538,7 @@ public abstract class FugueDeploy extends CommandLineHandler
       }
     }
     
-    private void deployLambdaContainers(IBatch<Runnable> batch, ContainerType containerType)
+    private void deployLambdaContainers(IBatch<Runnable> batch, ContainerType containerType, boolean invoke)
     {
       Map<String, JsonObject<?>> map = containerMap_.get(containerType);
       
@@ -1547,19 +1570,61 @@ public abstract class FugueDeploy extends CommandLineHandler
               putFugueConfig(environment);
               
             }
+            if(!environment.containsKey("FUGUE_ACTION"))
+            {
+              environment.put("FUGUE_ACTION", action_.name());       
+            }
+            
+            if(!environment.containsKey("FUGUE_DRY_RUN"))
+            {
+              environment.put("FUGUE_DRY_RUN", Boolean.toString(dryRun_));       
+            }
             
             Collection<String> paths = container.getListOf(String.class, PATHS);
             
+            int provisionedCapacity = 0;
+            IJsonDomNode node = container.get(PROVISIONED_CONCURRENCY);
+
+            if(node instanceof IIntegerProvider)
+            {
+              provisionedCapacity = ((IIntegerProvider) node).asInteger();
+            }
+            else if(node instanceof IStringProvider)
+            {
+              String s = ((IStringProvider) node).asString();
+              
+              StringSubstitutor sub = new StringSubstitutor(templateVariables_);
+              s = sub.replace(s);
+              
+              provisionedCapacity = Integer.parseInt(s);
+            }
+           
+            log_.info("About to upload " + name + " version " + buildId_);
+            try(OutputStream out = getStorageOutputStream(ArtifactHelper.getFilename(name, buildId_)))
+            {
+              artifactHelper_.fetchArtifact(name, buildId_, out);
+            }
+            catch (IOException e)
+            {
+              throw new IllegalStateException("Error while using getting the output stream ", e);
+            }
+   
             deployLambdaContainer(name,
                 container.getString(IMAGE, name),
                 container.getRequiredString(ROLE),
                 container.getRequiredString(HANDLER),
                 container.getRequiredInteger(MEMORY),
                 container.getRequiredInteger(TIMEOUT),
-                container.getInteger(PROVISIONED_CONCURRENCY, 0),
+                provisionedCapacity,
                 environment,
                 paths
                 );
+            
+           cleanupLambdaContainerStorage(name);
+            
+            if(invoke) 
+              executeLambdaContainer(name);
+            
           });
         }
       }
@@ -1572,6 +1637,7 @@ public abstract class FugueDeploy extends CommandLineHandler
         postDeployLambdaContainers(ContainerType.LAMBDA);
         postDeployExternalLambdaContainers(ContainerType.EXTERNAL_LAMBDA);
         postDeployExternalHttpContainers(ContainerType.EXTERNAL_HTTP);
+        postDeployApiIntegrationContainers(ContainerType.API_INTEGRATION);
       }
       postDeployContainers();
     }
@@ -1616,6 +1682,19 @@ public abstract class FugueDeploy extends CommandLineHandler
           postDeployExternalLambdaContainer(name, arn,
               paths
               );
+        }
+      }
+    }
+
+    private void postDeployApiIntegrationContainers(ContainerType containerType)
+    {
+      Map<String, JsonObject<?>> map = containerMap_.get(containerType);
+      
+      if(map != null)
+      {
+        for(String name : map.keySet())
+        {
+          postDeployApiIntegrationContainer(name, map.get(name));
         }
       }
     }

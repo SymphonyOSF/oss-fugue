@@ -40,4 +40,5 @@ public abstract class Subscription
   }
 
   public abstract void create(String functionName);
+  public abstract String getSource();
 }

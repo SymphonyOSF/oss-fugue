@@ -34,10 +34,12 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.management.RuntimeErrorException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,6 +105,7 @@ import com.symphony.oss.fugue.kv.IKvPartitionKeyProvider;
 import com.symphony.oss.fugue.kv.IKvPartitionSortKeyProvider;
 import com.symphony.oss.fugue.kv.KvCondition;
 import com.symphony.oss.fugue.kv.KvPagination;
+import com.symphony.oss.fugue.kv.KvPartitionUser;
 import com.symphony.oss.fugue.kv.table.AbstractKvTable;
 import com.symphony.oss.fugue.kv.table.IKvTableTransaction;
 import com.symphony.oss.fugue.store.NoSuchObjectException;
@@ -144,18 +147,18 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
   protected final String              objectTableName_;
   protected final int                 payloadLimit_;
   protected final boolean             validate_;
-  protected final boolean             enableSecondaryStorage_;
   protected final StreamSpecification streamSpecification_;
+  
+  private static final int MAX_TRANSACTION_SIZE = 25;
   
   protected AbstractDynamoDbKvTable(AbstractBuilder<?,?> builder)
   {
     super(builder);
     
-    region_ = builder.region_;
-    payloadLimit_ = builder.payloadLimit_;
-    validate_ = builder.validate_;
-    enableSecondaryStorage_ = builder.enableSecondaryStorage_;
-    streamSpecification_ = builder.streamSpecification_;
+    region_                 = builder.region_;
+    payloadLimit_           = builder.payloadLimit_ != null ? builder.payloadLimit_ : MAX_RECORD_SIZE ;
+    validate_               = builder.validate_;
+    streamSpecification_    = builder.streamSpecification_;
   
     log_.info("Starting storage...");
     
@@ -323,6 +326,56 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
       throw new IllegalStateException(e);
     }
   }
+  
+  @Override
+  public void storeNonTransactional(Collection<IKvItem> kvItems, ITraceContext trace)
+  {
+    ArrayList<UpdateOrPut> itemsToPut = new ArrayList<>();
+
+    List<Item> items = new ArrayList<>();
+    for (IKvItem kvItem : kvItems)
+    {
+      String partitionKey = getPartitionKey(kvItem);
+      String sortKey = kvItem.getSortKey().asString();
+        
+      UpdateOrPut updateOrPut = new UpdateOrPut(kvItem, partitionKey, sortKey, payloadLimit_);
+      
+      items.add(ItemUtils.toItem(updateOrPut.updateItem_).withPrimaryKey(new PrimaryKey(
+          new KeyAttribute(ColumnNamePartitionKey,  partitionKey.toString()),
+          new KeyAttribute(ColumnNameSortKey,       sortKey.toString())
+          )));
+
+    }
+    
+    
+    TableWriteItems tableWriteItems = new TableWriteItems(objectTable_.getTableName())
+          .withItemsToPut(items);
+    
+    BatchWriteItemOutcome outcome = dynamoDB_.batchWriteItem(tableWriteItems);
+
+    long                          delay                 = 4;
+    Map<String, List<WriteRequest>> unprocessedItems = outcome.getUnprocessedItems();
+
+    while(outcome.getUnprocessedItems().size()>0)
+    {
+        log_.info("Retry " + unprocessedItems.size()  + " unprocessed items after " + delay + "ms.");
+        try
+        {
+          Thread.sleep(delay);
+
+          if (delay < 1000)
+            delay *= 1.2;
+        }
+        catch (InterruptedException e)
+        {
+          log_.warn("Sleep interrupted", e);
+        }
+        
+        unprocessedItems = dynamoDB_.batchWriteItemUnprocessed(unprocessedItems).getUnprocessedItems();
+
+    }
+  }
+
 
 //  @Override
 //  public void store(@Nullable IKvPartitionSortKeyProvider partitionSortKeyProvider, Collection<IKvItem> kvItems, ITraceContext trace) throws ObjectExistsException
@@ -440,6 +493,70 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
       }
     }
   }
+  
+  @Override
+  public void storeEntitlementMapping(IKvItem kvItem, KvCondition effective, KvCondition entAction, String action, ITraceContext trace)
+  {  
+    Hash        absoluteHash = kvItem.getAbsoluteHash();
+    List<TransactWriteItem> actions = new ArrayList<>(1);
+    Hash secondaryStoredHash = null;
+    
+    String partitionKey = getPartitionKey(kvItem);
+    String sortKey = kvItem.getSortKey().asString();
+    
+    UpdateOrPut updateOrPut = new UpdateOrPut(kvItem, partitionKey, sortKey, payloadLimit_);
+    
+    if(kvItem.isSaveToSecondaryStorage())
+    {
+      if(storeToSecondaryStorage(kvItem, updateOrPut.payloadNotStored_, trace))
+        secondaryStoredHash = kvItem.getAbsoluteHash();
+    }
+    
+    String expression = "attribute_not_exists("+effective.getName()+") OR "+effective.getName()+" < :a"
+                        +" and "
+                        +"( "
+                        +" ("
+                        +"  attribute_not_exists("+entAction.getName()+") "
+                        +"  AND "
+                        +"  :b = "+action
+                        +")"
+                        +" or "
+                        +"("+entAction.getName()+" <> :b)"
+                        +")";
+    
+    HashMap<String, AttributeValue> values = new HashMap<>();
+    values.put(":a", new AttributeValue(effective.getValue()));
+    values.put(":b", new AttributeValue(entAction.getValue()));
+    
+    Put put = updateOrPut
+        .createPut()
+        .withConditionExpression(expression)
+        .withExpressionAttributeValues(values);
+    
+    actions.add(new TransactWriteItem().withPut(put));
+    
+    try
+    {
+      trace.trace("ABOUT_TO_STORE_CONDITIONAL", kvItem);
+      write(actions, absoluteHash.toStringBase64(), "Conditions not met.", trace);
+      trace.trace("STORED_CONDITIONAL", kvItem);
+    }
+    catch (NoSuchObjectException e)
+    {
+      trace.trace("FAILED_TO_STORE_CONDITIONAL", kvItem);
+      if(secondaryStoredHash != null)
+      {
+        try
+        {
+          deleteFromSecondaryStorage(secondaryStoredHash, trace);
+        }
+        catch(RuntimeException e2)
+        {
+          log_.error("Failed to delete secondary copy of " + secondaryStoredHash, e2);
+        }
+      }
+    }
+  }
 
   class Condition
   {
@@ -459,35 +576,10 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
     }
   }
   
-  class DeleteConsumer extends AbstractItemConsumer
-  {
+  abstract class AbstractDeleteConsumer extends AbstractItemConsumer
+  {  
     List<PrimaryKey>            primaryKeysToDelete_ = new ArrayList<>(24);
     IKvPartitionSortKeyProvider absoluteHashPrefix_;
-    
-    public DeleteConsumer(IKvPartitionSortKeyProvider absoluteHashPrefix)
-    {
-      absoluteHashPrefix_ = absoluteHashPrefix;
-    }
-
-    @Override
-    void consume(Item item, ITraceContext trace)
-    {
-      primaryKeysToDelete_.add(new PrimaryKey(
-          new KeyAttribute(ColumnNamePartitionKey,  item.getString(ColumnNamePartitionKey)),
-          new KeyAttribute(ColumnNameSortKey,       item.getString(ColumnNameSortKey))
-          )
-        );
-      
-      Hash absoluteHash = Hash.newInstance(item.getString(ColumnNameAbsoluteHash));
-      
-      primaryKeysToDelete_.add(new PrimaryKey(
-          new KeyAttribute(ColumnNamePartitionKey,  getPartitionKey(absoluteHashPrefix_) + absoluteHash),
-          new KeyAttribute(ColumnNameSortKey,       absoluteHashPrefix_.getSortKey().asString())
-          )
-        );
-      
-      deleteFromSecondaryStorage(absoluteHash, trace);
-    }
     
     void dynamoBatchWrite()
     {
@@ -535,6 +627,57 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
     }
   }
   
+  class DeleteConsumer extends AbstractDeleteConsumer
+  {
+    
+    public DeleteConsumer(IKvPartitionSortKeyProvider absoluteHashPrefix)
+    {
+      absoluteHashPrefix_ = absoluteHashPrefix;
+    }
+
+    @Override
+    void consume(Item item, ITraceContext trace)
+    {
+      primaryKeysToDelete_.add(new PrimaryKey(
+          new KeyAttribute(ColumnNamePartitionKey,  item.getString(ColumnNamePartitionKey)),
+          new KeyAttribute(ColumnNameSortKey,       item.getString(ColumnNameSortKey))
+          )
+        );
+      
+      Hash absoluteHash = Hash.newInstance(item.getString(ColumnNameAbsoluteHash));
+      
+      primaryKeysToDelete_.add(new PrimaryKey(
+          new KeyAttribute(ColumnNamePartitionKey,  getPartitionKey(absoluteHashPrefix_) + absoluteHash),
+          new KeyAttribute(ColumnNameSortKey,       absoluteHashPrefix_.getSortKey().asString())
+          )
+        );
+      
+      try
+      {
+        deleteFromSecondaryStorage(absoluteHash, trace);
+      }
+      catch(RuntimeException e2)
+      {
+        log_.error("Failed to delete secondary copy of " + absoluteHash, e2);
+      }
+
+    }
+  }
+  
+  class DeleteSystemObjectConsumer extends AbstractDeleteConsumer
+  {
+
+  @Override
+  void consume(Item item, ITraceContext trace)
+  {
+    primaryKeysToDelete_.add(new PrimaryKey(
+        new KeyAttribute(ColumnNamePartitionKey,  item.getString(ColumnNamePartitionKey)),
+        new KeyAttribute(ColumnNameSortKey,       item.getString(ColumnNameSortKey))
+        )
+      );    
+  }
+}
+  
   @Override
   public void delete(IKvPartitionSortKeyProvider partitionSortKeyProvider, 
       IKvPartitionKeyProvider versionPartitionKey, IKvPartitionSortKeyProvider absoluteHashPrefix, ITraceContext trace)
@@ -547,7 +690,7 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
     {
       DeleteConsumer deleteConsumer = new DeleteConsumer(absoluteHashPrefix);
       
-      after = doFetchPartitionObjects(versionPartitionKey, true, 12, after, null, null, deleteConsumer, trace).getAfter();
+      after = doFetchPartitionObjects(versionPartitionKey, true, 12, after, null, null, null, null, null, deleteConsumer, trace).getAfter();
       
       deleteConsumer.dynamoBatchWrite();
     } while (after != null);
@@ -563,6 +706,22 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
         );
   }
   
+  @Override
+  public void deleteSystemPartitionObjects(IKvPartitionKeyProvider partitionKeyProvider, ITraceContext trace)
+  {
+    String after = null;
+    
+    do
+    {
+      DeleteSystemObjectConsumer deleteConsumer = new DeleteSystemObjectConsumer();
+      
+      after = doFetchPartitionObjects(partitionKeyProvider, true, 24, after, null, null, null, null, null, deleteConsumer, trace).getAfter();
+      
+      deleteConsumer.dynamoBatchWrite();
+    } while (after != null);
+
+  }
+    
   @Override
   public void deleteRow(IKvPartitionSortKeyProvider partitionSortKeyProvider, ITraceContext trace)
   {
@@ -627,7 +786,7 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
       catch (NoSuchObjectException e)
       {
         log_.error("Failed to wite objects", e);
-        for(Hash secondaryStoredHash : secondaryStoredHashes)
+         for(Hash secondaryStoredHash : secondaryStoredHashes)
         {
           try
           {
@@ -1736,32 +1895,73 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
       log_.info("Table \"" + objectTableName_ + "\" Does not exist.");
     }
   }
-
+  
   @Override
   public IKvPagination fetchPartitionObjects(IKvPartitionKeyProvider partitionKey, boolean scanForwards, Integer limit, 
       @Nullable String after,
       @Nullable String sortKeyPrefix,
+      @Nullable String sortKeyMin,
+      @Nullable String sortKeyMax,
       @Nullable Map<String, Object> filterAttributes,
       Consumer<String> consumer, ITraceContext trace)
   {
-    return doFetchPartitionObjects(partitionKey, scanForwards, limit, after, sortKeyPrefix, filterAttributes, new PartitionConsumer(consumer), trace);
+    return doFetchPartitionObjects(partitionKey, scanForwards, limit, after, sortKeyPrefix, sortKeyMin, sortKeyMax,
+        filterAttributes, null, new PartitionConsumer(consumer), trace);
   }
+  @Override
+  public IKvPagination fetchPartitionObjects(IKvPartitionKeyProvider partitionKey, boolean scanForwards, Integer limit, 
+      @Nullable String after,
+      @Nullable String sortKeyPrefix,
+      @Nullable String sortKeyMin,
+      @Nullable String sortKeyMax,
+      @Nullable Map<String, Object> filterAttributes,
+      BiConsumer<String, String> consumer, ITraceContext trace)
+  {
+    return doFetchPartitionObjects(partitionKey, scanForwards, limit, after, sortKeyPrefix, sortKeyMin, sortKeyMax,
+        filterAttributes, consumer, null, trace);
+  }
+  
+  private static final int API_GATEWAY_SIZE_LIMIT = 5 * 1024 * 1024;
 
   private IKvPagination doFetchPartitionObjects(IKvPartitionKeyProvider partitionKey, boolean scanForwards, Integer limit, 
       @Nullable String after,
       @Nullable String sortKeyPrefix,
+      @Nullable String sortKeyMin,
+      @Nullable String sortKeyMax,
       @Nullable Map<String, Object> filterAttributes,
-      AbstractItemConsumer consumer, ITraceContext trace)
+      BiConsumer<String, String> stringConsumer, AbstractItemConsumer itemConsumer, ITraceContext trace)
   {
     return doDynamoQueryTask(() ->
     {
+      trace.trace("Preparing request");
+      
       ValueMap valueMap = new ValueMap()
           .withString(":v_partition", getPartitionKey(partitionKey))
           ;
       
       String keyConditionExpression = ColumnNamePartitionKey + " = :v_partition";
       
-      if(sortKeyPrefix != null)
+      if (sortKeyMin != null || sortKeyMax != null)
+      {
+        if (sortKeyMin != null && sortKeyMax != null)
+        {
+          keyConditionExpression += " and " + ColumnNameSortKey + " BETWEEN :v_sortKeyMin and :v_sortKeyMax";
+          valueMap.put(":v_sortKeyMin", sortKeyMin);
+          valueMap.put(":v_sortKeyMax", sortKeyMax);
+        }
+        else if (sortKeyMin != null)
+        {
+          keyConditionExpression += " and " + ColumnNameSortKey + " >= :v_sortKeyMin";
+          valueMap.put(":v_sortKeyMin", sortKeyMin);
+        }
+
+        else
+        {
+          keyConditionExpression += " and " + ColumnNameSortKey + " <= :v_sortKeyMax";
+          valueMap.put(":v_sortKeyMax", sortKeyMax);
+        }
+      }
+      else if (sortKeyPrefix != null)
       {
         keyConditionExpression += " and begins_with(" + ColumnNameSortKey + ", :v_sortKeyPrefix)";
         valueMap.put(":v_sortKeyPrefix", sortKeyPrefix);
@@ -1810,25 +2010,57 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
       }
     
       Map<String, AttributeValue> lastEvaluatedKey = null;
+      trace.trace("Calling query");
       ItemCollection<QueryOutcome> items = objectTable_.query(spec);
+      trace.trace("Preparing loop");
+      int p = 1;
+      int k = 0;
+      int total = 0;
+      
+      int response_body_size = 0;
+      
       String before = null;
       for(Page<Item, QueryOutcome> page : items.pages())
       {
         Iterator<Item> it = page.iterator();
         
+        trace.trace("Read page "+(p++));
+        k = 0;
         while(it.hasNext())
         {
+          k++;
           Item item = it.next();
+          String sortKey = item.getString(ColumnNameSortKey);
           
-          consumer.consume(item, trace);
-          
+          if (stringConsumer != null)
+          {
+            String document = item.getString(ColumnNameDocument);
+
+            response_body_size += document.length();
+            
+            if (response_body_size < API_GATEWAY_SIZE_LIMIT)
+            {          
+              stringConsumer.accept(sortKey, document);
+            }
+            else
+            {     
+              trace.trace("Threshold at:"+ (total+k));
+              return new KvPagination(before, sortKey);
+            }
+          }
+          else
+            itemConsumer.consume(item, trace);
+
           if(before == null && after != null)
           {
-            before = item.getString(ColumnNameSortKey);
+            before = sortKey;
           }
         }
+        trace.trace("Consumed : "+k);
+        total+=k;
       }
-      
+      trace.trace("Fetched total "+total);
+
       if(before == null && after != null)
       {
         before = "";
@@ -1846,6 +2078,79 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
       return new KvPagination(before, null);
     });
   }
+  
+  @Override
+  public IKvPagination fetchPartitionUsers(IKvPartitionKeyProvider partitionKey, Integer limit, 
+      @Nullable String after,
+      Consumer<KvPartitionUser> consumer, ITraceContext trace)
+  {
+    return doFetchPartitionUsers(partitionKey, limit, after, new PartitionUserConsumer(consumer), trace);
+  }
+
+  private IKvPagination doFetchPartitionUsers(IKvPartitionKeyProvider partitionKey, Integer limit, 
+      @Nullable String after,
+      AbstractItemConsumer consumer, ITraceContext trace)
+  {
+	    ValueMap valueMap = new ValueMap()
+	            .withString(":v_partition", getPartitionKey(partitionKey))
+	            ;
+	        
+	        String keyConditionExpression = ColumnNamePartitionKey + " = :v_partition";
+	        
+	        QuerySpec spec = new QuerySpec()
+	            .withKeyConditionExpression(keyConditionExpression)
+	            .withValueMap(valueMap);
+	            
+	        
+	        if(limit != null)
+	        {
+	          spec.withMaxResultSize(limit);
+	        }
+	        
+	        if(after != null && after.length()>0)
+	        {
+	          spec.withExclusiveStartKey(
+	              new KeyAttribute(ColumnNamePartitionKey, getPartitionKey(partitionKey)),
+	              new KeyAttribute(ColumnNameSortKey,      after)
+	              );
+	        }
+	      
+	        Map<String, AttributeValue> lastEvaluatedKey = null;
+	        ItemCollection<QueryOutcome> items = objectTable_.query(spec);
+	        String before = null;
+	        for(Page<Item, QueryOutcome> page : items.pages())
+	        {
+	          Iterator<Item> it = page.iterator();
+	          
+	          while(it.hasNext())
+	          {
+	            Item item = it.next();
+	            
+	            consumer.consume(item, trace);
+	            
+	            if(before == null && after != null)
+	            {
+	              before = item.getString(ColumnNameSortKey);
+	            }
+	          }
+	        }
+	        
+	        if(before == null && after != null)
+	        {
+	          before = "";
+	        }
+	        
+	        lastEvaluatedKey = items.getLastLowLevelResult().getQueryResult().getLastEvaluatedKey();
+	        
+	        if(lastEvaluatedKey != null)
+	        {
+	          AttributeValue sequenceKeyAttr = lastEvaluatedKey.get(ColumnNameSortKey);
+	          
+	          return new KvPagination(before, sequenceKeyAttr.getS());
+	        }
+	        
+	        return new KvPagination(before, null);
+   };
 
   abstract class AbstractItemConsumer
   {
@@ -1884,13 +2189,50 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
       consumer_.accept(payloadString);
     }
   }
+  
+  class PartitionUserConsumer extends AbstractItemConsumer
+  {
+    Consumer<KvPartitionUser> consumer_;
+    
+    PartitionUserConsumer(Consumer<KvPartitionUser> consumer)
+    {
+      consumer_ = consumer;
+    }
+    @Override
+    void consume(Item item, ITraceContext trace)
+    {
+      String payloadString = item.getString(ColumnNameDocument);
+      
+      if(payloadString == null)
+      {
+        String hashString = item.getString(ColumnNameAbsoluteHash);
+        Hash absoluteHash = Hash.newInstance(hashString);
+        
+        try
+        {
+          payloadString = fetchFromSecondaryStorage(absoluteHash, trace);
+        }
+        catch (NoSuchObjectException e)
+
+        {
+          throw new IllegalStateException("Unable to read known object from S3", e);
+
+        }
+      }
+      
+      String sortKey = item.getString(ColumnNameSortKey);
+      consumer_.accept(new KvPartitionUser(sortKey, payloadString));
+
+    }
+  }
+  
 
   protected static abstract class AbstractBuilder<T extends AbstractBuilder<T,B>, B extends AbstractDynamoDbKvTable<B>> extends AbstractKvTable.AbstractBuilder<T,B>
   {
     protected final AmazonDynamoDBClientBuilder amazonDynamoDBClientBuilder_;
 
     protected String              region_;
-    protected int                 payloadLimit_           = MAX_RECORD_SIZE;
+    protected Integer             payloadLimit_           = MAX_RECORD_SIZE;
     protected boolean             validate_               = true;
     protected boolean             enableSecondaryStorage_ = false;
 
@@ -1939,10 +2281,10 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
       return self();
     }
 
-    public T withPayloadLimit(int payloadLimit)
+    public T withPayloadLimit(Integer payloadLimit)
     {
-      payloadLimit_ = Math.min(payloadLimit, MAX_RECORD_SIZE);
-      
+      payloadLimit_ = payloadLimit == null ? MAX_RECORD_SIZE : Math.min(payloadLimit, MAX_RECORD_SIZE);
+
       return self();
     }
 
@@ -1953,4 +2295,11 @@ public abstract class AbstractDynamoDbKvTable<T extends AbstractDynamoDbKvTable<
       return self();
     }
   }
-}
+  
+  @Override
+  public int getTransactionItemsLimit()
+  {
+    return MAX_TRANSACTION_SIZE;
+  }
+ }
+

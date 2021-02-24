@@ -42,7 +42,7 @@ public class CredentialName extends Name
 //    this(realmId, environmentId, null, owner);
 //  }
   
-  protected CredentialName(String prefix, String environmentTypeId, String environmentId, String tenantId, String owner, String suffix)
+  public CredentialName(String prefix, String environmentTypeId, String environmentId, String tenantId, String owner, String suffix)
   {
     super(prefix, environmentTypeId, environmentId, tenantId, owner, suffix);
 
@@ -52,7 +52,7 @@ public class CredentialName extends Name
     owner_ = owner;
   }
   
-  protected CredentialName(String prefix, String environmentTypeId, String environmentId, String owner, String suffix)
+  public CredentialName(String prefix, String environmentTypeId, String environmentId, String owner, String suffix)
   {
     super(prefix, environmentTypeId, environmentId, owner, suffix);
 

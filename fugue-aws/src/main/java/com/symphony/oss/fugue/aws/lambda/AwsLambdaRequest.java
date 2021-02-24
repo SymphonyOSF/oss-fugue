@@ -25,6 +25,8 @@ package com.symphony.oss.fugue.aws.lambda;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 
@@ -96,11 +98,11 @@ public class AwsLambdaRequest extends JsonLambdaRequest
   private final Map<String, String> pathParams_;
   private final Map<String, String> requestHeaders_;
   private final ImmutableByteArray  body_;
-  private final Map<String, String>       stageVariables_;
+  private final Map<String, String> stageVariables_;
   private String                    awsRequestId_ = "UNKNOWN-" + UUID.randomUUID().toString();
   private long                      awsRequestEpoch_;
-  private final String                    httpMethod_;
-  private final String                    path_;
+  private final String              httpMethod_;
+  private final String              path_;
   
   public AwsLambdaRequest(InputStream inputStream)
   {
@@ -108,7 +110,7 @@ public class AwsLambdaRequest extends JsonLambdaRequest
     
     queryParams_ = mapAdaptor(getJson().get("queryStringParameters"));
     pathParams_ = mapAdaptor(getJson().get("pathParameters"));
-    requestHeaders_ = mapAdaptor(getJson().get("headers"));
+    requestHeaders_ = headerMap(getJson().get("headers"));
     stageVariables_ = mapAdaptor(getJson().get("stageVariables"));
     
     JsonNode context = getJson().get("requestContext");
@@ -165,6 +167,26 @@ public class AwsLambdaRequest extends JsonLambdaRequest
     }
   }
 
+  private Map<String, String> headerMap(JsonNode jsonNode)
+  {
+    Map<String, String> result = new HashMap<>();
+    
+    if(jsonNode != null)
+    {
+      Iterator<String> it = jsonNode.fieldNames();
+      
+      while(it.hasNext())
+      {
+        String name = it.next();
+        String value = jsonNode.get(name).asText();
+        
+        result.put(name.toLowerCase(), value);
+      }
+    }
+    
+    return result;
+  }
+
   public String getAwsRequestId()
   {
     return awsRequestId_;
@@ -190,7 +212,7 @@ public class AwsLambdaRequest extends JsonLambdaRequest
   @Override
   public String getHeader(String name)
   {
-    return requestHeaders_.get(name);
+    return requestHeaders_.get(name.toLowerCase());
   }
 
   @Override

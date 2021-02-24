@@ -23,6 +23,7 @@
 
 package com.symphony.oss.fugue.aws.sqs;
 
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -35,6 +36,7 @@ import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
+import com.amazonaws.services.sqs.model.QueueDeletedRecentlyException;
 import com.amazonaws.services.sqs.model.QueueDoesNotExistException;
 import com.amazonaws.services.sqs.model.TagQueueRequest;
 import com.google.common.cache.CacheBuilder;
@@ -69,6 +71,7 @@ public class SqsQueueManager implements IQueueManager
 
   private final AmazonSQS                    sqsClient_;
   //private Map<String, SqsQueueSender>          senderMap_ = new HashMap<>();
+  private boolean gateway_;
   
   private final LoadingCache<String, SqsQueueSender>          senderCache_ = CacheBuilder.newBuilder()
       .maximumSize(250)
@@ -78,7 +81,7 @@ public class SqsQueueManager implements IQueueManager
             @Override
             public SqsQueueSender load(String queueName)
             {
-              return new SqsQueueSender(sqsClient_, queueName);
+              return new SqsQueueSender(sqsClient_, gateway_, queueName);
             }
           });
   private final LoadingCache<String, SqsQueueReceiver>          receiverCache_ = CacheBuilder.newBuilder()
@@ -89,7 +92,7 @@ public class SqsQueueManager implements IQueueManager
             @Override
             public SqsQueueReceiver load(String queueName)
             {
-              return new SqsQueueReceiver(sqsClient_, queueName);
+              return new SqsQueueReceiver(sqsClient_, gateway_, queueName);
             }
           });
 
@@ -99,7 +102,26 @@ public class SqsQueueManager implements IQueueManager
     accountId_  = builder.accountId_;
     tags_       = ImmutableMap.copyOf(builder.tags_);
     
-    sqsClient_ = builder.sqsBuilder_.withRegion(region_).build();
+    ClientConfiguration configuration = new ClientConfiguration()
+    .withMaxConnections(200);
+
+    if(builder.proxyUrl_ !=null) 
+    {
+      configuration.setProxyHost(builder.proxyUrl_.getHost());
+      configuration.setProxyPort(builder.proxyUrl_.getPort());
+    }
+    
+    if(builder.proxyUsername_ != null) 
+      configuration.setProxyUsername(builder.proxyUsername_);
+    
+    if(builder.proxyPassword_ != null)
+      configuration.setProxyPassword(builder.proxyPassword_);
+
+    sqsClient_ = builder.sqsBuilder_
+     .withClientConfiguration(configuration)
+     .build();
+    
+    gateway_ = builder.gateway_;
   }
   
   @Override
@@ -157,11 +179,15 @@ public class SqsQueueManager implements IQueueManager
    */
   public static class Builder extends BaseAbstractBuilder<Builder, SqsQueueManager>
   {
-    private AmazonSQSClientBuilder sqsBuilder_;
+    private AmazonSQSClientBuilder       sqsBuilder_;
     private String                 region_;
     private String                 accountId_;
     private Map<String, String>    tags_ = new HashMap<>();
     //  private String configPath_ = "org/symphonyoss/s2/fugue/aws/sqs";
+    private boolean gateway_;
+    private String                        proxyUsername_;
+    private URL                           proxyUrl_;
+    private String                        proxyPassword_;
 
     /**
      * Constructor.
@@ -171,10 +197,8 @@ public class SqsQueueManager implements IQueueManager
       super(Builder.class);
       
       sqsBuilder_ = AmazonSQSClientBuilder
-          .standard()
-          .withClientConfiguration(new ClientConfiguration()
-              .withMaxConnections(200)
-              );
+          .standard();
+      
     }
     
 //    @Override
@@ -255,6 +279,48 @@ public class SqsQueueManager implements IQueueManager
       
       return self();
     }
+    
+    /**
+     * Set the API proxy URL.
+     * 
+     * @param proxyUrl The client proxy Url.
+     * 
+     * @return this (fluent method)
+     */
+    public Builder withProxyUrl(URL proxyUrl)
+    {
+      proxyUrl_ = proxyUrl; 
+      
+      return self();
+    }
+
+    /**
+     * Set the API proxy URL.
+     * 
+     * @param proxyUsername The client proxy Username.
+     * 
+     * @return this (fluent method)
+     */
+    public Builder withProxyUsername(String proxyUsername)
+    {
+      proxyUsername_ = proxyUsername;  
+      
+      return self();
+    }
+    
+    /**
+     * Set the API proxy password.
+     * 
+     * @param proxyPassword The client proxy Password.
+     * 
+     * @return this (fluent method)
+     */
+    public Builder withProxyPassword(String proxyPassword)
+    {
+      proxyPassword_ = proxyPassword;   
+      
+      return self();
+    }
 
     @Override
     public void validate(FaultAccumulator faultAccumulator)
@@ -288,9 +354,22 @@ public class SqsQueueManager implements IQueueManager
   }
   
   @Override
+  public String getQueueUrl(String queueName)
+  {
+    try
+    {
+      return sqsClient_.getQueueUrl(queueName.toString()).getQueueUrl();
+    }
+    catch(QueueDoesNotExistException e)
+    {
+      return null;
+    }
+  }
+  
+  @Override
   public String createQueue(String queueName, Map<String, String> tags, boolean dryRun)
   {
-    String  queueUrl;
+    String  queueUrl = "";
     
     try
     {
@@ -307,9 +386,39 @@ public class SqsQueueManager implements IQueueManager
       }
       else
       {
-        queueUrl = sqsClient_.createQueue(new CreateQueueRequest(queueName.toString())).getQueueUrl();        
+        int count = 1;
         
-        log_.info("Created queue " + queueName + " as " + queueUrl);
+        boolean created = false;
+
+        while (!created)
+        {
+          try
+          {
+            queueUrl = sqsClient_.createQueue(new CreateQueueRequest(queueName.toString())).getQueueUrl();
+            
+            log_.info("Created queue " + queueName + " as " + queueUrl);
+            
+            created = true;
+          }
+          catch (QueueDeletedRecentlyException ex)
+          {
+            
+            if (count++ <= 4)
+            {
+              try
+              {
+                Thread.sleep(15000);
+              }
+              catch (InterruptedException ie)
+              {
+                throw ex;
+              }
+            }
+            else
+              throw ex;
+          }
+        }
+        
       }
     }
     
@@ -347,14 +456,33 @@ public class SqsQueueManager implements IQueueManager
       }
       else
       {
-        sqsClient_.deleteQueue(existingQueueUrl);
-
-        log_.info("Deleted queue " + queueName + " with URL " + existingQueueUrl);
+        try
+        {
+          sqsClient_.deleteQueue(existingQueueUrl);
+          
+          log_.info("Deleted queue " + queueName + " with URL " + existingQueueUrl);
+        }
+        catch (QueueDoesNotExistException e)
+        {
+          log_.info("Queue was already deleted " + queueName + " with URL " + existingQueueUrl);
+        }
       }
     }
     catch(QueueDoesNotExistException e)
     {
       log_.info("Queue " + queueName + " does not exist.");
     }
+  }
+
+  @Override
+  public long getTTLLowerBound()
+  {
+    return 1000 * 60;
+  }
+
+  @Override
+  public long getTTLUpperBound()
+  {
+    return 1000 * 60 * 60 * 24 * (7 - 2 /*CLEANUP DAYS */);
   }
 }

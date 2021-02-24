@@ -29,6 +29,8 @@ import org.slf4j.LoggerFactory;
 import com.amazonaws.services.lambda.AWSLambda;
 import com.amazonaws.services.lambda.model.CreateEventSourceMappingRequest;
 import com.amazonaws.services.lambda.model.CreateEventSourceMappingResult;
+import com.amazonaws.services.lambda.model.DeleteEventSourceMappingRequest;
+import com.amazonaws.services.lambda.model.DeleteEventSourceMappingResult;
 import com.amazonaws.services.lambda.model.EventSourceMappingConfiguration;
 import com.amazonaws.services.lambda.model.ListEventSourceMappingsRequest;
 import com.amazonaws.services.lambda.model.ListEventSourceMappingsResult;
@@ -56,9 +58,7 @@ class AwsTopicSubscription extends TopicSubscription
   @Override
   public void create(String functionName)
   {
-
-    String queueName = getQueueName();
-    String queueArn = queueArnPrefix_ + queueName;
+    String queueArn = getSource();
     
     ListEventSourceMappingsResult mappingResult = lambdaClient_.listEventSourceMappings(new ListEventSourceMappingsRequest()
         .withFunctionName(functionName)
@@ -92,6 +92,21 @@ class AwsTopicSubscription extends TopicSubscription
         );
     
     log_.info("CreateEventSourceMappingResult=" + result);
+  }
+
+  @Override
+  public String getSource()
+  {
+    return queueArnPrefix_ + getQueueName();
+  }
+
+  public static void delete(EventSourceMappingConfiguration mapping, AWSLambda lambdaClient)
+  {
+    DeleteEventSourceMappingResult result = lambdaClient.deleteEventSourceMapping(new DeleteEventSourceMappingRequest()
+        .withUUID(mapping.getUUID()));
+    
+    log_.info("DeleteEventSourceMappingResult=" + result);
+    
   }
 
 }

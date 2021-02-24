@@ -47,7 +47,7 @@ public abstract class AbstractPullSubscriber implements Runnable
   private final IBusyCounter                        busyCounter_;
   private final long                                extensionFrequency_;
   private final ICloseableConsumer                  consumer_;
-  private boolean                                   running_ = true;
+  protected boolean                                 running_ = true;
 
   
   public AbstractPullSubscriber(AbstractPullSubscriberManager<?,?> manager,

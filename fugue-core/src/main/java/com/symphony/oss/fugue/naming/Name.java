@@ -56,7 +56,7 @@ public class Name
    * @param name        The name
    * @param additional  Zero or more optional suffix elements.
    */
-  protected Name(@Nonnull String name, Object ...additional)
+  public Name(@Nonnull String name, Object ...additional)
   {
     if(name == null)
       throw new NullPointerException("name may not be null");

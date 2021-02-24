@@ -353,7 +353,7 @@ public class SqsSubscriberAdmin extends AbstractSubscriberAdmin<SqsSubscriberAdm
 //      String lambdaName = nameFactory_.getLogicalServiceItemName(subscription.getLambdaConsumer()).toString();
 //      
 //      lambdaManager_.subscribe(lambdaName, queueArn);
-//    }
+//   }
   }
   
   /*

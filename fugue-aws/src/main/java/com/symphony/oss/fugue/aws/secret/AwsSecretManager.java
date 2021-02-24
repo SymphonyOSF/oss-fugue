@@ -129,18 +129,33 @@ public class AwsSecretManager implements ISecretManager
   @Override
   public IImmutableJsonDomNode getSecret(CredentialName name) throws SecretNotFoundException
   {
-    GetSecretValueRequest getSecretValueRequest = new GetSecretValueRequest()
-        .withSecretId(name.toString());
-    
     try
     {
-      GetSecretValueResult getSecretValueResponse = secretClient_.getSecretValue(getSecretValueRequest);
-      String secret = getSecretValueResponse.getSecretString();
-      
-      if(getSecretValueResponse.getSecretString() == null) 
-        throw new IllegalStateException("Returned value is not a string");
+      String secret = getSecretAsString(name);
           
       return JacksonAdaptor.adapt(MAPPER.readTree(secret)).immutify();
+    }
+    catch (IOException e)
+    {
+      throw new IllegalStateException(e);
+    }
+}
+  
+  @Override
+  public String getSecretAsString(CredentialName name) throws SecretNotFoundException
+  {
+    try
+    {
+      GetSecretValueRequest getSecretValueRequest = new GetSecretValueRequest()
+          .withSecretId(name.toString());
+  
+      GetSecretValueResult getSecretValueResponse = secretClient_.getSecretValue(getSecretValueRequest);
+      String secret = getSecretValueResponse.getSecretString();
+        
+      if(getSecretValueResponse.getSecretString() == null) 
+        throw new IllegalStateException("Returned value is not a string");              
+
+      return secret;
     }
     catch (InvalidParameterException e)
     {
@@ -150,15 +165,11 @@ public class AwsSecretManager implements ISecretManager
     {
       throw new CodingFault(e);
     }
-    catch (IOException e)
-    {
-      throw new IllegalStateException(e);
-    }
     catch(ResourceNotFoundException e)
     {
       throw new SecretNotFoundException("Unable to find secret " + name, e);
     }
-}
+  }
   
   @Override
   public void putSecret(CredentialName name, IImmutableJsonDomNode secret)
@@ -200,4 +211,5 @@ public class AwsSecretManager implements ISecretManager
       throw new CodingFault(e);
     }
   }
+
 }

@@ -21,7 +21,7 @@
   <parent>
     <groupId>com.symphony.oss.fugue</groupId>
     <artifactId>oss-fugue</artifactId>
-    <version>0.2.1-SNAPSHOT</version>
+    <version>0.3.0-SNAPSHOT</version>
   </parent>
   <artifactId>fugue-deploy-aws</artifactId>
 
@@ -123,6 +123,11 @@
         <artifactId>aws-java-sdk-api-gateway</artifactId>
         <version>${aws.java.sdk.version}</version>
     </dependency>
+    <dependency>
+	  <groupId>com.github.alexmojaki</groupId>
+      <artifactId>s3-stream-upload</artifactId>
+	  <version>1.0.1</version>
+	</dependency>
     
     <dependency>
       <groupId>org.slf4j</groupId>

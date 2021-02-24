@@ -24,21 +24,21 @@
 package com.symphony.oss.fugue.kv.table;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
 
-import com.symphony.oss.commons.hash.Hash;
 import com.symphony.oss.fugue.IFugueComponent;
 import com.symphony.oss.fugue.kv.IKvItem;
 import com.symphony.oss.fugue.kv.IKvPagination;
 import com.symphony.oss.fugue.kv.IKvPartitionKeyProvider;
 import com.symphony.oss.fugue.kv.IKvPartitionSortKeyProvider;
 import com.symphony.oss.fugue.kv.KvCondition;
+import com.symphony.oss.fugue.kv.KvPartitionUser;
 import com.symphony.oss.fugue.store.NoSuchObjectException;
-import com.symphony.oss.fugue.store.ObjectExistsException;
 import com.symphony.oss.fugue.trace.ITraceContext;
 
 /**
@@ -50,12 +50,21 @@ import com.symphony.oss.fugue.trace.ITraceContext;
 public interface IKvTable extends IFugueComponent
 {
   /**
-   * Store the given collection of items, overwriting any existing object with the same partition and sort keys.
+   * Store the given collection of items transactionally, overwriting any existing object with the same partition and sort keys.
    * 
    * @param kvItems Items to be stored.
    * @param trace   Trace context.
    */
   void store(Collection<IKvItem> kvItems, ITraceContext trace);
+  
+  /**
+   * Store the given collection of items, overwriting any existing object with the same partition and sort keys.
+   * 
+   * @param kvItems Items to be stored.
+   * @param trace   Trace context.
+   */
+  void storeNonTransactional(Collection<IKvItem> kvItems, ITraceContext trace);
+  
   
   /**
    * Store the given item, provided the given condition is met.
@@ -66,6 +75,20 @@ public interface IKvTable extends IFugueComponent
    */
   void store(IKvItem kvItem, KvCondition kvCondition, ITraceContext trace);
   
+  /**
+   * Store the given item, provided the given list of conditions are met.
+   * 
+   * @param kvItem       Item to be stored.
+   * @param effective    The effective condition
+   * @param entAction    The entitlement action condition
+   * @param action       The allow action 
+   * @param trace        Trace context.
+   */
+  void storeEntitlementMapping(IKvItem kvItem, KvCondition effective, KvCondition entAction, String action, ITraceContext trace);
+  
+  /**
+   * @return the transaction.
+   */
   IKvTableTransaction createTransaction();
 
 //  /**
@@ -94,7 +117,8 @@ public interface IKvTable extends IFugueComponent
 //      ITraceContext trace) throws NoSuchObjectException;
   
   /**
-   * Physically delete the given object.
+   * Physically delete the given application object.
+
    * 
    * @param partitionSortKeyProvider  The partition and sort key of the existing item.
    * @param versionPartitionKey       Partition key for the versions partition.
@@ -103,6 +127,15 @@ public interface IKvTable extends IFugueComponent
    */
   void delete(IKvPartitionSortKeyProvider partitionSortKeyProvider, IKvPartitionKeyProvider versionPartitionKey,
       IKvPartitionSortKeyProvider absoluteHashPrefix, ITraceContext trace);
+  
+
+  /**
+   * Physically delete all the system objects from the given partition.
+   * 
+   * @param partitionKeyProvider  The partition key.
+   * @param trace                     Trace context.
+   */
+  void deleteSystemPartitionObjects(IKvPartitionKeyProvider partitionKeyProvider, ITraceContext trace);
   
   /**
    * Fetch the object with the given partition key and sort key.
@@ -171,8 +204,47 @@ public interface IKvTable extends IFugueComponent
   IKvPagination fetchPartitionObjects(IKvPartitionKeyProvider partitionKey, boolean scanForwards, Integer limit, 
       @Nullable String after,
       @Nullable String sortKeyPrefix,
+      @Nullable String sortKeyMin,
+      @Nullable String sortKeyMax,
+      @Nullable Map<String, Object> filterAttributes,
+      BiConsumer<String, String> consumer, ITraceContext trace);
+  
+  /**
+   * Return objects from the given partition.
+   * 
+   * @param partitionKey      The ID of the partition.
+   * @param scanForwards      If true then scan objects in the order of their sort keys, else in reverse order.
+   * @param limit             An optional limit to the number of objects retrieved.
+   * @param after             An optional page cursor to continue a previous query.
+   * @param sortKeyPrefix     An optional sort key prefix.
+   * @param filterAttributes  Optional attribute values to filter results.
+   * @param consumer          A consumer to receive the retrieved objects.
+   * @param trace             Trace context.
+   * 
+   * @return              Pagination tokens to allow a continuation query to be made.
+   */
+  IKvPagination fetchPartitionObjects(IKvPartitionKeyProvider partitionKey, boolean scanForwards, Integer limit, 
+      @Nullable String after,
+      @Nullable String sortKeyPrefix,
+      @Nullable String sortKeyMin,
+      @Nullable String sortKeyMax,
       @Nullable Map<String, Object> filterAttributes,
       Consumer<String> consumer, ITraceContext trace);
+  
+  /**
+   * Return Users Permissions from the given partition.
+   * 
+   * @param partitionKey      The ID of the partition.
+   * @param limit             An optional limit to the number of objects retrieved.
+   * @param after             An optional page cursor to continue a previous query.
+   * @param consumer          A consumer to receive the retrieved objects.
+   * @param trace             Trace context.
+   * 
+   * @return              Pagination tokens to allow a continuation query to be made.
+   */
+  IKvPagination fetchPartitionUsers(IKvPartitionKeyProvider partitionKey, Integer limit, 
+      @Nullable String after,
+      Consumer<KvPartitionUser> consumer, ITraceContext trace);
 
   /**
    * Delete the single row whose primary key is given.
@@ -181,4 +253,11 @@ public interface IKvTable extends IFugueComponent
    * @param trace                     Trace context.
    */
   void deleteRow(IKvPartitionSortKeyProvider partitionSortKeyProvider, ITraceContext trace);
+  
+  /**
+   * Gets the maximum number of items that can be stored in a transaction
+   * @return the transaction limit
+   * 
+   */
+  int getTransactionItemsLimit();
 }
