@@ -204,10 +204,8 @@ public interface IKvTable extends IFugueComponent
   IKvPagination fetchPartitionObjects(IKvPartitionKeyProvider partitionKey, boolean scanForwards, Integer limit, 
       @Nullable String after,
       @Nullable String sortKeyPrefix,
-      @Nullable String sortKeyPrefixMinExclusive,
-      @Nullable String sortKeyPrefixMinInclusive,
-      @Nullable String sortKeyPrefixMaxExclusive, 
-      @Nullable String sortKeyPrefixMaxInclusive,
+      @Nullable String sortKeyMin,
+      @Nullable String sortKeyMax,
       @Nullable Map<String, Object> filterAttributes,
       BiConsumer<String, String> consumer, ITraceContext trace);
   
@@ -228,10 +226,8 @@ public interface IKvTable extends IFugueComponent
   IKvPagination fetchPartitionObjects(IKvPartitionKeyProvider partitionKey, boolean scanForwards, Integer limit, 
       @Nullable String after,
       @Nullable String sortKeyPrefix,
-      @Nullable String sortKeyPrefixMinExclusive,
-      @Nullable String sortKeyPrefixMinInclusive,
-      @Nullable String sortKeyPrefixMaxExclusive, 
-      @Nullable String sortKeyPrefixMaxInclusive,
+      @Nullable String sortKeyMin,
+      @Nullable String sortKeyMax,
       @Nullable Map<String, Object> filterAttributes,
       Consumer<String> consumer, ITraceContext trace);
   
