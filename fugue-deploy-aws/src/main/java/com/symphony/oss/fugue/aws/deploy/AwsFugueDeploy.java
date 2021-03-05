@@ -3361,6 +3361,15 @@ public abstract class AwsFugueDeploy extends FugueDeploy
                 );
             
             log_.info("Updated stage " + stage);
+            try
+            {
+              log_.info("Sleep 800...");
+              Thread.sleep(800);
+            }
+            catch (InterruptedException e)
+            {
+              log_.error("Interrupted", e);
+            }
           }
         }
         
@@ -3384,8 +3393,26 @@ public abstract class AwsFugueDeploy extends FugueDeploy
                 .withValue(isPublic_ ? "PUBLIC" : "INTERNAL")
                 )
         );
+        try
+        {
+          log_.info("Sleep 800...");
+          Thread.sleep(800);
+        }
+        catch (InterruptedException e)
+        {
+          log_.error("Interrupted", e);
+        }
         
         createApiGatewayBasePath();
+        try
+        {
+          log_.info("Sleep 800...");
+          Thread.sleep(800);
+        }
+        catch (InterruptedException e)
+        {
+          log_.error("Interrupted", e);
+        }
       }
 
       String getStageName()
@@ -3549,6 +3576,15 @@ public abstract class AwsFugueDeploy extends FugueDeploy
             );
           
           log_.info("Stage exists as " + stage);
+          try
+          {
+            log_.info("Sleep 800...");
+            Thread.sleep(800);
+          }
+          catch (InterruptedException e)
+          {
+            log_.error("Interrupted", e);
+          }
         }
         catch(com.amazonaws.services.apigateway.model.NotFoundException e)
         {
