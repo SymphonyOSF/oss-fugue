@@ -29,8 +29,10 @@ import com.symphony.oss.fugue.naming.CredentialName;
 public interface ISecretManager
 {
 
+  IImmutableJsonDomNode getSecret(String secretName) throws SecretNotFoundException;
   IImmutableJsonDomNode getSecret(CredentialName secretName) throws SecretNotFoundException;
   
+  String getSecretAsString(String secretName) throws SecretNotFoundException;
   String getSecretAsString(CredentialName secretName) throws SecretNotFoundException;
 
   void putSecret(CredentialName name, IImmutableJsonDomNode secret);

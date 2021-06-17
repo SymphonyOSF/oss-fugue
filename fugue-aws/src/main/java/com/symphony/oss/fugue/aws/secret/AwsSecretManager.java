@@ -129,6 +129,12 @@ public class AwsSecretManager implements ISecretManager
   @Override
   public IImmutableJsonDomNode getSecret(CredentialName name) throws SecretNotFoundException
   {
+    return getSecret(name.toString());
+  }
+  
+  @Override
+  public IImmutableJsonDomNode getSecret(String name) throws SecretNotFoundException
+  {
     try
     {
       String secret = getSecretAsString(name);
@@ -139,15 +145,21 @@ public class AwsSecretManager implements ISecretManager
     {
       throw new IllegalStateException(e);
     }
-}
+  }
   
   @Override
   public String getSecretAsString(CredentialName name) throws SecretNotFoundException
   {
+    return getSecretAsString(name.toString());
+  }
+  
+  @Override
+  public String getSecretAsString(String name) throws SecretNotFoundException
+  {
     try
     {
       GetSecretValueRequest getSecretValueRequest = new GetSecretValueRequest()
-          .withSecretId(name.toString());
+          .withSecretId(name);
   
       GetSecretValueResult getSecretValueResponse = secretClient_.getSecretValue(getSecretValueRequest);
       String secret = getSecretValueResponse.getSecretString();

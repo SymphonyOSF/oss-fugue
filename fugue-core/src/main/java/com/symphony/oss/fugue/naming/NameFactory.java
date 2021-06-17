@@ -439,6 +439,13 @@ public class NameFactory implements INameFactory
         getGlobalNamePrefix(), environmentType_, environmentId_, podName_, getServiceId(), subscriptionId, topicName.getTopicId(), topicName.getServiceId());
   }
   
+  @Override
+  public SubscriptionName  getSubscriptionName(String queueName)
+  {
+    return createSubscriptionName(getTopicName(queueName), serviceId_, queueName,
+        getGlobalNamePrefix(), environmentType_, environmentId_, podName_, getRequiredServiceId(), queueName);
+  }
+  
   protected Name createName(@Nonnull String name, String ...additional)
   {
     return new Name(name, (Object[])additional);

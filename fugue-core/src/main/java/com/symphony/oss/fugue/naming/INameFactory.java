@@ -90,6 +90,15 @@ public interface INameFactory
   SubscriptionName  getSubscriptionName(TopicName topicName, @Nullable String subscriptionId);
 
   /**
+   * Return a Subscription Name for the given queue name.
+   * 
+   * @param queueName       The name of the queue.
+   * 
+   * @return A SubscriptionName
+   */
+  SubscriptionName  getSubscriptionName(String queueName);
+  
+  /**
    * 
    * @return the service name with no tenant element even if we are in a tenant specific context.
    */

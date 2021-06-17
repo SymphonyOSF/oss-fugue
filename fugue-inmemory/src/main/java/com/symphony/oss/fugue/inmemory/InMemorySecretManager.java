@@ -44,7 +44,7 @@ import com.symphony.oss.fugue.secret.SecretNotFoundException;
  */
 public class InMemorySecretManager implements ISecretManager
 {
-  private final Map<CredentialName, IImmutableJsonDomNode> secretMap_ = new HashMap<>();
+  private final Map<String, IImmutableJsonDomNode> secretMap_ = new HashMap<>();
 
   /**
    * Constructor.
@@ -82,6 +82,12 @@ public class InMemorySecretManager implements ISecretManager
   @Override
   public IImmutableJsonDomNode getSecret(CredentialName name) throws SecretNotFoundException
   {
+    return getSecret(name.toString());
+  }
+  
+  @Override
+  public IImmutableJsonDomNode getSecret(String name) throws SecretNotFoundException
+  {
     IImmutableJsonDomNode result = secretMap_.get(name);
     
     if(result == null)
@@ -92,6 +98,12 @@ public class InMemorySecretManager implements ISecretManager
   
   @Override
   public String getSecretAsString(CredentialName name) throws SecretNotFoundException
+  {
+    return getSecretAsString(name.toString());
+  }
+  
+  @Override
+  public String getSecretAsString(String name) throws SecretNotFoundException
   {
     IImmutableJsonDomNode result = secretMap_.get(name);
     
@@ -104,7 +116,7 @@ public class InMemorySecretManager implements ISecretManager
   @Override
   public void putSecret(CredentialName name, IImmutableJsonDomNode secret)
   {
-    secretMap_.put(name, secret);
+    secretMap_.put(name.toString(), secret);
   }
 
   @Override

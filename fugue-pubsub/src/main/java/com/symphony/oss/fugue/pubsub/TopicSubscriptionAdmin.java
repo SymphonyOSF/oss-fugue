@@ -98,6 +98,7 @@ public class TopicSubscriptionAdmin implements ITopicSubscriptionAdmin
   public static abstract class AbstractBuilder<T extends AbstractBuilder<T,B>, B extends ISubscriptionAdmin> extends AbstractSubscription.AbstractBuilder<T,B>
   {
     private Set<String>                    topicIds_ = new HashSet<>();
+    private Set<String>                    queueNames_ = new HashSet<>();
     private String                         subscriptionId_;
     private String                         serviceId_;
     private String                         filterPropertyName_;
@@ -158,6 +159,24 @@ public class TopicSubscriptionAdmin implements ITopicSubscriptionAdmin
       {
         for(String topicId : topicIds)
           topicIds_.add(topicId);
+      }
+      
+      return self();
+    }
+    
+    /**
+     * Add the given queue names directly to the list of topics to be subscribed to.
+     * 
+     * @param queueNames fully resolved queue names to be subscribed to.
+     * 
+     * @return This (fluent method).
+     */
+    public T withQueueNames(String ...queueNames)
+    {
+      if(queueNames != null)
+      {
+        for(String queueName : queueNames)
+          queueNames_.add(queueName);
       }
       
       return self();
@@ -228,7 +247,10 @@ public class TopicSubscriptionAdmin implements ITopicSubscriptionAdmin
     {
       super.validate(faultAccumulator);
       
-      faultAccumulator.checkNotNull(topicIds_, "topic ID");
+      if(topicIds_.isEmpty() && queueNames_.isEmpty())
+      {
+        faultAccumulator.error("At least one topic ID or queue name is required.");
+      }
       
       Set<SubscriptionName> names = new HashSet<>();
        
@@ -243,6 +265,11 @@ public class TopicSubscriptionAdmin implements ITopicSubscriptionAdmin
           TopicName topicName = serviceId_ == null ? nameFactory_.getTopicName(topicId) : nameFactory_.getTopicName(serviceId_, topicId);
           
           names.add(nameFactory_.getSubscriptionName(topicName, subscriptionId_));
+        }
+        
+        for(String queueName : queueNames_)
+        {
+          names.add(nameFactory_.getSubscriptionName(queueName));
         }
       }
       
